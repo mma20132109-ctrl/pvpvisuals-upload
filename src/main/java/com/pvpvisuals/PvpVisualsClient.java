@@ -51,6 +51,7 @@ public class PvpVisualsClient implements ClientModInitializer {
 		ChinaHatModule.register();
 		com.pvpvisuals.render.blockoverlay.BlockOverlayModule.register();
 		com.pvpvisuals.render.hitbox.HitBoxModule.register();
+		com.pvpvisuals.render.targetesp.TargetEspModule.register();
 		ParticleRenderer.register();
 		TrajectoryModule.register();
 	}
