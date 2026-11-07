@@ -28,7 +28,7 @@ public final class NotificationToast {
     private NotificationToast() { }
 
     public static void show(String text, boolean ok) {
-        show(text, ok, DEFAULT_MS);
+        show(text, ok, PvpConfig.get().binds.durationMs);
     }
 
     public static void show(String text, boolean ok, long durationMs) {
