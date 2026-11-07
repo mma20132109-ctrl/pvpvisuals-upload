@@ -362,7 +362,7 @@ public class EchoScreen extends Screen {
 		Gfx.textScaled(g, this.font, "Echo ", tx, ty, 1.2f, EchoTheme.TEXT, false);
 		Gfx.textScaled(g, this.font, "Visual", tx + Gfx.width(this.font, "Echo ") * 1.2f, ty, 1.2f, EchoTheme.ACCENT_TEXT,
 				false);
-		Gfx.text(g, this.font, "PvP visuals client", tx, ly + 17, EchoTheme.DIM);
+		Gfx.textAtSize(g, this.font, "PvP visuals client", tx, ly + 17, 5.8f, EchoTheme.DIM, false);
 
 		search.update(dt);
 		search.render(g, this.font);
@@ -441,7 +441,7 @@ public class EchoScreen extends Screen {
 		Gfx.rrect(g, gx, cfgY(), 36, CFG_H, 6f, glassSettingsOpen || glassHover ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
 				glassSettingsOpen || glassHover ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
 				glassHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER, 1f);
-		Gfx.text(g, this.font, "Glass", gx + 6, cfgY() + 3, glassSettingsOpen || glassHover ? EchoTheme.TEXT : EchoTheme.MUTED);
+		Gfx.textAtSize(g, this.font, "Glass", gx + 6, cfgY() + 3, 5.8f, glassSettingsOpen || glassHover ? EchoTheme.TEXT : EchoTheme.MUTED, false);
 
 		// Import / Export / Reset
 		for (int i = 0; i < CFG_LABELS.length; i++) {
@@ -451,8 +451,8 @@ public class EchoScreen extends Screen {
 			int fill = hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL;
 			Gfx.rrect(g, bx, by, cfgW[i], CFG_H, 6f, fill, fill,
 					hv ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER, 1f);
-			Gfx.text(g, this.font, CFG_LABELS[i], bx + (cfgW[i] - Gfx.width(this.font, CFG_LABELS[i])) / 2, by + 3,
-					hv ? EchoTheme.TEXT : EchoTheme.MUTED);
+			Gfx.textAtSize(g, this.font, CFG_LABELS[i], bx + (cfgW[i] - Gfx.widthAtSize(this.font, CFG_LABELS[i], 5.8f)) / 2f, by + 3, 5.8f,
+					hv ? EchoTheme.TEXT : EchoTheme.MUTED, false);
 		}
 
 		// точки выбора темы
@@ -493,9 +493,9 @@ public class EchoScreen extends Screen {
 	}
 
 	private void drawGlassSlider(GuiGraphics g, int x, int y, int width, int id, String label, int value) {
-		Gfx.text(g, this.font, label, x, y, EchoTheme.MUTED);
+		Gfx.textAtSize(g, this.font, label, x, y, 5.8f, EchoTheme.MUTED, false);
 		String shown = value + "%";
-		Gfx.text(g, this.font, shown, x + width - Gfx.width(this.font, shown), y, EchoTheme.ACCENT_TEXT);
+		Gfx.textAtSize(g, this.font, shown, x + width - Gfx.widthAtSize(this.font, shown, 5.8f), y, 5.8f, EchoTheme.ACCENT_TEXT, false);
 		int barY = y + 13;
 		Gfx.fill(g, x, barY, width, 4, 2, EchoTheme.CARD_BORDER);
 		float ratio = id == 0 ? value / 100f : value / 80f;
@@ -517,11 +517,11 @@ public class EchoScreen extends Screen {
 	}
 
 	private int hint(GuiGraphics g, int x, int cy, String key, String text) {
-		int kw = Gfx.width(this.font, key) + 8;
+		int kw = Gfx.widthAtSize(this.font, key, 5.2f) + 8;
 		Gfx.rrect(g, x, cy - 6, kw, 12, 4f, 0x10FFFFFF, 0x10FFFFFF, 0, 0f);
-		Gfx.text(g, this.font, key, x + 4, cy - 4, EchoTheme.MUTED);
-		Gfx.text(g, this.font, text, x + kw + 4, cy - 4, EchoTheme.DIM);
-		return x + kw + 4 + Gfx.width(this.font, text);
+		Gfx.textAtSize(g, this.font, key, x + 4, cy - 3, 5.2f, EchoTheme.MUTED, false);
+		Gfx.textAtSize(g, this.font, text, x + kw + 4, cy - 3, 5.6f, EchoTheme.DIM, false);
+		return x + kw + 4 + Gfx.widthAtSize(this.font, text, 5.6f);
 	}
 
 	// ---------- ввод ----------
