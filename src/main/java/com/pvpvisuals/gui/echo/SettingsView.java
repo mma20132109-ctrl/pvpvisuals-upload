@@ -175,7 +175,9 @@ public final class SettingsView {
 
 		// строки
 		float fade = Gfx.ease(anim);
-		if (!inline) scroll.begin(g);
+		// Keep a second clip for inline settings: the grid clip alone lets long setting
+		// lists draw over the next module card while this panel is scrolled.
+		scroll.begin(g);
 		int off = scroll.offset();
 		int ry = scroll.y - off;
 		boolean inside = allowHover && scroll.contains(mx, my);
@@ -186,8 +188,8 @@ public final class SettingsView {
 			}
 			ry += rh + ROW_GAP;
 		}
-		if (!inline) scroll.end(g);
-		scroll.renderBar(g);
+		scroll.end(g);
+		if (!inline) scroll.renderBar(g);
 		renderDropdown(g, font, mx, my, allowHover);
 	}
 
