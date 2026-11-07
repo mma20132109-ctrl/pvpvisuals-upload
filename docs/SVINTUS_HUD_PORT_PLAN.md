@@ -12,16 +12,22 @@ Goal: port the remaining Svintus HUD visuals and interactions into PvPVisuals wh
 - HUD editor (dragging, scaling, snapping/guides, context settings, persisted positions and alpha)
 
 ## Progress
-- [x] Source audit for coordinates and module-list reference geometry/behavior.
-- [x] Added PvPVisuals coordinates widget with XYZ, optional facing direction and optional Nether/Overworld conversion.
-- [x] Added animated enabled-module list, width sorting, compact rows and optional accent glow.
-- [x] Registered both widgets in the HUD manager and exposed their toggles/options in the Click GUI.
-- [ ] Finish exact Svintus watermark segments (player, FPS, ping, time, iconography and typography).
-- [ ] Match module-list alignment and all animation details against the reference.
-- [ ] Port remaining armor/held-items behavior and compare with existing inventory HUD.
-- [ ] Finish Target HUD parity and notification stacking/animations.
-- [ ] Review HUD editor interactions and persisted settings against Svintus.
+- [x] Audited Svintus widget geometry, typography, palette, and interaction behavior.
+- [x] Coordinates HUD: XYZ, compass direction, optional Nether/Overworld conversion, shared glass panel.
+- [x] Module List: width sorting, eased enter/leave, horizontal slide, optional glow, left/right and top/bottom anchor alignment.
+- [x] Watermark: compact brand block plus independently configurable nickname, FPS, ping, and local time segments.
+- [x] Armor HUD: armor slots, optional main/off-hand items, durability bars, percentage/count labels, and shared Layout controls.
+- [x] Target HUD: 1.5-second target linger, eased show/hide, health/absorption and hurt treatment, optional items/armor and distance.
+- [x] Notifications: shared glass surface, accent wash, eased fade and edge-directed slide.
+- [x] HUD editor: existing drag/resize/snap/guides/context-settings/save behavior retained; chrome restyled with shared glass and typography.
+- [x] Inventory, HUD Binds, and Combo Counter use the common HUD surface and compact Inter typography.
+- [x] All new widget settings are stored in PvpConfig with backward-compatible defaults and exposed in Click GUI.
+- [ ] Final in-game visual comparison for spacing, icon shapes, font weights, and edge-case screen sizes.
 - [ ] Gradle build and in-game test on Fabric 1.21.11 / Java 21.
+
+Implementation note: all widgets continue to use AbstractHudModule for persisted position, anchor, scale, alpha, and editor integration. The new Armor HUD is separate from Inventory HUD so existing inventory settings and behavior remain intact.
+
+Build and in-game verification have not yet been performed.
 
 ## Completion criteria
 - Match reference geometry, palette, typography, icons, glass/blur, animation timing and interaction behavior.
