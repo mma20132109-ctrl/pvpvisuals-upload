@@ -230,8 +230,23 @@ public final class Gfx {
 		return Math.round(Typo.width(font, s) * (size / 7.4f));
 	}
 
+	public static int widthAtSize(Font font, Component s, float size) {
+		return Math.round(Typo.width(font, s) * (size / 7.4f));
+	}
+
 	/** Draws Inter at an explicit reference size (Svintus uses 7.4px titles, 5.8px descriptions and 5.4px bind labels). */
 	public static void textAtSize(GuiGraphics g, Font font, String s, float x, float y, float size, int color,
+			boolean shadow) {
+		float scale = size / 7.4f;
+		g.pose().pushMatrix();
+		g.pose().translate(x, y);
+		g.pose().scale(scale, scale);
+		Typo.check(font);
+		g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
+		g.pose().popMatrix();
+	}
+
+	public static void textAtSize(GuiGraphics g, Font font, Component s, float x, float y, float size, int color,
 			boolean shadow) {
 		float scale = size / 7.4f;
 		g.pose().pushMatrix();
