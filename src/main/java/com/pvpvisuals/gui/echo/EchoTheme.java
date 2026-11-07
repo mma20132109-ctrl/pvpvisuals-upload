@@ -65,6 +65,8 @@ public final class EchoTheme {
 	}
 
 	public static void apply(EchoPalette palette) {
+		int previousPrimary = accent();
+		int previousSecondary = accent2();
 		applied = palette;
 		int primary = palette.primary;
 		int secondary = palette.secondary;
@@ -72,8 +74,8 @@ public final class EchoTheme {
 		WIN_BOTTOM = SURFACE_BOTTOM;
 		HUD_TOP = 0xDC1B1E27;
 		HUD_BOTTOM = 0xDC101219;
-		fromPrimary = accent();
-		fromSecondary = accent2();
+		fromPrimary = previousPrimary;
+		fromSecondary = previousSecondary;
 		ACCENT_BLEND.snap(0f).to(1f);
 		NEON = primary;
 		NEON_LINE = withAlpha(primary, 0.92f);
@@ -107,6 +109,24 @@ public final class EchoTheme {
 		if (wanted != applied) {
 			apply(wanted);
 		}
+		updateAnimatedAccent();
+	}
+
+	private static void updateAnimatedAccent() {
+		int primary = accent();
+		int secondary = accent2();
+		NEON = primary;
+		NEON_LINE = withAlpha(primary, 0.92f);
+		ACCENT_A = primary;
+		ACCENT_B = secondary;
+		ACCENT_TEXT = mix(primary, 0xFFFFFFFF, 0.30f);
+		TAB_TOP = withAlpha(primary, 0.78f);
+		TAB_BOTTOM = withAlpha(secondary, 0.58f);
+		CARD_BORDER_ON = withAlpha(primary, 0.62f);
+		CARD_BORDER_HOT = primary;
+		TILE_ICON = mix(primary, 0xFFFFFFFF, 0.22f);
+		DIVIDER = withAlpha(primary, 0.24f);
+		HOVER_FILL = withAlpha(primary, 0.14f);
 	}
 
 	/** Svintus-style smooth accent interpolation; surfaces remain neutral Liquid Glass. */
