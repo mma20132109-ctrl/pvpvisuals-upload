@@ -86,12 +86,13 @@ public final class TargetHudComponent extends AbstractHudModule {
 		hurt += ((hit ? 1f : 0f) - hurt) * 0.25f;
 
 		float oldAlpha = HudAlpha.current;
-		HudAlpha.current = oldAlpha * visibleProgress;
-		float scale = 0.92f + 0.08f * visibleProgress;
 		g.pose().pushMatrix();
-		g.pose().translate(W / 2f, contentHeight() / 2f);
-		g.pose().scale(scale, scale);
-		g.pose().translate(-W / 2f, -contentHeight() / 2f);
+		try {
+			HudAlpha.current = oldAlpha * visibleProgress;
+			float scale = 0.92f + 0.08f * visibleProgress;
+			g.pose().translate(W / 2f, contentHeight() / 2f);
+			g.pose().scale(scale, scale);
+			g.pose().translate(-W / 2f, -contentHeight() / 2f);
 
 		int w = W;
 		int h = contentHeight();
@@ -160,8 +161,10 @@ public final class TargetHudComponent extends AbstractHudModule {
 				ix = slot(g, target.getItemBySlot(s), ix, iy) + step;
 			}
 		}
-		g.pose().popMatrix();
-		HudAlpha.current = oldAlpha;
+		} finally {
+			g.pose().popMatrix();
+			HudAlpha.current = oldAlpha;
+		}
 	}
 
 
