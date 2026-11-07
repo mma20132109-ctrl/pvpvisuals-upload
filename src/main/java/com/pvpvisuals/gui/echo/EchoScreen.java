@@ -90,6 +90,8 @@ public class EchoScreen extends Screen {
 	private static int dragOffX;
 	private static int dragOffY;
 	private boolean draggingWindow;
+	private boolean glassSettingsOpen;
+	private int glassSliderDragging = -1;
 
 	public EchoScreen() {
 		super(Component.literal("Echo Visual"));
@@ -295,6 +297,9 @@ public class EchoScreen extends Screen {
 		drawWindow(g, mouseX, mouseY, dt, now);
 		g.pose().popMatrix();
 		Gfx.alpha = 1f;
+		if (glassSettingsOpen) {
+			drawGlassSettings(g, mouseX, mouseY);
+		}
 
 		dialog.render(g, this.font, mouseX, mouseY, this.width, this.height);
 		NotificationToast.render(g, this.font, this.width, this.height);
@@ -424,6 +429,14 @@ public class EchoScreen extends Screen {
 			hint(g, hx + 8, cy, "RMB", "settings");
 		}
 
+		// Настройки прозрачности и затемнения Liquid Glass
+		int gx = glassButtonX();
+		boolean glassHover = hoverOk && Gfx.hit(mx, my, gx, cfgY(), 36, CFG_H);
+		Gfx.rrect(g, gx, cfgY(), 36, CFG_H, 6f, glassSettingsOpen || glassHover ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
+				glassSettingsOpen || glassHover ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
+				glassHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER, 1f);
+		Gfx.text(g, this.font, "Glass", gx + 6, cfgY() + 3, glassSettingsOpen || glassHover ? EchoTheme.TEXT : EchoTheme.MUTED);
+
 		// Import / Export / Reset
 		for (int i = 0; i < CFG_LABELS.length; i++) {
 			int bx = cfgX(this.font, i);
@@ -455,6 +468,45 @@ public class EchoScreen extends Screen {
 			float rad = 3.4f + dotHover[i] * 0.6f - a * 0.3f;
 			int fill = RoundedRender.lerp(RoundedRender.lerp(c, 0xFF000000, 0.2f), c, Math.max(a, dotHover[i]));
 			Gfx.circle(g, dx + 0.5f, dy + 0.5f, rad, fill);
+		}
+	}
+
+	private int glassButtonX() {
+		return cfgX(this.font, 0) - 40;
+	}
+
+	private void drawGlassSettings(GuiGraphics g, int mx, int my) {
+		int px = wx + ww - 210;
+		int py = wy + wh - 112;
+		Gfx.fill(g, px, py, 196, 98, 10, 0xF0181B24);
+		Gfx.ring(g, px, py, 196, 98, 10, 1f, EchoTheme.CARD_BORDER_HOT);
+		Gfx.text(g, this.font, "LIQUID GLASS", px + 12, py + 10, EchoTheme.TEXT);
+		PvpConfig cfg = PvpConfig.get();
+		drawGlassSlider(g, px + 12, py + 34, 172, 0, "Transparency", Math.round((1f - Mth.clamp(cfg.gui.panelOpacity, 0f, 1f)) * 100f));
+		drawGlassSlider(g, px + 12, py + 68, 172, 1, "Background dim", Math.round(Mth.clamp(cfg.gui.overlayAlpha, 0f, 0.8f) * 100f));
+	}
+
+	private void drawGlassSlider(GuiGraphics g, int x, int y, int width, int id, String label, int value) {
+		Gfx.text(g, this.font, label, x, y, EchoTheme.MUTED);
+		String shown = value + "%";
+		Gfx.text(g, this.font, shown, x + width - Gfx.width(this.font, shown), y, EchoTheme.ACCENT_TEXT);
+		int barY = y + 13;
+		Gfx.fill(g, x, barY, width, 4, 2, EchoTheme.CARD_BORDER);
+		float ratio = id == 0 ? value / 100f : value / 80f;
+		int fill = Math.round(width * Mth.clamp(ratio, 0f, 1f));
+		if (fill > 0) Gfx.fill(g, x, barY, fill, 4, 2, EchoTheme.ACCENT_A, EchoTheme.ACCENT_B);
+		Gfx.circle(g, x + Math.round(width * Mth.clamp(ratio, 0f, 1f)), barY + 2, 4, EchoTheme.KNOB);
+	}
+
+	private void updateGlassSlider(double mouseX) {
+		int px = wx + ww - 210;
+		int x = px + 12;
+		int width = 172;
+		float ratio = Mth.clamp((float) (mouseX - x) / width, 0f, 1f);
+		if (glassSliderDragging == 0) {
+			PvpConfig.get().gui.panelOpacity = 1f - ratio;
+		} else if (glassSliderDragging == 1) {
+			PvpConfig.get().gui.overlayAlpha = ratio * 0.8f;
 		}
 	}
 
@@ -511,6 +563,26 @@ public class EchoScreen extends Screen {
 			for (int i = 0; i < cats.length; i++) {
 				if (Gfx.hit(mx, my, cx0 + 2 + i * tabSlot(), wy + TABS_Y, tabSlot(), TABS_H)) {
 					select(cats[i]);
+					return true;
+				}
+			}
+			// Панель настроек Liquid Glass
+			if (Gfx.hit(mx, my, glassButtonX(), cfgY(), 36, CFG_H)) {
+				glassSettingsOpen = !glassSettingsOpen;
+				glassSliderDragging = -1;
+				return true;
+			}
+			if (glassSettingsOpen) {
+				int px = wx + ww - 210;
+				int py = wy + wh - 112;
+				if (Gfx.hit(mx, my, px + 12, py + 34, 172, 20)) {
+					glassSliderDragging = 0;
+					updateGlassSlider(mx);
+					return true;
+				}
+				if (Gfx.hit(mx, my, px + 12, py + 68, 172, 20)) {
+					glassSliderDragging = 1;
+					updateGlassSlider(mx);
 					return true;
 				}
 			}
@@ -585,6 +657,10 @@ public class EchoScreen extends Screen {
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
+		if (glassSliderDragging >= 0) {
+			updateGlassSlider(event.x());
+			return true;
+		}
 		if (draggingWindow) {
 			dragOffX += Math.round(dragX);
 			dragOffY += Math.round(dragY);
@@ -600,6 +676,11 @@ public class EchoScreen extends Screen {
 
 	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
+		if (glassSliderDragging >= 0) {
+			glassSliderDragging = -1;
+			save();
+			return true;
+		}
 		if (draggingWindow) {
 			draggingWindow = false;
 			return true;
