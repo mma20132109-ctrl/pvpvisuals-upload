@@ -2,6 +2,7 @@ package com.pvpvisuals.hud;
 
 import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.gui.echo.EchoScreen;
+import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.gui.echo.EchoTheme;
 import com.pvpvisuals.gui.rival.Theme;
@@ -102,8 +103,11 @@ public final class HudEditorOverlay {
 		toolbar(g, font, t, cfg, mx, my, sw);
 
 		String hint = "ЛКМ — переместить  •  ПКМ — настройки  •  Угол — изменить размер  •  Shift+колесо — прозрачность  •  Esc — сохранить";
-		RoundedRender.fill(g, (sw - font.width(hint)) / 2 - 6, hintY - 4, font.width(hint) + 12, 16, 5, 0xB0101010);
-		g.drawString(font, hint, (sw - font.width(hint)) / 2, hintY, 0xFFFFFFFF, true);
+		int hintW = font.width(hint);
+		int hintX = (sw - hintW) / 2 - 6;
+		HudStyle.panel(g, hintX, hintY - 4, hintW + 12, 16, 5, 0.92f);
+		Gfx.textAtSize(g, font, hint, (sw - hintW) / 2f, hintY - 0.1f, 5.8f,
+				0xFFFFFFFF, false);
 
 		if (resizing != null) {
 			String s = String.format(java.util.Locale.ROOT, "%.2f×", resizing.scale());
@@ -138,8 +142,9 @@ public final class HudEditorOverlay {
 		String label = m.label();
 		int tw = font.width(label) + 8;
 		int ty = y - TITLE_H - 2 >= 0 ? y - TITLE_H - 2 : y + h + 3;
-		RoundedRender.fill(g, x, ty, tw, TITLE_H, 4, EchoTheme.HUD_TOP, EchoTheme.HUD_BOTTOM);
-		g.drawString(font, label, x + 4, ty + 2, EchoTheme.TEXT, false);
+		HudStyle.panel(g, x, ty, tw, TITLE_H, 4, 0.96f);
+		HudStyle.accentWash(g, x, ty, tw, TITLE_H, 4, 0.9f);
+		Gfx.textAtSize(g, font, label, x + 4f, ty + 2.1f, 6.2f, EchoTheme.TEXT, false);
 	}
 
 	private static void toolbar(GuiGraphics g, Font font, Theme t, PvpConfig cfg, int mx, int my, int sw) {
@@ -153,11 +158,14 @@ public final class HudEditorOverlay {
 			boolean hov = mx >= x && mx < x + w && my >= 6 && my < 6 + BTN_H;
 			int top = on ? EchoTheme.TAB_TOP : EchoTheme.shift(0xC01B1030);
 			int bottom = on ? EchoTheme.TAB_BOTTOM : EchoTheme.shift(0xC0120A22);
-			RoundedRender.fill(g, x, 6, w, BTN_H, 5, top, bottom);
+			HudStyle.panel(g, x, 6, w, BTN_H, 5, on ? 1f : 0.82f);
+			Gfx.rrect(g, x + 1, 7, Math.max(0, w - 2), BTN_H - 2, 4,
+					HudStyle.opacity(top, on ? 0.55f : 0.16f),
+					HudStyle.opacity(bottom, on ? 0.45f : 0.10f), 0, 0f);
 			if (hov) {
 				g.renderOutline(x, 6, w, BTN_H, EchoTheme.ACCENT_TEXT);
 			}
-			g.drawString(font, BUTTONS[i], x + 5, 6 + 3, 0xFFFFFFFF, false);
+			Gfx.textAtSize(g, font, BUTTONS[i], x + 5f, 9.0f, 5.8f, 0xFFFFFFFF, false);
 			x -= 4;
 		}
 	}
