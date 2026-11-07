@@ -242,7 +242,8 @@ public final class SettingsView {
 				Gfx.textAtSize(g, font, label, tx, ry + (rh - 7) / 2, 6.6f, textC, false);
 				Gfx.fill(g, px, ry + 4, pw, rh - 8, 5, EchoTheme.PILL);
 				Gfx.ring(g, px, ry + 4, pw, rh - 8, 5, 1, dropdown == e ? EchoTheme.ACCENT_TEXT : EchoTheme.PILL_BORDER);
-				Gfx.textAtSize(g, font, value, px + 7, ry + (rh - 7) / 2, 6.2f, EchoTheme.TEXT, false);
+				String shownValue = Gfx.trimAtSize(font, value, pw - 22, 6.2f);
+				Gfx.textAtSize(g, font, shownValue, px + 7, ry + (rh - 7) / 2, 6.2f, EchoTheme.TEXT, false);
 				EchoIcons.chevron(g, right - 11, ry + (rh - 8) / 2 + 1, dropdown == e ? 3 : 1, EchoTheme.MUTED);
 			} else if (e.hasKids()) {
 				EchoIcons.chevron(g, right - 7, ry + (rh - 4) / 2 - 1, 2, e.expanded ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM);
@@ -316,7 +317,9 @@ public final class SettingsView {
 		boolean edit = e == editing;
 		Gfx.fill(g, x, ry, rw, rh, 7, hover || edit ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
 		Gfx.ring(g, x, ry, rw, rh, 7, 1, edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
-		Gfx.textAtSize(g, font, e.def.title(), x + 10 + e.depth * 8 - 8, ry + (rh - 7) / 2, 6.6f, EchoTheme.TEXT, false);
+		int labelX = x + 10 + e.depth * 8 - 8;
+		String label = Gfx.trimAtSize(font, e.def.title(), Math.max(12, x + (int) (rw * 0.36f) - labelX - 12), 6.6f);
+		Gfx.textAtSize(g, font, label, labelX, ry + (rh - 7) / 2, 6.6f, EchoTheme.TEXT, false);
 		int fx = x + (int) (rw * 0.36f);
 		int fw = rw - (fx - x) - 6;
 		Gfx.fill(g, fx, ry + 3, fw, rh - 6, 5, EchoTheme.CARD);
