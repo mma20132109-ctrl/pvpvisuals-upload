@@ -73,6 +73,6 @@ public final class ScrollArea {
 		}
 		int barH = Math.max(14, (int) (h * (h / (float) contentH)));
 		int by = y + (int) ((h - barH) * (shown / max()));
-		Gfx.fill(g, x + w + 4, by, 2, barH, 1, 0x30FFFFFF); // тонкий скроллбар за краем списка
+		Gfx.fill(g, x + w - 2, by, 2, barH, 1, 0x30FFFFFF); // скроллбар остаётся внутри области окна
 	}
 }
