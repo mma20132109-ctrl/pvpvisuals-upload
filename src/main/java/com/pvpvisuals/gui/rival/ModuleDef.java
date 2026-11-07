@@ -176,7 +176,7 @@ public final class ModuleDef {
 		if (setter != null) {
 			boolean enabled = !getter.getAsBoolean();
 			setter.accept(enabled);
-			if (category == Category.VISUAL || category == Category.UTILS) {
+			if (category != Category.CLIENT) {
 				KeybindManager.notifyModuleToggle(name, enabled);
 			}
 			return true;
