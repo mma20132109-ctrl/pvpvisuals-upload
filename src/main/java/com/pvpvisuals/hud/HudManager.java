@@ -25,13 +25,15 @@ import net.minecraft.world.entity.LivingEntity;
 /** Регистрирует HUD-слой мода и рисует все модули. */
 public final class HudManager {
 	public static final TargetHudComponent TARGET = new TargetHudComponent();
+	public static final ArmorHudModule ARMOR = new ArmorHudModule();
 	public static final ComboComponent COMBO = new ComboComponent();
 	public static final InventoryHudComponent INVENTORY = new InventoryHudComponent();
 	public static final WatermarkModule WATERMARK = new WatermarkModule();
 	public static final CoordinatesHudModule COORDINATES = new CoordinatesHudModule();
 	public static final ModuleListHudModule MODULE_LIST = new ModuleListHudModule();
 	public static final com.pvpvisuals.hud.binds.HudBindsModule HUD_BINDS = new com.pvpvisuals.hud.binds.HudBindsModule();
-	public static final List<AbstractHudModule> COMPONENTS = List.of(WATERMARK, COORDINATES, MODULE_LIST, TARGET, COMBO, INVENTORY, HUD_BINDS);
+	public static final List<AbstractHudModule> COMPONENTS = List.of(
+			WATERMARK, COORDINATES, MODULE_LIST, TARGET, ARMOR, COMBO, INVENTORY, HUD_BINDS);
 
 	private static final TopBar ISLAND = new TopBar();
 
