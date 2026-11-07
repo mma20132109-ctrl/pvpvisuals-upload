@@ -175,12 +175,15 @@ public final class ModuleCard {
 
 	public void render(GuiGraphics g, Font font, int sy) {
 		refreshText(font);
-		int base = RoundedRender.lerp(EchoTheme.CARD, EchoTheme.CARD_HOVER, hov);
+		int glassTop = RoundedRender.lerp(0x704B5870, 0x905C6C86, hov);
+		int glassBottom = RoundedRender.lerp(0x8A293448, 0xA63D4A60, hov);
 		int border = RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hov * 0.6f);
 		if (on > 0.02f) {
-			border = RoundedRender.lerp(border, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.75f), on);
+			glassTop = RoundedRender.lerp(glassTop, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.34f), on);
+			glassBottom = RoundedRender.lerp(glassBottom, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), on);
+			border = RoundedRender.lerp(border, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.82f), on);
 		}
-		Gfx.rrect(g, x, sy, w, H, R, base, base, border, on > 0.02f ? 1f : 0.8f);
+		Gfx.glass(g, x, sy, w, H, R, glassTop, glassBottom, border);
 		if (on > 0.02f) {
 			// акцентная подсветка включённого модуля: заливка сверху вниз
 			Gfx.rrect(g, x, sy, w, H, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f * on),
