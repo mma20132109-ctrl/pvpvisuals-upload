@@ -155,8 +155,8 @@ public class EchoScreen extends Screen {
 	}
 
 	private void layout() {
-		ww = Math.min(this.width - 12, 470);
-		wh = Math.min(this.height - 12, 316);
+		ww = Math.min(this.width - 12, 440);
+		wh = Math.min(this.height - 12, 296);
 		wx = Mth.clamp((this.width - ww) / 2 + dragOffX, 4, Math.max(4, this.width - ww - 4));
 		wy = Mth.clamp((this.height - wh) / 2 + dragOffY, 4, Math.max(4, this.height - 30));
 		dragOffX = wx - (this.width - ww) / 2;
