@@ -400,10 +400,11 @@ public class EchoScreen extends Screen {
 			int base = RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, tabHover[i]);
 			int textC = RoundedRender.lerp(base, EchoTheme.TEXT, a);
 			int iconC = RoundedRender.lerp(base, EchoTheme.ACCENT_TEXT, a);
-			int contentW = 12 + 5 + Gfx.width(this.font, c.title);
+			int textW = Gfx.widthAtSize(this.font, c.title, 6.2f);
+			int contentW = 9 + 4 + textW;
 			int cx = sx + (slot - contentW) / 2;
-			EchoIcons.category(g, c, cx, y + (TABS_H - 12) / 2, iconC);
-			Gfx.text(g, this.font, c.title, cx + 17, y + (TABS_H - 8) / 2, textC);
+			EchoIcons.category(g, c, cx, y + (TABS_H - 9) / 2, iconC);
+			Gfx.textAtSize(g, this.font, c.title, cx + 13, y + (TABS_H - 7) / 2, 6.2f, textC, false);
 		}
 	}
 
