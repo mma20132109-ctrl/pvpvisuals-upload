@@ -27,6 +27,7 @@ processResources {
 	// Keep artwork in the project-root target_esp/ folder, but package it
 	// where Minecraft 1.21.11 resolves mod textures at runtime.
 	from(layout.projectDirectory.dir("target_esp")) {
+		include "**/*.png"
 		into "assets/pvpvisuals/textures/target_esp"
 	}
 
