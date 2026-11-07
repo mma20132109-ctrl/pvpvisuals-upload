@@ -177,10 +177,13 @@ public final class TargetHudComponent extends AbstractHudModule {
 		}
 		String letter = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
 		g.pose().pushMatrix();
-		g.pose().translate(x + size / 2f - Gfx.width(font, letter) * 1.4f / 2f, y + size / 2f - 5f);
-		g.pose().scale(1.4f, 1.4f);
-		g.drawString(font, letter, 0, 0, HudAlpha.mul(EchoTheme.ACCENT_TEXT), false);
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x + size / 2f - Gfx.width(font, letter) * 1.4f / 2f, y + size / 2f - 5f);
+			g.pose().scale(1.4f, 1.4f);
+			g.drawString(font, letter, 0, 0, HudAlpha.mul(EchoTheme.ACCENT_TEXT), false);
+		} finally {
+			g.pose().popMatrix();
+		}
 	}
 
 	/** Слот 10×10 с предметом и полоской прочности; возвращает x слота. */
@@ -190,10 +193,13 @@ public final class TargetHudComponent extends AbstractHudModule {
 			return x;
 		}
 		g.pose().pushMatrix();
-		g.pose().translate(x, y);
-		g.pose().scale(10f / 16f, 10f / 16f);
-		g.renderItem(stack, 0, 0); // ПРОВЕРИТЬ: GuiGraphics#renderItem(ItemStack, int, int) в 1.21.11
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x, y);
+			g.pose().scale(10f / 16f, 10f / 16f);
+			g.renderItem(stack, 0, 0);
+		} finally {
+			g.pose().popMatrix();
+		}
 		if (stack.isDamageableItem() && stack.getDamageValue() > 0) {
 			int max = stack.getMaxDamage();
 			float ratio = Mth.clamp((max - stack.getDamageValue()) / (float) max, 0f, 1f);
