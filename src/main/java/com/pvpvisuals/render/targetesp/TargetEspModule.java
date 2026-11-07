@@ -98,7 +98,7 @@ public final class TargetEspModule {
                 allied = target.isAlliedTo(mc.player);
                 invisible = target.isInvisible();
                 fade = Math.min(1.0f, fade + dt * 6.0f);
-                emitSpiritParticle(mc, target, box, settings, now);
+                emitSpiritParticle(mc, box, settings, now);
             } else {
                 fadeOut(dt, settings);
             }
@@ -132,7 +132,7 @@ public final class TargetEspModule {
      * One particle is spawned at a time at a point on a rising helix around the target.
      * ClientLevel.addParticle(ParticleOptions, x, y, z, vx, vy, vz) exists in 1.21.11 Mojang mappings.
      */
-    private static void emitSpiritParticle(Minecraft mc, LivingEntity target, AABB box,
+    private static void emitSpiritParticle(Minecraft mc, AABB box,
             TargetEspSettings settings, long now) {
         if (TargetEspMode.byName(settings.mode) != TargetEspMode.GHOSTS || mc.level == null) {
             return;
