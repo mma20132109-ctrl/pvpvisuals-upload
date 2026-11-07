@@ -144,13 +144,13 @@ public final class SettingsView {
 		if (card.bindable) {
 			boolean listening = card.def.name.equals(KeybindManager.listeningModule());
 			String label = listening ? "PRESS KEY" : bindText != null ? bindText : "NONE";
-			pillW = Math.max(34, Gfx.width(font, label) + 12);
+			pillW = Math.max(34, Gfx.widthAtSize(font, label, 5.4f) + 12);
 			int px = right - pillW;
 			int py = y + 6 + 4;
 			Gfx.fill(g, px, py, pillW, PILL_H, 5, EchoTheme.PILL);
 			Gfx.ring(g, px, py, pillW, PILL_H, 5, 1, listening ? EchoTheme.NEON : EchoTheme.PILL_BORDER);
-			Gfx.text(g, font, label, px + (pillW - Gfx.width(font, label)) / 2, py + 3,
-					listening ? EchoTheme.TEXT : (bindText != null ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM));
+			Gfx.textAtSize(g, font, label, px + (pillW - Gfx.widthAtSize(font, label, 5.4f)) / 2f, py + 4, 5.4f,
+					listening ? EchoTheme.TEXT : (bindText != null ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM), false);
 			if (bindText != null && !listening) {
 				boolean hv = allowHover && Gfx.hit(mx, my, px - 18, py, 14, PILL_H);
 				Gfx.fill(g, px - 18, py, 14, PILL_H, 5, hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL);
@@ -283,7 +283,7 @@ public final class SettingsView {
 		boolean edit = e == editing;
 		Gfx.fill(g, x, ry, rw, rh, 7, hover || edit ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
 		Gfx.ring(g, x, ry, rw, rh, 7, 1, edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
-		Gfx.text(g, font, e.def.title(), x + 10 + e.depth * 8 - 8, ry + (rh - 8) / 2, EchoTheme.TEXT);
+		Gfx.textAtSize(g, font, e.def.title(), x + 10 + e.depth * 8 - 8, ry + (rh - 7) / 2, 6.6f, EchoTheme.TEXT, false);
 		int fx = x + (int) (rw * 0.36f);
 		int fw = rw - (fx - x) - 6;
 		Gfx.fill(g, fx, ry + 3, fw, rh - 6, 5, EchoTheme.CARD);
@@ -292,13 +292,13 @@ public final class SettingsView {
 		boolean caret = edit && (System.currentTimeMillis() / 500) % 2 == 0;
 		String shown = caret ? s + "_" : s;
 		// длинный текст показываем с конца, чтобы был виден ввод
-		while (shown.length() > 1 && Gfx.width(font, shown) > fw - 10) {
+		while (shown.length() > 1 && Gfx.widthAtSize(font, shown, 6.2f) > fw - 10) {
 			shown = shown.substring(1);
 		}
 		if (s.isEmpty() && !edit) {
-			Gfx.text(g, font, "empty", fx + 5, ry + (rh - 8) / 2, EchoTheme.DIM);
+			Gfx.textAtSize(g, font, "пусто", fx + 5, ry + (rh - 7) / 2, 6.2f, EchoTheme.DIM, false);
 		} else {
-			Gfx.text(g, font, shown, fx + 5, ry + (rh - 8) / 2, EchoTheme.TEXT);
+			Gfx.textAtSize(g, font, shown, fx + 5, ry + (rh - 7) / 2, 6.2f, EchoTheme.TEXT, false);
 		}
 	}
 
