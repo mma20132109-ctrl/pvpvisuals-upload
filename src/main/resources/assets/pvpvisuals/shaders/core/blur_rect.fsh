@@ -27,28 +27,45 @@ float hash(vec2 p) {
 
 void main() {
     vec2 halfSize = rectSize * 0.5;
-    float radius = min(params.x, min(halfSize.x, halfSize.y));
-    float d = sdRoundBox(localPos - halfSize, halfSize, radius);
-    float aa = max(fwidth(d), 1e-4);
-    float mask = clamp(0.5 - d / aa, 0.0, 1.0);
+    float radius = clamp(params.x, 0.0, min(halfSize.x, halfSize.y));
+    float distance = sdRoundBox(localPos - halfSize, halfSize, radius);
+    float aa = max(fwidth(distance), 0.75);
+    float mask = clamp(0.5 - distance / aa, 0.0, 1.0);
     if (mask <= 0.002) discard;
 
+    // The captured scene is sampled in screen space. A compact 13-tap
+    // Gaussian kernel softens the backdrop without requiring another framebuffer.
     vec2 texSize = vec2(textureSize(Sampler0, 0));
     vec2 uv = gl_FragCoord.xy / texSize;
     vec2 px = 1.0 / texSize;
 
-    vec3 blurred = texture(Sampler0, uv).rgb * 0.25;
-    blurred += texture(Sampler0, uv + vec2(px.x, 0.0)).rgb * 0.125;
-    blurred += texture(Sampler0, uv - vec2(px.x, 0.0)).rgb * 0.125;
-    blurred += texture(Sampler0, uv + vec2(0.0, px.y)).rgb * 0.125;
-    blurred += texture(Sampler0, uv - vec2(0.0, px.y)).rgb * 0.125;
-    blurred += texture(Sampler0, uv + px).rgb * 0.0625;
-    blurred += texture(Sampler0, uv - px).rgb * 0.0625;
-    blurred += texture(Sampler0, uv + vec2(px.x, -px.y)).rgb * 0.0625;
-    blurred += texture(Sampler0, uv + vec2(-px.x, px.y)).rgb * 0.0625;
+    // Slight edge refraction gives the panel a lens-like glass boundary.
+    vec2 gradient = normalize(vec2(dFdx(distance), dFdy(distance)) + vec2(1e-5));
+    float edge = 1.0 - smoothstep(-2.0, 1.0, distance);
+    vec2 refractedUv = uv + gradient * px * edge * 1.35;
 
-    vec3 tint = vertexColor.rgb;
-    vec3 color = mix(blurred, tint, clamp(vertexColor.a, 0.0, 0.35));
-    color += (hash(gl_FragCoord.xy) - 0.5) * 0.012;
-    fragColor = vec4(color, mask * 0.92) * ColorModulator;
+    vec3 blurred = texture(Sampler0, refractedUv).rgb * 0.20;
+    blurred += texture(Sampler0, refractedUv + vec2( px.x, 0.0)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2(-px.x, 0.0)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0,  px.y)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0, -px.y)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + px).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv - px).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2( px.x, -px.y)).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2(-px.x,  px.y)).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2( 2.0 * px.x, 0.0)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2(-2.0 * px.x, 0.0)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0,  2.0 * px.y)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0, -2.0 * px.y)).rgb * 0.01;
+
+    float tintAmount = clamp(vertexColor.a * 3.0, 0.0, 0.42);
+    vec3 glass = mix(blurred, vertexColor.rgb, tintAmount);
+
+    // Soft upper reflection and a restrained Fresnel rim.
+    float upperSheen = pow(1.0 - clamp(localPos.y / max(rectSize.y, 1.0), 0.0, 1.0), 3.0);
+    float fresnel = pow(1.0 - clamp(abs(distance) / max(radius, 1.0), 0.0, 1.0), 2.0);
+    glass += vec3(1.0) * (upperSheen * 0.055 + fresnel * edge * 0.035);
+    glass += (hash(gl_FragCoord.xy) - 0.5) * 0.008;
+
+    fragColor = vec4(clamp(glass, 0.0, 1.0), mask * 0.94) * ColorModulator;
 }
