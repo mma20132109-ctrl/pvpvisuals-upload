@@ -44,19 +44,23 @@ void main() {
     float edge = 1.0 - smoothstep(-2.0, 1.0, distance);
     vec2 refractedUv = uv + gradient * px * edge * 1.35;
 
+    // Blur in framebuffer pixels (not GUI-scaled pixels). The previous 1-2px
+    // kernel was too subtle at common resolutions and made the glass look sharp.
+    // A wider weighted kernel keeps the effect confined to this rounded panel.
+    const float radius = 4.0;
     vec3 blurred = texture(Sampler0, refractedUv).rgb * 0.20;
-    blurred += texture(Sampler0, refractedUv + vec2( px.x, 0.0)).rgb * 0.12;
-    blurred += texture(Sampler0, refractedUv + vec2(-px.x, 0.0)).rgb * 0.12;
-    blurred += texture(Sampler0, refractedUv + vec2(0.0,  px.y)).rgb * 0.12;
-    blurred += texture(Sampler0, refractedUv + vec2(0.0, -px.y)).rgb * 0.12;
-    blurred += texture(Sampler0, refractedUv + px).rgb * 0.07;
-    blurred += texture(Sampler0, refractedUv - px).rgb * 0.07;
-    blurred += texture(Sampler0, refractedUv + vec2( px.x, -px.y)).rgb * 0.07;
-    blurred += texture(Sampler0, refractedUv + vec2(-px.x,  px.y)).rgb * 0.07;
-    blurred += texture(Sampler0, refractedUv + vec2( 2.0 * px.x, 0.0)).rgb * 0.01;
-    blurred += texture(Sampler0, refractedUv + vec2(-2.0 * px.x, 0.0)).rgb * 0.01;
-    blurred += texture(Sampler0, refractedUv + vec2(0.0,  2.0 * px.y)).rgb * 0.01;
-    blurred += texture(Sampler0, refractedUv + vec2(0.0, -2.0 * px.y)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2( px.x * radius, 0.0)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2(-px.x * radius, 0.0)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0,  px.y * radius)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0, -px.y * radius)).rgb * 0.12;
+    blurred += texture(Sampler0, refractedUv + vec2( px.x * radius,  px.y * radius)).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2(-px.x * radius, -px.y * radius)).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2( px.x * radius, -px.y * radius)).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2(-px.x * radius,  px.y * radius)).rgb * 0.07;
+    blurred += texture(Sampler0, refractedUv + vec2( 2.0 * px.x * radius, 0.0)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2(-2.0 * px.x * radius, 0.0)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0,  2.0 * px.y * radius)).rgb * 0.01;
+    blurred += texture(Sampler0, refractedUv + vec2(0.0, -2.0 * px.y * radius)).rgb * 0.01;
 
     float tintAmount = clamp(vertexColor.a * 3.0, 0.0, 0.42);
     vec3 glass = mix(blurred, vertexColor.rgb, tintAmount);
