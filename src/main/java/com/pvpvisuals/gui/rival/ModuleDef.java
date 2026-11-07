@@ -8,6 +8,8 @@ import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
+import com.pvpvisuals.keybind.KeybindManager;
+
 /**
  * Описание строки меню. Виды:
  * toggle — on/off; action — кнопка; cycle — кнопка с динамической подписью;
@@ -172,7 +174,11 @@ public final class ModuleDef {
 	/** @return true, если состояние изменилось и конфиг нужно сохранить. */
 	public boolean activate() {
 		if (setter != null) {
-			setter.accept(!getter.getAsBoolean());
+			boolean enabled = !getter.getAsBoolean();
+			setter.accept(enabled);
+			if (category == Category.VISUAL || category == Category.UTILS) {
+				KeybindManager.notifyModuleToggle(name, enabled);
+			}
 			return true;
 		}
 		if (action != null) {
