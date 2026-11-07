@@ -304,9 +304,9 @@ public class EchoScreen extends Screen {
 		g.pose().translate(this.width / 2f, this.height / 2f);
 		g.pose().scale(uiScale * sc, uiScale * sc);
 		g.pose().translate(-cx, -cy);
-		drawWindow(g, virtualMouseX, virtualMouseY, dt, now);
+		drawWindow(g, Math.round(virtualMouseX), Math.round(virtualMouseY), dt, now);
 		if (glassSettingsOpen) {
-			drawGlassSettings(g, virtualMouseX, virtualMouseY);
+			drawGlassSettings(g, Math.round(virtualMouseX), Math.round(virtualMouseY));
 		}
 		g.pose().popMatrix();
 		Gfx.alpha = 1f;
