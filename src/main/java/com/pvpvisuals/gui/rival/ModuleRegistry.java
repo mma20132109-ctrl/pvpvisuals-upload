@@ -182,10 +182,8 @@ public final class ModuleRegistry {
 		return out;
 	}
 
-	/** Список для GUI: модули + настройки уведомлений (бинды назначаются плашкой на карточке модуля). */
+	/** Полный список модулей GUI; бинд назначается плашкой на карточке модуля. */
 	public static List<ModuleDef> build() {
-		PvpConfig c = PvpConfig.get();
-		List<ModuleDef> list = new ArrayList<>(modules());
-		return list;
+		return new ArrayList<>(modules());
 	}
 }
