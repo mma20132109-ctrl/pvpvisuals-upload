@@ -124,12 +124,12 @@ public final class SettingsView {
 		Component title = Component.literal(card.def.title()).withStyle(ChatFormatting.BOLD);
 		g.pose().pushMatrix();
 		g.pose().translate(x + 30, y + 9);
-		g.pose().scale(1.2f, 1.2f);
+		g.pose().scale(1f, 1f);
 		Gfx.text(g, font, title, 0, 0, EchoTheme.TEXT, true);
 		g.pose().popMatrix();
 		String d = card.description();
 		if (!d.isEmpty()) {
-			Gfx.text(g, font, d, x + 30, y + 22, EchoTheme.MUTED);
+			Gfx.textAtSize(g, font, d, x + 30, y + 22, 5.8f, EchoTheme.MUTED, false);
 		}
 
 		int right = x + w - 8;
@@ -196,9 +196,9 @@ public final class SettingsView {
 		int textC = lit ? EchoTheme.TEXT : EchoTheme.MUTED;
 
 		if (d.isSlider()) {
-			Gfx.text(g, font, d.title(), tx, ry + 5, EchoTheme.TEXT);
+			Gfx.textAtSize(g, font, d.title(), tx, ry + 5, 6.6f, EchoTheme.TEXT, false);
 			String v = d.valueText();
-			Gfx.text(g, font, v, x + rw - 10 - Gfx.width(font, v), ry + 5, EchoTheme.ACCENT_TEXT);
+			Gfx.textAtSize(g, font, v, x + rw - 10 - Gfx.widthAtSize(font, v, 6.2f), ry + 5, 6.2f, EchoTheme.ACCENT_TEXT, false);
 			int bx = x + 10;
 			int bw = rw - 20;
 			Gfx.fill(g, bx, ry + 19, bw, 4, 2, EchoTheme.CARD_BORDER);
@@ -213,7 +213,7 @@ public final class SettingsView {
 					com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.24f), 2f);
 			Gfx.circle(g, knobX, ry + 21, 3.2f, EchoTheme.KNOB);
 		} else {
-			Gfx.text(g, font, d.title(), tx, ry + (rh - 8) / 2, textC);
+			Gfx.textAtSize(g, font, d.title(), tx, ry + (rh - 7) / 2, 6.6f, textC, false);
 			int right = x + rw - 8;
 			if (d.isChoice()) {
 				String value = d.choiceValue();
@@ -221,7 +221,7 @@ public final class SettingsView {
 				int px = right - pw;
 				Gfx.fill(g, px, ry + 4, pw, rh - 8, 5, EchoTheme.PILL);
 				Gfx.ring(g, px, ry + 4, pw, rh - 8, 5, 1, dropdown == e ? EchoTheme.ACCENT_TEXT : EchoTheme.PILL_BORDER);
-				Gfx.text(g, font, value, px + 7, ry + (rh - 8) / 2, EchoTheme.TEXT);
+				Gfx.textAtSize(g, font, value, px + 7, ry + (rh - 7) / 2, 6.2f, EchoTheme.TEXT, false);
 				EchoIcons.chevron(g, right - 11, ry + (rh - 8) / 2 + 1, dropdown == e ? 3 : 1, EchoTheme.MUTED);
 			} else if (e.hasKids()) {
 				EchoIcons.chevron(g, right - 7, ry + (rh - 4) / 2 - 1, 2, e.expanded ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM);
@@ -270,7 +270,7 @@ public final class SettingsView {
 			if (selected || hover) Gfx.fill(g, boxX + 2, iy, boxW - 4, itemH, 4,
 					selected ? com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f) : 0x18FFFFFF);
 			if (selected) Gfx.circle(g, boxX + 9, iy + itemH / 2f, 1.6f, EchoTheme.ACCENT_TEXT);
-			Gfx.text(g, font, value, boxX + 16, iy + 3, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT);
+			Gfx.textAtSize(g, font, value, boxX + 16, iy + 3, 6.2f, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT, false);
 		}
 	}
 
