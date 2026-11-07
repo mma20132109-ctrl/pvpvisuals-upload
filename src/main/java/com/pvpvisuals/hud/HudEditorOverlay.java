@@ -408,7 +408,8 @@ public final class HudEditorOverlay {
 			HudStyle.accentWash(g, x, y, w, TITLE_H, 7f, 0.92f);
 			Gfx.textAtSize(g, font, target.label(), x + 8f, y + 5.2f, 6.4f,
 					HudStyle.ACCENT, false);
-			HudStyle.separator(g, x + 7f, y + TITLE_H, w - 14f, 0.8f);
+			Gfx.rrect(g, x + 7f, y + TITLE_H, w - 14f, 0.8f, 0.4f,
+					HudStyle.opacity(0x35FFFFFF, 0.8f), 0x00000000, 0, 0f);
 
 			for (int i = 0; i < options.size(); i++) {
 				float rowY = y + TITLE_H + 2f + i * ITEM_H;
