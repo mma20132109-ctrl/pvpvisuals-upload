@@ -1,5 +1,6 @@
 package com.pvpvisuals.hud;
 
+import com.pvpvisuals.config.HudSettings;
 import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.gui.rival.NotificationToast;
 
@@ -14,8 +15,29 @@ public final class NotificationsHudModule extends AbstractHudModule {
     @Override public int defaultY() { return 40; }
     @Override public boolean enabled() { return PvpConfig.get().binds.showNotifications; }
 
+    /**
+     * Переносит старую настройку Top/Bottom Left/Right в новый общий якорь HUD
+     * только для профилей, где ещё нет сохранённой позиции виджета.
+     */
+    private void migrateLegacyPosition() {
+        PvpConfig cfg = PvpConfig.get();
+        if (cfg.hud.containsKey(id())) {
+            return;
+        }
+        HudSettings settings = new HudSettings();
+        String old = cfg.binds.position == null ? "TOP_RIGHT" : cfg.binds.position.toUpperCase(java.util.Locale.ROOT);
+        settings.anchor = old.contains("BOTTOM")
+                ? (old.contains("RIGHT") ? HudAnchor.BOTTOM_RIGHT.name() : HudAnchor.BOTTOM_LEFT.name())
+                : (old.contains("RIGHT") ? HudAnchor.TOP_RIGHT.name() : HudAnchor.TOP_LEFT.name());
+        settings.x = 10;
+        settings.y = 10;
+        cfg.hud.put(id(), settings);
+        cfg.markDirtyQuiet();
+    }
+
     @Override
     protected int contentWidth() {
+        migrateLegacyPosition();
         return NotificationToast.CARD_W;
     }
 
