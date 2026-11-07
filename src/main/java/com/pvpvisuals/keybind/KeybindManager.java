@@ -146,7 +146,10 @@ public final class KeybindManager {
 			if (d.name.equals(name)) {
 				d.activate();
 				PvpConfig.get().save();
-				notify(name + ": " + (d.enabled() ? "ON" : "OFF"), d.enabled());
+				BindSettings bind = PvpConfig.get().binds;
+				if (bind.showNotifications) {
+					NotificationToast.showToggle(name, d.enabled(), bind.durationMs);
+				}
 				return;
 			}
 		}
