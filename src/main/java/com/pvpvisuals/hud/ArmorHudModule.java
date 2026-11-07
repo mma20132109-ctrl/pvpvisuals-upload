@@ -113,10 +113,13 @@ public final class ArmorHudModule extends AbstractHudModule {
                     HudAlpha.mul(0x35FFFFFF));
         } else {
             g.pose().pushMatrix();
-            g.pose().translate(x + (CELL - ITEM) / 2f, y + (CELL - ITEM) / 2f - 0.5f);
-            g.pose().scale(ITEM / 16f, ITEM / 16f);
-            g.renderItem(stack, 0, 0);
-            g.pose().popMatrix();
+            try {
+                g.pose().translate(x + (CELL - ITEM) / 2f, y + (CELL - ITEM) / 2f - 0.5f);
+                g.pose().scale(ITEM / 16f, ITEM / 16f);
+                g.renderItem(stack, 0, 0);
+            } finally {
+                g.pose().popMatrix();
+            }
 
             if (percent >= 0 && stack.getDamageValue() > 0) {
                 float ratio = Math.max(0f, Math.min(1f, percent / 100f));
