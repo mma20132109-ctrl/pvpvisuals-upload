@@ -57,18 +57,36 @@ public final class LiquidGlassRenderer {
         float alpha = Math.max(0f, Math.min(1f, opacity));
         blurRect(graphics, x, y, width, height, radius,
                 withAlpha(EchoTheme.WIN_TOP, alpha), withAlpha(EchoTheme.WIN_BOTTOM, alpha));
-        roundRect(graphics, x + 1f, y + 1f, width - 2f, Math.min(54f, height * 0.22f),
+        // Broad reflected light near the upper edge, like a curved glass sheet.
+        roundRect(graphics, x + 1f, y + 1f, width - 2f, Math.min(62f, height * 0.28f),
                 Math.max(1f, radius - 1f),
-                withAlpha(0x18FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+                withAlpha(0x30FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+        // Bright outer rim plus a softer inner shadow create visible glass thickness.
         roundRect(graphics, x + 0.6f, y + 0.6f, width - 1.2f, height - 1.2f,
-                Math.max(1f, radius - 0.6f), 0, 0, withAlpha(0x55FFFFFF, alpha), 0.8f);
+                Math.max(1f, radius - 0.6f), 0, 0, withAlpha(0x78FFFFFF, alpha), 0.9f);
+        roundRect(graphics, x + 1.8f, y + 1.8f, width - 3.6f, height - 3.6f,
+                Math.max(1f, radius - 1.8f), 0, 0, withAlpha(0x26000000, alpha), 0.8f);
+    }
+
+    /** Frosted glass surface for module cards, fields and compact settings panels. */
+    public static void surface(GuiGraphics graphics, float x, float y, float width, float height, float radius,
+            int tint, int border) {
+        surface(graphics, x, y, width, height, radius, tint, withAlpha(tint, 0.76f), border, 1f);
     }
 
     public static void surface(GuiGraphics graphics, float x, float y, float width, float height, float radius,
-            int tint, int border) {
-        blurRect(graphics, x, y, width, height, radius, tint, withAlpha(tint, 0.72f));
+            int topTint, int bottomTint, int border, float opacity) {
+        float alpha = Math.max(0f, Math.min(1f, opacity));
+        blurRect(graphics, x, y, width, height, radius,
+                withAlpha(topTint, alpha), withAlpha(bottomTint, alpha));
+        roundRect(graphics, x + 0.8f, y + 0.8f, width - 1.6f, Math.min(height - 1.6f, 18f),
+                Math.max(1f, radius - 0.8f),
+                withAlpha(0x26FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
         if (border != 0) {
-            roundRect(graphics, x, y, width, height, radius, 0, 0, border, 0.8f);
+            roundRect(graphics, x + 0.5f, y + 0.5f, width - 1f, height - 1f,
+                    Math.max(1f, radius - 0.5f), 0, 0, withAlpha(border, alpha), 0.8f);
+            roundRect(graphics, x + 1.5f, y + 1.5f, width - 3f, height - 3f,
+                    Math.max(1f, radius - 1.5f), 0, 0, withAlpha(0x26000000, alpha), 0.7f);
         }
     }
 
@@ -90,7 +108,7 @@ public final class LiquidGlassRenderer {
         GpuTextureView view = backdrop.getColorTextureView();
         TextureSetup textureSetup = new TextureSetup(view, null, null, backdropSampler, null, null);
         float glassOpacity = Math.max(0f, Math.min(1f, com.pvpvisuals.config.PvpConfig.get().gui.panelOpacity));
-        float tintStrength = 0.18f * glassOpacity;
+        float tintStrength = 0.62f * glassOpacity;
         graphicsState(graphics).submitGuiElement(new LiquidGlassBlurState(pose, textureSetup,
                 x, y, width, height, radius,
                 tint(top, tintStrength), tint(top, tintStrength), tint(bottom, tintStrength), tint(bottom, tintStrength), bounds));
