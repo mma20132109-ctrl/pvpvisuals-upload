@@ -49,11 +49,29 @@ public final class ModuleRegistry {
 				KillEffectModule.def(c),
 
 				ModuleDef.toggle("Target HUD", Category.UTILS, () -> c.targetHud, v -> c.targetHud = v)
-						.child(HudModuleUi.layout(HudManager.TARGET, Category.UTILS)),
+						.child(HudModuleUi.layout(HudManager.TARGET, Category.UTILS))
+						.child(ModuleDef.toggle("Items and Armor", Category.UTILS,
+								() -> c.targetHudItems, v -> c.targetHudItems = v))
+						.child(ModuleDef.toggle("Distance", Category.UTILS,
+								() -> c.targetHudDistance, v -> c.targetHudDistance = v)),
+				ModuleDef.toggle("Armor HUD", Category.UTILS, () -> c.armorHud, v -> c.armorHud = v)
+						.child(HudModuleUi.layout(HudManager.ARMOR, Category.UTILS))
+						.child(ModuleDef.toggle("Hand Items", Category.UTILS,
+								() -> c.armorHudHands, v -> c.armorHudHands = v))
+						.child(ModuleDef.toggle("Durability in %", Category.UTILS,
+								() -> c.armorHudPercent, v -> c.armorHudPercent = v)),
 				ModuleDef.toggle("Combo Counter", Category.UTILS, () -> c.comboCounter, v -> c.comboCounter = v)
 						.child(HudModuleUi.layout(HudManager.COMBO, Category.UTILS)),
 				ModuleDef.toggle("Watermark", Category.UTILS, () -> c.watermark, v -> c.watermark = v)
-						.child(HudModuleUi.layout(HudManager.WATERMARK, Category.UTILS)),
+						.child(HudModuleUi.layout(HudManager.WATERMARK, Category.UTILS))
+						.child(ModuleDef.toggle("Nickname", Category.UTILS,
+								() -> c.watermarkShowNick, v -> c.watermarkShowNick = v))
+						.child(ModuleDef.toggle("FPS", Category.UTILS,
+								() -> c.watermarkShowFps, v -> c.watermarkShowFps = v))
+						.child(ModuleDef.toggle("Ping", Category.UTILS,
+								() -> c.watermarkShowPing, v -> c.watermarkShowPing = v))
+						.child(ModuleDef.toggle("Time", Category.UTILS,
+								() -> c.watermarkShowTime, v -> c.watermarkShowTime = v)),
 				ModuleDef.toggle("Coordinates", Category.UTILS, () -> c.coordinatesHud, v -> c.coordinatesHud = v)
 						.child(HudModuleUi.layout(HudManager.COORDINATES, Category.UTILS))
 						.child(ModuleDef.toggle("Direction", Category.UTILS, () -> c.coordinatesDirection, v -> c.coordinatesDirection = v))
