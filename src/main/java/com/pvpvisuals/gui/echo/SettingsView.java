@@ -127,7 +127,7 @@ public final class SettingsView {
 		g.pose().pushMatrix();
 		g.pose().translate(x + 30, y + 9);
 		g.pose().scale(1f, 1f);
-		Gfx.text(g, font, title, 0, 0, EchoTheme.TEXT, true);
+		Gfx.textAtSize(g, font, title, 0, 0, 7.4f, EchoTheme.TEXT, true);
 		g.pose().popMatrix();
 		String d = card.description();
 		if (!d.isEmpty()) {
