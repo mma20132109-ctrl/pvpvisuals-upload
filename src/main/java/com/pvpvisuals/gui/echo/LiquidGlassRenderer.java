@@ -76,9 +76,11 @@ public final class LiquidGlassRenderer {
 
         GpuTextureView view = backdrop.getColorTextureView();
         TextureSetup textureSetup = new TextureSetup(view, null, null, backdropSampler, null, null);
+        float glassOpacity = Math.max(0f, Math.min(1f, com.pvpvisuals.config.PvpConfig.get().gui.panelOpacity));
+        float tintStrength = 0.18f * glassOpacity;
         graphicsState(graphics).submitGuiElement(new LiquidGlassBlurState(pose, textureSetup,
                 x, y, width, height, radius,
-                tint(top, 0.18f), tint(top, 0.18f), tint(bottom, 0.18f), tint(bottom, 0.18f), bounds));
+                tint(top, tintStrength), tint(top, tintStrength), tint(bottom, tintStrength), tint(bottom, tintStrength), bounds));
     }
 
     public static void roundRect(GuiGraphics graphics, float x, float y, float width, float height, float radius,
