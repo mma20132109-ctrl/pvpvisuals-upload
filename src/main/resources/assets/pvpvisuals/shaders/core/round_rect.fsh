@@ -31,17 +31,17 @@ void main() {
     float outerMask = clamp(0.5 - distance / aa, 0.0, 1.0);
 
     float borderWidth = max(params.y, 0.0);
-    float innerMask = 1.0;
+    float shapeMask = outerMask;
     if (borderWidth > 0.0) {
-        innerMask = clamp(0.5 - (distance + borderWidth) / aa, 0.0, 1.0);
+        float innerMask = clamp(0.5 - (distance + borderWidth) / aa, 0.0, 1.0);
+        shapeMask = outerMask * (1.0 - innerMask);
     }
-    float fillMask = outerMask * innerMask;
 
     vec4 color = vertexColor;
     float vertical = clamp(localPos.y / max(rectSize.y, 1.0), 0.0, 1.0);
     float topLight = (1.0 - vertical) * 0.045;
     color.rgb = clamp(color.rgb + vec3(topLight), 0.0, 1.0);
-    color.a *= fillMask;
+    color.a *= shapeMask;
     if (color.a <= 0.002) discard;
 
     color.rgb += dither(gl_FragCoord.xy) / 255.0;
