@@ -36,6 +36,8 @@ public final class PvpConfig {
 	public boolean targetHudItems = true;
 	/** Показывать дистанцию до цели в Target HUD. */
 	public boolean targetHudDistance = true;
+	/** Выделять сущность, на которую наведён прицел, отдельным Target ESP. */
+	public boolean targetEsp = false;
 	public boolean damageNumbers = true;
 	public boolean critEffect = true;
 	public boolean trajectory = true;
