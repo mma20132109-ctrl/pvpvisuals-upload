@@ -562,6 +562,9 @@ public class EchoScreen extends Screen {
 		if (!interactive) {
 			return true;
 		}
+		// GUI hit testing uses the same virtual coordinates as the scaled reference canvas.
+		mx /= uiScale;
+		my /= uiScale;
 		if (btn != 0 && btn != 1) {
 			return false;
 		}
@@ -673,17 +676,17 @@ public class EchoScreen extends Screen {
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
 		if (glassSliderDragging >= 0) {
-			updateGlassSlider(event.x());
+			updateGlassSlider(event.x() / uiScale);
 			return true;
 		}
 		if (draggingWindow) {
-			dragOffX += Math.round(dragX);
-			dragOffY += Math.round(dragY);
+			dragOffX += Math.round(dragX / uiScale);
+			dragOffY += Math.round(dragY / uiScale);
 			layout();
 			return true;
 		}
 		if (settings != null && settings.isDragging()) {
-			settings.dragTo(event.x());
+			settings.dragTo(event.x() / uiScale);
 			return true;
 		}
 		return super.mouseDragged(event, dragX, dragY);
@@ -713,6 +716,8 @@ public class EchoScreen extends Screen {
 		if (dialog.active()) {
 			return dialog.scroll(scrollY);
 		}
+		mouseX /= uiScale;
+		mouseY /= uiScale;
 		float px = (float) (-scrollY * 28);
 		if (settings != null) {
 			if (settings.contains(mouseX, mouseY)) {
