@@ -1,6 +1,8 @@
 package com.pvpvisuals.gui.echo;
 
 import com.pvpvisuals.config.PvpConfig;
+import com.pvpvisuals.gui.svintus.Anim;
+import com.pvpvisuals.gui.svintus.Colors;
 
 /**
  * Neutral Liquid Glass surfaces with a selectable Svintus-style accent.
@@ -10,6 +12,9 @@ public final class EchoTheme {
 	private EchoTheme() { }
 
 	private static EchoPalette applied;
+	private static int fromPrimary = EchoPalette.PERIWINKLE.primary;
+	private static int fromSecondary = EchoPalette.PERIWINKLE.secondary;
+	private static final Anim ACCENT_BLEND = new Anim(1f, 8f);
 	private static final int SURFACE_TOP = 0xE51B1E27;
 	private static final int SURFACE_BOTTOM = 0xE5101219;
 	private static final int CARD_BASE = 0xB5222630;
@@ -67,6 +72,9 @@ public final class EchoTheme {
 		WIN_BOTTOM = SURFACE_BOTTOM;
 		HUD_TOP = 0xDC1B1E27;
 		HUD_BOTTOM = 0xDC101219;
+		fromPrimary = accent();
+		fromSecondary = accent2();
+		ACCENT_BLEND.snap(0f).to(1f);
 		NEON = primary;
 		NEON_LINE = withAlpha(primary, 0.92f);
 		ACCENT_A = primary;
@@ -99,6 +107,15 @@ public final class EchoTheme {
 		if (wanted != applied) {
 			apply(wanted);
 		}
+	}
+
+	/** Svintus-style smooth accent interpolation; surfaces remain neutral Liquid Glass. */
+	public static int accent() {
+		return Colors.lerp(fromPrimary, current().primary, ACCENT_BLEND.get());
+	}
+
+	public static int accent2() {
+		return Colors.lerp(fromSecondary, current().secondary, ACCENT_BLEND.get());
 	}
 
 	public static EchoPalette current() {
