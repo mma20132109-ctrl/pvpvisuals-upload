@@ -9,8 +9,8 @@ import net.minecraft.client.gui.GuiGraphics;
  * окружность с мягкой тенью. Положение кружка — дробное (без округления до пикселя), поэтому анимация идёт плавно.
  */
 public final class ToggleSwitch {
-	public static final int W = 24;
-	public static final int H = 12;
+	public static final int W = 20;
+	public static final int H = 11;
 
 	private float pos;
 	private boolean init;
