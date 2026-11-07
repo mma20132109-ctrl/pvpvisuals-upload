@@ -92,7 +92,7 @@ public final class LiquidGlassRenderer {
                 .transformAxisAligned(pose);
 
         var state = graphicsState(graphics);
-        state.addSimpleElement(new LiquidGlassShapeState(pose, x, y, width, height,
+        state.submitGuiElement(new LiquidGlassShapeState(pose, x, y, width, height,
                 radius, 0f, top, top, bottom, bottom, bounds));
 
         if (border > 0f && (borderColor >>> 24) != 0) {
