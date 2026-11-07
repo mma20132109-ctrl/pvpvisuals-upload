@@ -115,22 +115,18 @@ public final class ModuleCard {
 		chipW = chip.isEmpty() ? 0 : Math.min(60, Gfx.widthAtSize(font, chip, 5.4f) + 8);
 		int reserve = PAD + rightButtonW() + (opensSettings() ? 18 : 6) + (chipW > 0 ? chipW + 6 : 0);
 		int avail = w - PAD - reserve;
-		titleC = Component.literal(trim(font, def.title(), avail, true)).withStyle(ChatFormatting.BOLD);
+		titleC = Component.literal(trimAtSize(font, def.title(), avail, 7.4f)).withStyle(ChatFormatting.BOLD);
 		descShown = Gfx.trimAtSize(font, desc, avail, 5.8f);
 	}
 
-	private static String trim(Font font, String s, int maxW, boolean bold) {
-		Component c = bold ? Component.literal(s).withStyle(ChatFormatting.BOLD) : Component.literal(s);
-		if (Gfx.width(font, c) <= maxW) {
-			return s;
-		}
+	private static String trimAtSize(Font font, String s, int maxW, float size) {
 		String shown = s;
+		Component full = Component.literal(shown).withStyle(ChatFormatting.BOLD);
+		if (Gfx.widthAtSize(font, full, size) <= maxW) return shown;
 		while (shown.length() > 1) {
 			shown = shown.substring(0, shown.length() - 1);
-			Component t = bold ? Component.literal(shown + "…").withStyle(ChatFormatting.BOLD) : Component.literal(shown + "…");
-			if (Gfx.width(font, t) <= maxW) {
-				break;
-			}
+			Component candidate = Component.literal(shown + "…").withStyle(ChatFormatting.BOLD);
+			if (Gfx.widthAtSize(font, candidate, size) <= maxW) break;
 		}
 		return shown + "…";
 	}
@@ -184,7 +180,7 @@ public final class ModuleCard {
 		}
 
 		int nameC = RoundedRender.lerp(EchoTheme.MUTED, EchoTheme.TEXT, Math.max(on, Math.max(hov * 0.6f, def.isToggle() ? 0f : 0.8f)));
-		Gfx.text(g, font, titleC, x + PAD, sy + 6, nameC, false);
+		Gfx.textAtSize(g, font, titleC, x + PAD, sy + 6, 7.4f, nameC, false);
 		Gfx.textAtSize(g, font, descShown, x + PAD, sy + 19, 5.8f, RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, Math.max(on, hov * 0.5f)), false);
 
 		if (showChip()) {
