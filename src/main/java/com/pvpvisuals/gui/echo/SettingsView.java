@@ -29,6 +29,9 @@ public final class SettingsView {
 	private static final int ROW_GAP = 4;
 	private static final int PILL_H = 14;
 
+	private static final long ROW_STAGGER_NS = 70_000_000L;
+	private static final long ROW_TRANSITION_NS = 190_000_000L;
+
 	private final ModuleCard card;
 	private final boolean inline;
 	private final ScrollArea scroll = new ScrollArea();
@@ -50,6 +53,10 @@ public final class SettingsView {
 	private String editOriginal = "";
 	private int pillW = 34;
 	private float anim;
+
+	// Used by the standalone settings panel; inline card settings retain their existing fade.
+	private long introStartNs = Long.MIN_VALUE;
+	private long outroStartNs = Long.MAX_VALUE;
 
 	public SettingsView(ModuleCard card) {
 		this(card, false);
@@ -120,6 +127,26 @@ public final class SettingsView {
 		scroll.scrollBy(px);
 	}
 
+	/** Schedule the row cascade after the container morph has completed. */
+	public void startIntro(long startNs) {
+		introStartNs = startNs;
+		outroStartNs = Long.MAX_VALUE;
+	}
+
+	/** Start the reverse cascade, from the last visible row to the first. */
+	public void startOutro(long startNs) {
+		if (introStartNs == Long.MIN_VALUE) {
+			introStartNs = startNs;
+		}
+		outroStartNs = startNs;
+	}
+
+	/** Total time needed for the reverse stagger to finish. */
+	public long outroDurationNs() {
+		collect();
+		return ROW_TRANSITION_NS + Math.max(0, rows.size() - 1) * ROW_STAGGER_NS;
+	}
+
 	// ---------- отрисовка ----------
 
 	public void render(GuiGraphics g, Font font, int mx, int my, float dtMs, boolean allowHover, String bindText) {
@@ -173,24 +200,62 @@ public final class SettingsView {
 		Gfx.rect(g, x, y + HEAD_H, x + w, y + HEAD_H + 1, EchoTheme.DIVIDER);
 		}
 
-		// строки
-		float fade = Gfx.ease(anim);
+		// Rows cascade after the outer panel has expanded. Inline settings keep their
+		// original shared fade so expanding a module card does not acquire a second timeline.
+		float baseFade = Gfx.ease(anim);
+		long nowNs = System.nanoTime();
+
 		// Keep a second clip for inline settings: the grid clip alone lets long setting
 		// lists draw over the next module card while this panel is scrolled.
 		scroll.begin(g);
 		int off = scroll.offset();
 		int ry = scroll.y - off;
 		boolean inside = allowHover && scroll.contains(mx, my);
+		int rowIndex = 0;
+		float dropdownReveal = baseFade;
+
 		for (ModuleEntry e : rows) {
 			int rh = rowHeight(e);
-			if (ry + rh >= scroll.y - 2 && ry <= scroll.y + scroll.h + 2) {
-				renderRow(g, font, e, ry, rh, inside && Gfx.hit(mx, my, x, ry, rowW(), rh), dtMs, fade);
+			float reveal = baseFade;
+
+			if (!inline && introStartNs != Long.MIN_VALUE) {
+				long enterDelay = rowIndex * ROW_STAGGER_NS;
+				reveal = Gfx.ease((nowNs - introStartNs - enterDelay)
+						/ (float) ROW_TRANSITION_NS);
+
+				if (outroStartNs != Long.MAX_VALUE) {
+					long reverseDelay = (rows.size() - 1L - rowIndex) * ROW_STAGGER_NS;
+					float leave = 1f - Gfx.ease((nowNs - outroStartNs - reverseDelay)
+							/ (float) ROW_TRANSITION_NS);
+					reveal = Math.min(reveal, leave);
+				}
 			}
+
+			if (e == dropdown) {
+				dropdownReveal = reveal;
+			}
+
+			if (ry + rh >= scroll.y - 2 && ry <= scroll.y + scroll.h + 2 && reveal > 0.001f) {
+				g.pose().pushMatrix();
+				// Slide-up: the row starts 7 GUI pixels below its final position.
+				g.pose().translate(0f, (1f - reveal) * 7f);
+				renderRow(g, font, e, ry, rh,
+						inside && Gfx.hit(mx, my, x, ry, rowW(), rh), dtMs, reveal);
+				g.pose().popMatrix();
+			}
+
 			ry += rh + ROW_GAP;
+			rowIndex++;
 		}
 		scroll.end(g);
 		if (!inline) scroll.renderBar(g);
+
+		float oldAlpha = Gfx.alpha;
+		if (dropdown != null) {
+			Gfx.alpha = oldAlpha * dropdownReveal;
+		}
 		renderDropdown(g, font, mx, my, allowHover);
+		Gfx.alpha = oldAlpha;
 	}
 
 	private void renderRow(GuiGraphics g, Font font, ModuleEntry e, int ry, int rh, boolean hover, float dtMs,
