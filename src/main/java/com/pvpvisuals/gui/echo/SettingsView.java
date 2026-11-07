@@ -22,8 +22,8 @@ public final class SettingsView {
 	public enum Result { NONE, CONSUMED, CHANGED, BACK }
 
 	private static final int HEAD_H = 34;
-	private static final int ROW_H = 22;
-	private static final int SLIDER_H = 30;
+	private static final int ROW_H = 24;
+	private static final int SLIDER_H = 31;
 	private static final int ROW_GAP = 4;
 	private static final int PILL_H = 14;
 
