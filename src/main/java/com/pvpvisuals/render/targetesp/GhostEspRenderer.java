@@ -41,8 +41,8 @@ import net.minecraft.resources.Identifier;
  * The source PNGs stay in the project-root target_esp/ directory. build.gradle copies them
  * into assets/pvpvisuals/textures/target_esp/ in build resources and in the final mod JAR.
  *
- * This renderer draws camera-facing textured quads. It does not spawn ParticleTypes.SOUL
- * and does not draw entity bounding boxes.
+ * This renderer draws camera-facing textured quads using the user's PNG artwork.
+ * It does not use Minecraft's vanilla particle engine and does not draw entity bounding boxes.
  */
 public final class GhostEspRenderer {
     private static final Logger LOG = LoggerFactory.getLogger("pvpvisuals/target-esp/ghosts");
