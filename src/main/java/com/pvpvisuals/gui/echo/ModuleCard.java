@@ -108,11 +108,11 @@ public final class ModuleCard {
 			return;
 		}
 		cacheKey = key;
-		chipW = chip.isEmpty() ? 0 : Math.min(60, Gfx.width(font, chip) + 10);
+		chipW = chip.isEmpty() ? 0 : Math.min(60, Gfx.widthAtSize(font, chip, 5.4f) + 8);
 		int reserve = PAD + rightButtonW() + (opensSettings() ? 18 : 6) + (chipW > 0 ? chipW + 6 : 0);
 		int avail = w - PAD - reserve;
 		titleC = Component.literal(trim(font, def.title(), avail, true)).withStyle(ChatFormatting.BOLD);
-		descShown = trim(font, desc, avail, false);
+		descShown = Gfx.trimAtSize(font, desc, avail, 5.8f);
 	}
 
 	private static String trim(Font font, String s, int maxW, boolean bold) {
@@ -182,7 +182,7 @@ public final class ModuleCard {
 
 		int nameC = RoundedRender.lerp(EchoTheme.MUTED, EchoTheme.TEXT, Math.max(on, Math.max(hov * 0.6f, def.isToggle() ? 0f : 0.8f)));
 		Gfx.text(g, font, titleC, x + PAD, sy + 6, nameC, false);
-		Gfx.text(g, font, descShown, x + PAD, sy + 18, RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, Math.max(on, hov * 0.5f)));
+		Gfx.textAtSize(g, font, descShown, x + PAD, sy + 19, 5.8f, RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, Math.max(on, hov * 0.5f)), false);
 
 		if (showChip()) {
 			boolean listening = def.name.equals(KeybindManager.listeningModule());
@@ -191,10 +191,10 @@ public final class ModuleCard {
 			Gfx.rrect(g, cx, sy + (H - 12) / 2f, chipW, 12, 4f, EchoTheme.PILL, EchoTheme.PILL,
 					listening ? EchoTheme.NEON : 0, listening ? 1f : 0f);
 			String shown = label;
-			while (shown.length() > 1 && Gfx.width(font, shown) > chipW - 6) {
+			while (shown.length() > 1 && Gfx.widthAtSize(font, shown, 5.4f) > chipW - 6) {
 				shown = shown.substring(0, shown.length() - 1);
 			}
-			Gfx.text(g, font, shown, cx + (chipW - Gfx.width(font, shown)) / 2, sy + (H - 8) / 2, EchoTheme.MUTED);
+			Gfx.textAtSize(g, font, shown, cx + (chipW - Gfx.widthAtSize(font, shown, 5.4f)) / 2f, sy + 11, 5.4f, EchoTheme.MUTED, false);
 		}
 
 		if (opensSettings()) {
