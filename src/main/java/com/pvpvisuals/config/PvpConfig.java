@@ -32,6 +32,10 @@ public final class PvpConfig {
 	public boolean hitParticles = true;
 	public boolean blockParticles = true;
 	public boolean targetHud = true;
+	/** Отображать броню и предметы в Target HUD. */
+	public boolean targetHudItems = true;
+	/** Показывать дистанцию до цели в Target HUD. */
+	public boolean targetHudDistance = true;
 	public boolean damageNumbers = true;
 	public boolean critEffect = true;
 	public boolean trajectory = true;
@@ -125,6 +129,15 @@ public final class PvpConfig {
 	public boolean coordinatesDirection = true;
 	public boolean coordinatesNether = false;
 	public boolean moduleListGlow = true;
+	/** Сегменты Watermark в стиле Svintus. */
+	public boolean watermarkShowNick = true;
+	public boolean watermarkShowFps = true;
+	public boolean watermarkShowPing = true;
+	public boolean watermarkShowTime = true;
+	/** Отдельный HUD брони и предметов рук. */
+	public boolean armorHud = false;
+	public boolean armorHudHands = true;
+	public boolean armorHudPercent = true;
 	public LogoSettings logo = new LogoSettings();
 
 	// ---------- оформление меню ----------
