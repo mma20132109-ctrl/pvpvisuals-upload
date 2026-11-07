@@ -225,6 +225,32 @@ public final class Gfx {
 		return Typo.width(font, s);
 	}
 
+	/** Measures text at the pixel size used by the Svintus reference font renderer. */
+	public static int widthAtSize(Font font, String s, float size) {
+		return Math.round(Typo.width(font, s) * (size / 7.4f));
+	}
+
+	/** Draws Inter at an explicit reference size (Svintus uses 7.4px titles, 5.8px descriptions and 5.4px bind labels). */
+	public static void textAtSize(GuiGraphics g, Font font, String s, float x, float y, float size, int color,
+			boolean shadow) {
+		float scale = size / 7.4f;
+		g.pose().pushMatrix();
+		g.pose().translate(x, y);
+		g.pose().scale(scale, scale);
+		Typo.check(font);
+		g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
+		g.pose().popMatrix();
+	}
+
+	public static String trimAtSize(Font font, String s, int maxWidth, float size) {
+		if (widthAtSize(font, s, size) <= maxWidth) return s;
+		String value = s;
+		while (value.length() > 1 && widthAtSize(font, value + "…", size) > maxWidth) {
+			value = value.substring(0, value.length() - 1);
+		}
+		return value + "…";
+	}
+
 	public static void text(GuiGraphics g, Font font, String s, int x, int y, int color) {
 		Typo.check(font);
 		g.drawString(font, Typo.of(s), x, y, a(color), false);
