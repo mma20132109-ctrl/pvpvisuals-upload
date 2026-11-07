@@ -4,7 +4,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
+import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import org.joml.Matrix3x2f;
 
 /** Rounded glass surface that samples the captured scene texture. */
@@ -15,11 +15,16 @@ public record LiquidGlassBlurState(
         float radius,
         int topLeft, int topRight, int bottomRight, int bottomLeft,
         ScreenRectangle bounds
-) implements SimpleGuiElementRenderState {
+) implements GuiElementRenderState {
 
     @Override
     public RenderPipeline pipeline() {
         return LiquidGlassPipelines.BLUR_RECT;
+    }
+
+    @Override
+    public ScreenRectangle bounds() {
+        return bounds;
     }
 
     @Override
@@ -28,7 +33,7 @@ public record LiquidGlassBlurState(
     }
 
     @Override
-    public void setupVertices(VertexConsumer vertices) {
+    public void buildVertices(VertexConsumer vertices) {
         int sw = pack(width);
         int sh = pack(height);
         int r = pack(radius);
