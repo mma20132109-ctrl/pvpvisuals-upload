@@ -31,6 +31,15 @@ public final class ModuleRegistry {
 				ChinaHatModule.def(c),
 				com.pvpvisuals.render.blockoverlay.BlockOverlayModule.def(c),
 				com.pvpvisuals.render.hitbox.HitBoxModule.def(c),
+				ModuleDef.toggle("Target ESP", Category.VISUAL, () -> c.targetEsp, v -> {
+					c.targetEsp = v;
+					if (v) com.pvpvisuals.render.hitbox.HitBoxRenderer.reset();
+				})
+						.child(ModuleDef.toggle("Through Walls", Category.VISUAL, () -> c.hitBox.throughWalls, v -> c.hitBox.throughWalls = v))
+						.child(ModuleDef.toggle("Corners Only", Category.VISUAL, () -> c.hitBox.cornerOnly, v -> c.hitBox.cornerOnly = v))
+						.child(ModuleDef.toggle("Glow", Category.VISUAL, () -> c.hitBox.glow, v -> c.hitBox.glow = v))
+						.child(ModuleDef.slider("Distance", Category.VISUAL, 8, 128, 0, () -> c.hitBox.maxDistance, v -> c.hitBox.maxDistance = (float) v))
+						.child(ModuleDef.slider("Thickness", Category.VISUAL, 0.5, 4.0, 1, () -> c.hitBox.lineThickness, v -> c.hitBox.lineThickness = (float) v)),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
 				com.pvpvisuals.render.radial.RadialMenuModule.def(c),
