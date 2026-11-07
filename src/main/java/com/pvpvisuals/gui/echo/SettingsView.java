@@ -217,7 +217,7 @@ public final class SettingsView {
 			int right = x + rw - 8;
 			if (d.isChoice()) {
 				String value = d.choiceValue();
-				int pw = Math.max(58, Math.min(132, Gfx.width(font, value) + 24));
+				int pw = 132;
 				int px = right - pw;
 				Gfx.fill(g, px, ry + 4, pw, rh - 8, 5, EchoTheme.PILL);
 				Gfx.ring(g, px, ry + 4, pw, rh - 8, 5, 1, dropdown == e ? EchoTheme.ACCENT_TEXT : EchoTheme.PILL_BORDER);
@@ -253,12 +253,13 @@ public final class SettingsView {
 		if (dropdown == null || !dropdown.def.isChoice()) return;
 		List<String> values = dropdown.def.choices();
 		int rowY = dropdownRowY();
-		int itemH = 16;
-		int boxW = Math.min(150, rowW() - 12);
-		int boxX = x + rowW() - boxW;
+		int itemH = 14;
+		int boxW = 132;
+		int boxX = x + rowW() - 8 - boxW;
 		int boxH = values.size() * itemH + 4;
 		int boxY = rowY + ROW_H + 3;
 		if (boxY + boxH > scroll.y + scroll.h) boxY = rowY - boxH - 3;
+		boxY = Math.max(y + HEAD_H + 6, boxY);
 		Gfx.fill(g, boxX, boxY, boxW, boxH, 7, 0xF01B1E28);
 		Gfx.ring(g, boxX, boxY, boxW, boxH, 7, 1, EchoTheme.CARD_BORDER_HOT);
 		for (int i = 0; i < values.size(); i++) {
@@ -268,7 +269,8 @@ public final class SettingsView {
 			boolean hover = allowHover && Gfx.hit(mx, my, boxX + 2, iy, boxW - 4, itemH);
 			if (selected || hover) Gfx.fill(g, boxX + 2, iy, boxW - 4, itemH, 4,
 					selected ? com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f) : 0x18FFFFFF);
-			Gfx.text(g, font, value, boxX + 10, iy + 4, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT);
+			if (selected) Gfx.circle(g, boxX + 9, iy + itemH / 2f, 1.6f, EchoTheme.ACCENT_TEXT);
+			Gfx.text(g, font, value, boxX + 16, iy + 3, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT);
 		}
 	}
 
@@ -356,12 +358,13 @@ public final class SettingsView {
 		if (dropdown != null) {
 			List<String> values = dropdown.def.choices();
 			int rowY = dropdownRowY();
-			int itemH = 16;
-			int boxW = Math.min(150, rowW() - 12);
-			int boxX = x + rowW() - boxW;
+			int itemH = 14;
+			int boxW = 132;
+			int boxX = x + rowW() - 8 - boxW;
 			int boxH = values.size() * itemH + 4;
 			int boxY = rowY + ROW_H + 3;
 			if (boxY + boxH > scroll.y + scroll.h) boxY = rowY - boxH - 3;
+			boxY = Math.max(y + HEAD_H + 6, boxY);
 			if (Gfx.hit(mx, my, boxX, boxY, boxW, boxH)) {
 				int index = (int) ((my - boxY - 2) / itemH);
 				if (index >= 0 && index < values.size()) dropdown.def.setChoice(values.get(index));
@@ -413,6 +416,15 @@ public final class SettingsView {
 					return Result.CONSUMED;
 				}
 				if (d.isChoice()) {
+					if (button == 1) {
+						List<String> values = d.choices();
+						if (!values.isEmpty()) {
+							int current = values.indexOf(d.choiceValue());
+							d.setChoice(values.get((current + 1) % values.size()));
+							com.pvpvisuals.config.PvpConfig.get().save();
+							return Result.CHANGED;
+						}
+					}
 					dropdown = dropdown == e ? null : e;
 					return Result.CONSUMED;
 				}
