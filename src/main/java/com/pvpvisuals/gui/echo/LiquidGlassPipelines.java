@@ -31,6 +31,18 @@ public final class LiquidGlassPipelines {
             .withVertexFormat(SHAPE_FORMAT, VertexFormat.Mode.QUADS)
             .build();
 
+    public static final RenderPipeline BLUR_RECT = RenderPipeline.builder()
+            .withLocation("pvpvisuals:pipeline/liquid_glass_blur_rect")
+            .withVertexShader("pvpvisuals:core/shape")
+            .withFragmentShader("pvpvisuals:core/blur_rect")
+            .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
+            .withUniform("Projection", UniformType.UNIFORM_BUFFER)
+            .withSampler("Sampler0")
+            .withBlend(BlendFunction.TRANSLUCENT)
+            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withVertexFormat(SHAPE_FORMAT, VertexFormat.Mode.QUADS)
+            .build();
+
     private LiquidGlassPipelines() {
     }
 }
