@@ -82,6 +82,12 @@ public final class TargetEspRenderer {
 
         try {
             TargetEspSettings settings = PvpConfig.get().targetEspSettings;
+            // Ghosts are native Minecraft particles emitted during END_EXTRACTION.
+            // Never submit ESP geometry for this style.
+            TargetEspMode selectedMode = TargetEspMode.byName(settings.mode);
+            if (selectedMode == TargetEspMode.GHOSTS) {
+                return;
+            }
             Minecraft mc = Minecraft.getInstance();
             RenderTarget target = mc.getMainRenderTarget();
             if (target == null || target.height <= 0) {
@@ -113,8 +119,7 @@ public final class TargetEspRenderer {
             long now = System.nanoTime();
 
             switch (mode) {
-                case GHOSTS -> drawGhosts(cx, y0, cz, width, depth, height, now,
-                        settings, worldPerPixel, r, g, bl, alpha);
+                case GHOSTS -> { /* handled by ParticleTypes.SOUL in TargetEspModule */ }
                 case CIRCLE -> drawCircle(cx, y0, cz, width, depth, now,
                         frame.health, settings, worldPerPixel, r, g, bl, alpha);
                 case SQUARE -> drawRotatingSquare(cx, cy, cz, width, depth, height, now,
@@ -185,31 +190,6 @@ public final class TargetEspRenderer {
             default -> { r = 1f; g = 0f; b = q; }
         }
         return (Math.round(r * 255f) << 16) | (Math.round(g * 255f) << 8) | Math.round(b * 255f);
-    }
-
-    private static void drawGhosts(float cx, float minY, float cz, float width, float depth, float height,
-            long now, TargetEspSettings s, float wpp, int r, int g, int b, int alpha) {
-        int count = Math.max(4, Math.min(48, s.ghostCount));
-        double time = now / 1_000_000_000.0;
-        float speed = clamp(s.animationSpeed, 0.1f, 4.0f);
-        float rx = Math.max(0.35f, width * 0.72f);
-        float rz = Math.max(0.35f, depth * 0.72f);
-
-        for (int i = 0; i < count; i++) {
-            double phase = time * speed + (Math.PI * 2.0 * i / count);
-            float x = cx + (float) Math.cos(phase) * rx;
-            float z = cz + (float) Math.sin(phase) * rz;
-            float bob = 0.5f + 0.5f * (float) Math.sin(phase * 0.72 + i * 0.31);
-            float y = minY + height * (0.12f + 0.76f * bob);
-            float size = 0.055f + 0.045f * (0.5f + 0.5f * (float) Math.sin(phase * 1.7));
-            int a = clampByte(Math.round(alpha * (0.35f + 0.65f * bob)));
-
-            // Small floating diamond, not a blocky full entity outline.
-            segment(x, y + size, z, x + size, y, z, 1.25f, wpp, r, g, b, a);
-            segment(x + size, y, z, x, y - size, z, 1.25f, wpp, r, g, b, a);
-            segment(x, y - size, z, x - size, y, z, 1.25f, wpp, r, g, b, a);
-            segment(x - size, y, z, x, y + size, z, 1.25f, wpp, r, g, b, a);
-        }
     }
 
     private static void drawCircle(float cx, float minY, float cz, float width, float depth, long now,
