@@ -54,6 +54,7 @@ public final class TargetEspRenderer {
         failed = false;
         PIPELINES[0] = null;
         PIPELINES[1] = null;
+        GhostEspRenderer.reset();
     }
 
     private static RenderPipeline pipeline(boolean throughWalls) {
@@ -86,6 +87,7 @@ public final class TargetEspRenderer {
             // Never submit ESP geometry for this style.
             TargetEspMode selectedMode = TargetEspMode.byName(settings.mode);
             if (selectedMode == TargetEspMode.GHOSTS) {
+                GhostEspRenderer.render(context);
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
@@ -140,7 +142,7 @@ public final class TargetEspRenderer {
         }
     }
 
-    private static int resolveColor(TargetEspSettings s, TargetEspModule.Frame f) {
+    static int resolveColor(TargetEspSettings s, TargetEspModule.Frame f) {
         if (f.invisible && s.useInvisibleColor) {
             return s.invisibleColor;
         }
