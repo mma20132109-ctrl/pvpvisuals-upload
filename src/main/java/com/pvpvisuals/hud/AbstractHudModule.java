@@ -166,12 +166,16 @@ public abstract class AbstractHudModule {
 	/** Рисует элемент с левым верхним углом в (x, y) экрана, с масштабом и прозрачностью из настроек. */
 	public final void render(GuiGraphics g, int x, int y, boolean preview) {
 		float sc = scale();
+		float previousAlpha = HudAlpha.current;
 		HudAlpha.current = alpha();
 		g.pose().pushMatrix();
-		g.pose().translate(x, y);
-		g.pose().scale(sc, sc);
-		drawContent(g, preview);
-		g.pose().popMatrix();
-		HudAlpha.current = 1.0f;
+		try {
+			g.pose().translate(x, y);
+			g.pose().scale(sc, sc);
+			drawContent(g, preview);
+		} finally {
+			g.pose().popMatrix();
+			HudAlpha.current = previousAlpha;
+		}
 	}
 }
