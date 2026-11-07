@@ -15,7 +15,6 @@ import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleEntry;
 import com.pvpvisuals.gui.rival.ModuleRegistry;
 import com.pvpvisuals.gui.rival.RoundedRender;
-import com.pvpvisuals.gui.rival.NotificationToast;
 import com.pvpvisuals.keybind.KeybindManager;
 import com.pvpvisuals.render.LogoRenderer;
 import com.pvpvisuals.render.LogoSizeMode;
@@ -363,7 +362,6 @@ public class EchoScreen extends Screen {
 		Gfx.alpha = 1f;
 
 		dialog.render(g, this.font, mouseX, mouseY, this.width, this.height);
-		NotificationToast.render(g, this.font, this.width, this.height);
 	}
 
 	private void drawWindow(GuiGraphics g, int mx, int my, float dt, long now) {
