@@ -14,7 +14,7 @@ public final class EchoTheme {
 	private static final int SURFACE_BOTTOM = 0xE5101219;
 	private static final int CARD_BASE = 0xB5222630;
 	private static final int CARD_HOVER_BASE = 0xD52C303B;
-	private static final int BORDER_BASE = 0x553FFFFFF;
+	private static final int BORDER_BASE = 0x55FFFFFF;
 	private static final int TEXT_BASE = 0xFFE9EAF1;
 	private static final int MUTED_BASE = 0xFF9DA2B0;
 	private static final int DIM_BASE = 0xFF737987;
@@ -32,7 +32,7 @@ public final class EchoTheme {
 	public static int TAB_BOTTOM = 0xAA8C9EFF;
 	public static int CARD = CARD_BASE;
 	public static int CARD_HOVER = CARD_HOVER_BASE;
-	public static int CARD_BORDER = 0x553FFFFFF;
+	public static int CARD_BORDER = 0x55FFFFFF;
 	public static int CARD_BORDER_ON = 0x887FFFFFF;
 	public static int CARD_BORDER_HOT = 0xFF8C9EFF;
 	public static int TILE = 0x332F3542;
@@ -76,7 +76,7 @@ public final class EchoTheme {
 		TAB_BOTTOM = withAlpha(secondary, 0.58f);
 		CARD = CARD_BASE;
 		CARD_HOVER = CARD_HOVER_BASE;
-		CARD_BORDER = 0x553FFFFFF;
+		CARD_BORDER = 0x55FFFFFF;
 		CARD_BORDER_ON = withAlpha(primary, 0.62f);
 		CARD_BORDER_HOT = primary;
 		TILE = 0x332F3542;
