@@ -72,21 +72,24 @@ public final class ModuleRegistry {
 								() -> c.splash.customSplashScreen, v -> c.splash.customSplashScreen = v))
 						.child(ModuleDef.toggle("Splash Particles", Category.CLIENT,
 								() -> c.splash.showSplashParticles, v -> c.splash.showSplashParticles = v))
-						.child(ModuleDef.cycle(Category.CLIENT,
-								() -> "Background: " + splashBackgroundTitle(c.splash.splashBackground),
-								() -> c.splash.splashBackground = nextSplashBackground(c.splash.splashBackground))),
+						.child(ModuleDef.choice("Background", Category.CLIENT,
+								() -> splashBackgroundTitle(c.splash.splashBackground),
+								List.of("Gradient", "Animated", "Dark"),
+								v -> c.splash.splashBackground = "Gradient".equals(v) ? "GRADIENT" : "Animated".equals(v) ? "SHADER" : "DARK")),
 				CapeModule.def(c),
 				ModuleDef.group(Category.CLIENT, () -> "Logo")
 						.child(ModuleDef.toggle("Watermark Logo", Category.CLIENT,
 								() -> c.logo.showInWatermark, v -> c.logo.showInWatermark = v))
-						.child(ModuleDef.cycle(Category.CLIENT,
-								() -> "WM Size: " + LogoSizeMode.byName(c.logo.sizeWatermark).title,
-								() -> c.logo.sizeWatermark = LogoSizeMode.byName(c.logo.sizeWatermark).next().name()))
+						.child(ModuleDef.choice("Watermark Size", Category.CLIENT,
+								() -> LogoSizeMode.byName(c.logo.sizeWatermark).title,
+								List.of("Auto", "128", "512", "2048"),
+								v -> c.logo.sizeWatermark = v.equals("Auto") ? "AUTO" : "S" + v))
 						.child(ModuleDef.toggle("Menu Logo", Category.CLIENT,
 								() -> c.logo.showInGui, v -> c.logo.showInGui = v))
-						.child(ModuleDef.cycle(Category.CLIENT,
-								() -> "Menu Size: " + LogoSizeMode.byName(c.logo.sizeGui).title,
-								() -> c.logo.sizeGui = LogoSizeMode.byName(c.logo.sizeGui).next().name())),
+						.child(ModuleDef.choice("Menu Size", Category.CLIENT,
+								() -> LogoSizeMode.byName(c.logo.sizeGui).title,
+								List.of("Auto", "128", "512", "2048"),
+								v -> c.logo.sizeGui = v.equals("Auto") ? "AUTO" : "S" + v)),
 				ModuleDef.group(Category.CLIENT, () -> "Menu Style")
 						.child(ModuleDef.slider("Overlay", Category.CLIENT, 0.0, 0.8, 2,
 								() -> c.gui.overlayAlpha, v -> c.gui.overlayAlpha = (float) v))
@@ -158,9 +161,10 @@ public final class ModuleRegistry {
 						() -> c.binds.showNotifications, v -> c.binds.showNotifications = v))
 				.child(ModuleDef.slider("Duration (ms)", Category.CLIENT, 500, 5000, 0,
 						() -> c.binds.durationMs, v -> c.binds.durationMs = (int) v))
-				.child(ModuleDef.cycle(Category.CLIENT,
-						() -> "Position: " + NotificationPosition.byName(c.binds.position).title,
-						() -> c.binds.position = NotificationPosition.byName(c.binds.position).next().name())));
+				.child(ModuleDef.choice("Position", Category.CLIENT,
+						() -> NotificationPosition.byName(c.binds.position).title,
+						List.of("Top Left", "Top Right", "Bottom Left", "Bottom Right"),
+						v -> c.binds.position = v.toUpperCase(java.util.Locale.ROOT).replace(' ', '_'))));
 		return list;
 	}
 }
