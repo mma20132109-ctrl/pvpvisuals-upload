@@ -48,7 +48,15 @@ public final class Gfx {
 	/** Скруглённый прямоугольник (float-координаты), градиент top -> bottom, обводка внутрь толщиной border. */
 	public static void rrect(GuiGraphics g, float x, float y, float w, float h, float r, int top, int bottom,
 			int borderColor, float border) {
-		LiquidGlassRenderer.roundRect(g, x, y, w, h, r, fade(top), fade(bottom), fade(borderColor), border);
+		if (SmoothRenderer.isOn()) {
+			SmoothRenderer.drawSmoothRoundedRect(g, x, y, w, h, r, fade(top), fade(bottom), fade(borderColor), border);
+		} else {
+			legacyFill(g, Math.round(x), Math.round(y), Math.round(w), Math.round(h), Math.round(r), a(top), a(bottom));
+			if (border > 0f) {
+				legacyRing(g, Math.round(x), Math.round(y), Math.round(w), Math.round(h), Math.round(r),
+						Math.max(1, Math.round(border)), a(borderColor));
+			}
+		}
 	}
 
 	public static void circle(GuiGraphics g, int cx, int cy, int rad, int color) {

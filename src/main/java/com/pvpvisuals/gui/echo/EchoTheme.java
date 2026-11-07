@@ -33,7 +33,7 @@ public final class EchoTheme {
 	public static int CARD = CARD_BASE;
 	public static int CARD_HOVER = CARD_HOVER_BASE;
 	public static int CARD_BORDER = 0x55FFFFFF;
-	public static int CARD_BORDER_ON = 0x887FFFFF;
+	public static int CARD_BORDER_ON = 0x887FFFFFF;
 	public static int CARD_BORDER_HOT = 0xFF8C9EFF;
 	public static int TILE = 0x332F3542;
 	public static int TILE_ICON = 0xFFB8C4FF;

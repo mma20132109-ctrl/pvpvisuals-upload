@@ -21,8 +21,7 @@
 		"ScreenDiagMixin",
 		"ItemInHandRendererMixin",
 		"GameRendererBobMixin",
-		"OptionInstanceAccessor",
-		"GuiGraphicsAccessor"
+		"OptionInstanceAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

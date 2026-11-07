@@ -31,10 +31,7 @@ public class PvpVisualsClient implements ClientModInitializer {
 		ClientTickEvents.END_CLIENT_TICK.register(client -> ConfigManager.getInstance().tick());
 
 		// Сохранение при выходе из игры (событие Fabric API lifecycle-events-v1).
-		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> {
-			ConfigManager.getInstance().shutdown();
-			com.pvpvisuals.gui.echo.LiquidGlassRenderer.close();
-		});
+		ClientLifecycleEvents.CLIENT_STOPPING.register(client -> ConfigManager.getInstance().shutdown());
 
 		com.pvpvisuals.cape.CapeModule.register();
 		com.pvpvisuals.cape.CapeSyncManager.register();
