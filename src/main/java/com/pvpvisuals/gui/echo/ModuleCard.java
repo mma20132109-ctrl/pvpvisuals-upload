@@ -19,9 +19,12 @@ import net.minecraft.util.Util;
  * Позиция x/y — в координатах содержимого (без прокрутки).
  */
 public final class ModuleCard {
-	public enum Zone { NONE, TOGGLE, BIND, MORE, BODY }
+	public enum Zone { NONE, TOGGLE, BIND, MORE, INLINE_SETTINGS, BODY }
 
 	public static final int H = 32;
+	public static final int INLINE_H = 112;
+	public boolean expanded;
+	public final SettingsView inlineSettings;
 	private static final int PAD = 10;
 	private static final int R = 9;
 
@@ -54,6 +57,7 @@ public final class ModuleCard {
 	public ModuleCard(ModuleDef def) {
 		this.def = def;
 		this.root = new ModuleEntry(def, 0);
+		this.inlineSettings = new SettingsView(this, true);
 		this.bindable = def.isToggle() && KeybindManager.isBindable(def.name);
 		this.glyph = ModuleInfo.glyph(def.name, def.category);
 		this.desc = ModuleInfo.desc(def.name);
@@ -68,6 +72,10 @@ public final class ModuleCard {
 
 	public Glyph glyph() {
 		return glyph;
+	}
+
+	public int totalHeight() {
+		return H + (expanded ? 4 + INLINE_H : 0);
 	}
 
 	public boolean hasSettings() {

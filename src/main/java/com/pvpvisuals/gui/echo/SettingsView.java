@@ -30,6 +30,7 @@ public final class SettingsView {
 	private static final int PILL_H = 14;
 
 	private final ModuleCard card;
+	private final boolean inline;
 	private final ScrollArea scroll = new ScrollArea();
 	private final List<ModuleEntry> rows = new ArrayList<>();
 	private final Map<ModuleEntry, ToggleSwitch> switches = new IdentityHashMap<>();
@@ -51,11 +52,21 @@ public final class SettingsView {
 	private float anim;
 
 	public SettingsView(ModuleCard card) {
-		this.card = card;
+		this(card, false);
 	}
+
+	public SettingsView(ModuleCard card, boolean inline) {
+		this.card = card;
+		this.inline = inline;
+}
 
 	public ModuleCard card() {
 		return card;
+	}
+
+	public void layoutInline(int x, int y, int w, int h) {
+		this.x = x; this.y = y; this.w = w; this.h = h;
+		scroll.setBounds(x, y, w, h);
 	}
 
 	public void layout(int x, int y, int w, int h) {
@@ -117,7 +128,8 @@ public final class SettingsView {
 		scroll.update(dtMs);
 		anim = Math.min(1f, anim + dtMs / 180f);
 
-		// шапка
+		// Шапка отдельного экрана; встроенный режим показывает только строки настроек.
+		if (!inline) {
 		boolean backHover = allowHover && Gfx.hit(mx, my, x, y + 6, 22, 22);
 		Gfx.fill(g, x, y + 6, 22, 22, 6, backHover ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
 		Gfx.ring(g, x, y + 6, 22, 22, 6, 1, backHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
@@ -159,6 +171,7 @@ public final class SettingsView {
 			}
 		}
 		Gfx.rect(g, x, y + HEAD_H, x + w, y + HEAD_H + 1, EchoTheme.DIVIDER);
+		}
 
 		// строки
 		float fade = Gfx.ease(anim);
@@ -379,11 +392,11 @@ public final class SettingsView {
 			}
 			dropdown = null;
 		}
-		if (Gfx.hit(mx, my, x, y + 6, 22, 22)) {
+		if (!inline && Gfx.hit(mx, my, x, y + 6, 22, 22)) {
 			return Result.BACK;
 		}
 		// шапка: тумблер и бинд
-		if (my >= y && my < y + HEAD_H) {
+		if (!inline && my >= y && my < y + HEAD_H) {
 			int right = x + w - 8;
 			if (card.def.isToggle()) {
 				right -= ToggleSwitch.W;

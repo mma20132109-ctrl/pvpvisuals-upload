@@ -649,24 +649,16 @@ public class EchoScreen extends Screen {
 		ModuleCard card = hit.card();
 		ModuleDef def = card.def;
 		switch (hit.zone()) {
-			case BIND -> {
-				if (btn == 1) {
-					KeybindManager.clear(def.name);
-				} else {
-					KeybindManager.startListening(def.name);
-				}
+			case BIND -> { if (btn == 1) KeybindManager.clear(def.name); else KeybindManager.startListening(def.name); }
+			case MORE -> card.expanded = !card.expanded;
+			case INLINE_SETTINGS -> {
+				SettingsView.Result result = card.inlineSettings.click(mx, my, btn);
+				if (result == SettingsView.Result.CHANGED) save();
 			}
-			case MORE -> openSettings(card);
 			case TOGGLE, BODY -> {
-				if (btn == 1) { // ПКМ — настройки
-					if (card.hasSettings() || def.isGroup()) {
-						openSettings(card);
-					}
-				} else if (def.isGroup()) {
-					openSettings(card);
-				} else if (def.activate()) { // ЛКМ — вкл/выкл (или запуск)
-					save();
-				}
+				if (btn == 1) { if (card.hasSettings() || def.isGroup()) card.expanded = !card.expanded; }
+				else if (def.isGroup()) card.expanded = !card.expanded;
+				else if (def.activate()) save();
 			}
 			default -> { }
 		}
@@ -689,6 +681,7 @@ public class EchoScreen extends Screen {
 			settings.dragTo(event.x() / uiScale);
 			return true;
 		}
+		if (grid.dragInline(event.x() / uiScale)) return true;
 		return super.mouseDragged(event, dragX, dragY);
 	}
 
@@ -708,6 +701,7 @@ public class EchoScreen extends Screen {
 			save();
 			return true;
 		}
+		if (grid.releaseInline()) { save(); return true; }
 		return super.mouseReleased(event);
 	}
 
@@ -726,6 +720,7 @@ public class EchoScreen extends Screen {
 			}
 			return false;
 		}
+		if (grid.scrollInlineAt(mouseX, mouseY, px)) return true;
 		if (grid.scroll().contains(mouseX, mouseY)) {
 			grid.scroll().scrollBy(px);
 			return true;
