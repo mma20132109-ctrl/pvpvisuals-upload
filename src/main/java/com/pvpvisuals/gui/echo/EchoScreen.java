@@ -365,58 +365,52 @@ public class EchoScreen extends Screen {
 		layoutSideSettings();
 		int panelWidth = sideSettingsWidth();
 		int targetX = sideSettingsLeft ? wx - panelWidth : wx + ww;
-		float raw = Mth.clamp((now - sideSettingsNs) / 560_000_000f, 0f, 1f);
+		float raw = Mth.clamp((now - sideSettingsNs) / 620_000_000f, 0f, 1f);
 		float t = Gfx.ease(raw);
-		// A stronger liquid emergence: the panel travels a full visible distance,
-		// stretches through the surface, then gently settles into its final shape.
 		float pulse = (float) Math.sin(raw * Math.PI);
-		float shift = 62f * (1f - t);
-		float drawX = sideSettingsLeft ? targetX + shift : targetX - shift;
 		float surfaceX = sideSettingsLeft ? wx : wx + ww;
 		float surfaceY = cy0 + ch0 * 0.5f;
 		float oldAlpha = Gfx.alpha;
 
-		// Expanding rings and a moving waterline make the point of emergence readable.
+		// The GUI edge is the fixed waterline: the panel grows out of it,
+		// rather than sliding in as a separate floating window.
+		float growth = Mth.clamp(t + pulse * 0.045f, 0.015f, 1.035f);
+		float visibleWidth = panelWidth * growth;
+		float drawX = sideSettingsLeft ? surfaceX - visibleWidth : surfaceX;
+
 		if (raw < 1f) {
 			float rippleFade = (1f - raw) * 0.72f;
-			Gfx.alpha = oldAlpha * Math.min(1f, raw * 2.8f + 0.12f);
+			Gfx.alpha = oldAlpha * Math.min(1f, raw * 2.5f + 0.08f);
 			for (int i = 0; i < 4; i++) {
-				float radius = 8f + raw * 34f + i * 10f;
+				float radius = 7f + raw * 32f + i * 9f;
 				int color = RoundedRender.scaleAlpha(EchoTheme.ACCENT_TEXT, rippleFade * (1f - i * 0.16f));
-				Gfx.ringCircle(g, surfaceX, surfaceY, radius, 1.15f, color);
+				Gfx.ringCircle(g, surfaceX, surfaceY, radius, 1.1f, color);
 			}
-			// Several ripples travel along the vertical edge like a disturbed water surface.
-			for (int i = 0; i < 7; i++) {
-				float phase = raw * 11f + i * 0.82f;
-				float y = cy0 + 10f + i * ((ch0 - 20f) / 6f);
-				float spread = (float) Math.sin(phase) * (5f + 9f * (1f - raw));
-				int color = RoundedRender.scaleAlpha(EchoTheme.TEXT, rippleFade * (0.8f - i * 0.045f));
-				Gfx.line(g, surfaceX - spread - 4f, y - 3f, surfaceX + spread + 4f, y + 3f, 1.1f, color);
+			// A wavering vertical seam follows the expanding panel edge.
+			for (int i = 0; i < 9; i++) {
+				float y = cy0 + 7f + i * ((ch0 - 14f) / 8f);
+				float wobble = (float) Math.sin(raw * 13f + i * 0.9f) * (1f - raw) * 5f;
+				float edge = sideSettingsLeft ? surfaceX - visibleWidth : surfaceX + visibleWidth;
+				int color = RoundedRender.scaleAlpha(EchoTheme.TEXT, rippleFade * (0.75f - i * 0.035f));
+				Gfx.line(g, edge - wobble, y - 3f, edge + wobble, y + 3f, 1.15f, color);
 			}
 		}
 
-		float fade = t * t * (3f - 2f * t);
-		Gfx.alpha = oldAlpha * fade;
+		Gfx.alpha = oldAlpha * Mth.clamp(t * 1.15f, 0f, 1f);
 		g.pose().pushMatrix();
-		g.pose().translate(drawX - targetX, -pulse * 5f);
-		// Horizontal stretch is deliberately pronounced at the beginning,
-		// as if the glass is being pulled out of a liquid membrane.
-		float sx = 0.76f + 0.24f * t + pulse * 0.10f;
-		float sy = 0.91f + 0.09f * t + pulse * 0.035f;
-		float pivotX = sideSettingsLeft ? targetX + panelWidth : targetX;
-		g.pose().translate(pivotX, surfaceY);
-		g.pose().scale(sx, sy);
-		g.pose().translate(-pivotX, -surfaceY);
+		// Scale from the shared GUI border so the inner edge never detaches.
+		g.pose().translate(surfaceX, surfaceY);
+		g.pose().scale(growth, 0.985f + 0.015f * t + pulse * 0.025f);
+		g.pose().translate(-surfaceX, -surfaceY);
 		Gfx.glow(g, targetX, cy0, panelWidth, ch0, 10, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 6);
 		LiquidGlassRenderer.window(g, targetX, cy0, panelWidth, ch0, 10);
 		Gfx.rrect(g, targetX + 1, cy0 + 1, panelWidth - 2, 34, 9, 0x12FFFFFF, 0x00FFFFFF, 0, 0f);
 		g.enableScissor(targetX, cy0, targetX + panelWidth, cy0 + ch0);
-		settings.render(g, this.font, mx - Math.round(drawX - targetX), my, dt, hoverOk && raw > 0.96f, settings.card().bindText);
+		settings.render(g, this.font, mx, my, dt, hoverOk && raw > 0.96f, settings.card().bindText);
 		g.disableScissor();
 		g.pose().popMatrix();
 		Gfx.alpha = oldAlpha;
 	}
-
 	private void drawHeader(GuiGraphics g, float dt) {
 		PvpConfig cfg = PvpConfig.get();
 		int lx = wx + MARGIN;
