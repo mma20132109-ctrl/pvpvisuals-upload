@@ -231,7 +231,7 @@ public final class SettingsView {
 				ToggleSwitch sw = switches.computeIfAbsent(e, k -> new ToggleSwitch());
 				sw.update(d.enabled(), dtMs);
 				sw.render(g, right - 20, ry + (rh - 10) / 2, 20, 10);
-			} else if (!d.isGroup()) {
+			} else if (!d.isGroup() && !d.isChoice()) {
 				EchoIcons.chevron(g, right - 4, ry + (rh - 8) / 2, 1, hover ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM);
 			}
 		}
