@@ -81,6 +81,11 @@ public final class ModuleRegistry {
 						.child(ModuleDef.toggle("Glow", Category.UTILS, () -> c.moduleListGlow, v -> c.moduleListGlow = v)),
 				InventoryHudModule.def(c),
 				com.pvpvisuals.hud.binds.HudBindsModule.def(c),
+				ModuleDef.toggle("Notifications", Category.UTILS,
+						() -> c.binds.showNotifications, v -> c.binds.showNotifications = v)
+						.child(HudModuleUi.layout(HudManager.NOTIFICATIONS, Category.UTILS))
+						.child(ModuleDef.slider("Duration (ms)", Category.UTILS, 500, 5000, 0,
+								() -> c.binds.durationMs, v -> c.binds.durationMs = (int) v)),
 
 				themeGroup(c),
 				ModuleDef.group(Category.CLIENT, () -> "Main Menu")
@@ -181,15 +186,6 @@ public final class ModuleRegistry {
 	public static List<ModuleDef> build() {
 		PvpConfig c = PvpConfig.get();
 		List<ModuleDef> list = new ArrayList<>(modules());
-		list.add(ModuleDef.group(Category.CLIENT, () -> "Bind Toasts")
-				.child(ModuleDef.toggle("Show Toasts", Category.CLIENT,
-						() -> c.binds.showNotifications, v -> c.binds.showNotifications = v))
-				.child(ModuleDef.slider("Duration (ms)", Category.CLIENT, 500, 5000, 0,
-						() -> c.binds.durationMs, v -> c.binds.durationMs = (int) v))
-				.child(ModuleDef.choice("Position", Category.CLIENT,
-						() -> NotificationPosition.byName(c.binds.position).title,
-						List.of("Top Left", "Top Right", "Bottom Left", "Bottom Right"),
-						v -> c.binds.position = v.toUpperCase(java.util.Locale.ROOT).replace(' ', '_'))));
 		return list;
 	}
 }
