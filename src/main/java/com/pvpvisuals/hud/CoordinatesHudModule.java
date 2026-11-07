@@ -21,7 +21,7 @@ public final class CoordinatesHudModule extends AbstractHudModule {
   coords=x+", "+y+", "+z;
   direction=PvpConfig.get().coordinatesDirection?p.getDirection().getName().substring(0,1).toUpperCase(java.util.Locale.ROOT):"";
   boolean nether=mc.level!=null && mc.level.dimension()==Level.NETHER;
-  other=PvpConfig.get().coordinatesNether?(nether?(x*8)+", "+(z*8):(x/8)+", "+(z/8)):"";
+  other=PvpConfig.get().coordinatesNether?(nether?(x*8)+", "+(z*8):Math.floorDiv(x, 8)+", "+Math.floorDiv(z, 8)):"";
  }
  @Override protected int contentWidth(){
   update(); var f=Minecraft.getInstance().font;
