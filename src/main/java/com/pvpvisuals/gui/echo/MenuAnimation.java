@@ -169,6 +169,27 @@ public final class MenuAnimation {
         }
     }
 
+    /**
+     * Move the active transition together with the main Click GUI when the user drags it.
+     * This keeps both the attached panel and its return-to-card anchor aligned.
+     */
+    public void shift(float deltaX, float deltaY) {
+        if (!visible || (deltaX == 0f && deltaY == 0f)) {
+            return;
+        }
+
+        currentX += deltaX;
+        currentY += deltaY;
+        targetX += deltaX;
+        targetY += deltaY;
+        originX += deltaX;
+        originY += deltaY;
+        fromX += deltaX;
+        fromY += deltaY;
+        panelX += deltaX;
+        panelY += deltaY;
+    }
+
     /** Eased opacity of the morphing panel and its contents. */
     public float revealProgress() {
         return visible ? currentAlpha : 0f;
