@@ -74,6 +74,8 @@ public class EchoScreen extends Screen {
 
 	// анимации
 	private final long openNs = System.nanoTime();
+	private long closingNs;
+	private boolean closing;
 	private long lastNs;
 	private long tabNs = System.nanoTime();
 	private long bindRefreshNs;
@@ -263,8 +265,13 @@ public class EchoScreen extends Screen {
 			// блюр уже применён в этом кадре
 		}
 
-		float open = Gfx.ease((now - openNs) / 220_000_000f);
-		interactive = open >= 0.999f && !dialog.active();
+		float open = closing ? 1f - Gfx.ease((now - closingNs) / 180_000_000f)
+				: Gfx.ease((now - openNs) / 220_000_000f);
+		if (closing && open <= 0.02f) {
+			super.onClose();
+			return;
+		}
+		interactive = !closing && open >= 0.999f && !dialog.active();
 		layout();
 		int overlayA = Math.round(Mth.clamp(PvpConfig.get().gui.overlayAlpha, 0f, 1f) * 255f * open) & 0xFF;
 		g.fill(0, 0, this.width, this.height, (overlayA << 24) | 0x0A0418);
@@ -701,10 +708,15 @@ public class EchoScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		if (closing) {
+			return;
+		}
+		closing = true;
+		closingNs = System.nanoTime();
+		interactive = false;
 		KeybindManager.cancelListening();
 		captureExpanded();
 		save();
-		super.onClose();
 	}
 
 	/** После импорта/сброса значения изменились целиком: пересоздаём меню с новыми лямбдами. */
