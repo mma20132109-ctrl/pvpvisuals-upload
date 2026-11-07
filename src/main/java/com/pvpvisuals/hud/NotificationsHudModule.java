@@ -2,6 +2,7 @@ package com.pvpvisuals.hud;
 
 import com.pvpvisuals.config.HudSettings;
 import com.pvpvisuals.config.PvpConfig;
+import com.pvpvisuals.gui.echo.EchoScreen;
 import com.pvpvisuals.gui.rival.NotificationToast;
 
 import net.minecraft.client.Minecraft;
@@ -48,6 +49,9 @@ public final class NotificationsHudModule extends AbstractHudModule {
 
     @Override
     protected void drawContent(GuiGraphics g, boolean preview) {
+        if (!preview && Minecraft.getInstance().screen instanceof EchoScreen) {
+            return;
+        }
         HudAnchor anchor = anchor();
         boolean right = anchor == HudAnchor.TOP_RIGHT || anchor == HudAnchor.BOTTOM_RIGHT;
         boolean bottom = anchor == HudAnchor.BOTTOM_LEFT || anchor == HudAnchor.BOTTOM_RIGHT;
