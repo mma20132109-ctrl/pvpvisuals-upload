@@ -6,6 +6,7 @@ import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
+import net.minecraft.resources.Identifier;
 
 /**
  * Dedicated GUI pipelines ported from the Svintus render architecture.
@@ -21,9 +22,9 @@ public final class LiquidGlassPipelines {
             .build();
 
     public static final RenderPipeline ROUND_RECT = RenderPipeline.builder()
-            .withLocation("pvpvisuals:pipeline/liquid_glass_round_rect")
-            .withVertexShader("pvpvisuals:core/shape")
-            .withFragmentShader("pvpvisuals:core/round_rect")
+            .withLocation(Identifier.fromNamespaceAndPath("pvpvisuals", "pipeline/liquid_glass_round_rect"))
+            .withVertexShader(Identifier.fromNamespaceAndPath("pvpvisuals", "core/shape"))
+            .withFragmentShader(Identifier.fromNamespaceAndPath("pvpvisuals", "core/round_rect"))
             .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
             .withUniform("Projection", UniformType.UNIFORM_BUFFER)
             .withBlend(BlendFunction.TRANSLUCENT)
@@ -32,9 +33,9 @@ public final class LiquidGlassPipelines {
             .build();
 
     public static final RenderPipeline BLUR_RECT = RenderPipeline.builder()
-            .withLocation("pvpvisuals:pipeline/liquid_glass_blur_rect")
-            .withVertexShader("pvpvisuals:core/shape")
-            .withFragmentShader("pvpvisuals:core/blur_rect")
+            .withLocation(Identifier.fromNamespaceAndPath("pvpvisuals", "pipeline/liquid_glass_blur_rect"))
+            .withVertexShader(Identifier.fromNamespaceAndPath("pvpvisuals", "core/shape"))
+            .withFragmentShader(Identifier.fromNamespaceAndPath("pvpvisuals", "core/blur_rect"))
             .withUniform("DynamicTransforms", UniformType.UNIFORM_BUFFER)
             .withUniform("Projection", UniformType.UNIFORM_BUFFER)
             .withSampler("Sampler0")
