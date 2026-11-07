@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleEntry;
+import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.keybind.KeybindManager;
 import com.pvpvisuals.gui.svintus.Anim;
 
@@ -33,6 +34,7 @@ public final class SettingsView {
 	private final List<ModuleEntry> rows = new ArrayList<>();
 	private final Map<ModuleEntry, ToggleSwitch> switches = new IdentityHashMap<>();
 	private final Map<ModuleEntry, Anim> sliderFills = new IdentityHashMap<>();
+	private final Map<ModuleEntry, Anim> rowHovers = new IdentityHashMap<>();
 	private final ToggleSwitch headSwitch = new ToggleSwitch();
 
 	private int x;
@@ -180,16 +182,19 @@ public final class SettingsView {
 			float fade) {
 		ModuleDef d = e.def;
 		int rw = rowW();
+		Anim hoverAnim = rowHovers.computeIfAbsent(e, key -> new Anim(0f, 14f));
+		float hoverProgress = hoverAnim.to(hover).get();
+		boolean rowHovered = hoverProgress > 0.02f;
 		float prev = Gfx.alpha;
 		Gfx.alpha = prev * fade;
 
 		if (d.isText()) {
-			renderTextRow(g, font, e, ry, rh, rw, hover);
+			renderTextRow(g, font, e, ry, rh, rw, rowHovered);
 			Gfx.alpha = prev;
 			return;
 		}
-		Gfx.fill(g, x, ry, rw, rh, 7, hover ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
-		Gfx.ring(g, x, ry, rw, rh, 7, 1, hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
+		Gfx.fill(g, x, ry, rw, rh, 7, RoundedRender.lerp(EchoTheme.CARD, EchoTheme.CARD_HOVER, hoverProgress));
+		Gfx.ring(g, x, ry, rw, rh, 7, 1, RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hoverProgress));
 
 		int tx = x + 10 + e.depth * 8 - 8;
 		boolean lit = d.enabled() || d.isGroup() || d.isSlider();
