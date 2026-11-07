@@ -42,6 +42,7 @@ public final class SettingsView {
 	private ModuleEntry dragging;
 	/** Строка с текстовым полем, которая сейчас редактируется (или null). */
 	private ModuleEntry editing;
+	private ModuleEntry dropdown;
 	private final StringBuilder buf = new StringBuilder();
 	private String editOriginal = "";
 	private int pillW = 34;
@@ -172,6 +173,7 @@ public final class SettingsView {
 		}
 		scroll.end(g);
 		scroll.renderBar(g);
+		renderDropdown(g, font, mx, my, allowHover);
 	}
 
 	private void renderRow(GuiGraphics g, Font font, ModuleEntry e, int ry, int rh, boolean hover, float dtMs,
@@ -213,7 +215,15 @@ public final class SettingsView {
 		} else {
 			Gfx.text(g, font, d.title(), tx, ry + (rh - 8) / 2, textC);
 			int right = x + rw - 8;
-			if (e.hasKids()) {
+			if (d.isChoice()) {
+				String value = d.choiceValue();
+				int pw = 132;
+				int px = right - pw;
+				Gfx.fill(g, px, ry + 4, pw, rh - 8, 5, EchoTheme.PILL);
+				Gfx.ring(g, px, ry + 4, pw, rh - 8, 5, 1, dropdown == e ? EchoTheme.ACCENT_TEXT : EchoTheme.PILL_BORDER);
+				Gfx.text(g, font, value, px + 7, ry + (rh - 8) / 2, EchoTheme.TEXT);
+				EchoIcons.chevron(g, right - 11, ry + (rh - 8) / 2 + 1, dropdown == e ? 3 : 1, EchoTheme.MUTED);
+			} else if (e.hasKids()) {
 				EchoIcons.chevron(g, right - 7, ry + (rh - 4) / 2 - 1, 2, e.expanded ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM);
 				right -= 16;
 			}
@@ -221,11 +231,47 @@ public final class SettingsView {
 				ToggleSwitch sw = switches.computeIfAbsent(e, k -> new ToggleSwitch());
 				sw.update(d.enabled(), dtMs);
 				sw.render(g, right - 20, ry + (rh - 10) / 2, 20, 10);
-			} else if (!d.isGroup()) {
+			} else if (!d.isGroup() && !d.isChoice()) {
 				EchoIcons.chevron(g, right - 4, ry + (rh - 8) / 2, 1, hover ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM);
 			}
 		}
 		Gfx.alpha = prev;
+	}
+
+
+	private int dropdownRowY() {
+		if (dropdown == null) return y;
+		int ry = scroll.y - scroll.offset();
+		for (ModuleEntry e : rows) {
+			if (e == dropdown) return ry;
+			ry += rowHeight(e) + ROW_GAP;
+		}
+		return y;
+	}
+
+	private void renderDropdown(GuiGraphics g, Font font, int mx, int my, boolean allowHover) {
+		if (dropdown == null || !dropdown.def.isChoice()) return;
+		List<String> values = dropdown.def.choices();
+		int rowY = dropdownRowY();
+		int itemH = 14;
+		int boxW = 132;
+		int boxX = x + rowW() - 8 - boxW;
+		int boxH = values.size() * itemH + 4;
+		int boxY = rowY + ROW_H + 3;
+		if (boxY + boxH > scroll.y + scroll.h) boxY = rowY - boxH - 3;
+		boxY = Math.max(y + HEAD_H + 6, boxY);
+		Gfx.fill(g, boxX, boxY, boxW, boxH, 7, 0xF01B1E28);
+		Gfx.ring(g, boxX, boxY, boxW, boxH, 7, 1, EchoTheme.CARD_BORDER_HOT);
+		for (int i = 0; i < values.size(); i++) {
+			String value = values.get(i);
+			int iy = boxY + 2 + i * itemH;
+			boolean selected = value.equals(dropdown.def.choiceValue());
+			boolean hover = allowHover && Gfx.hit(mx, my, boxX + 2, iy, boxW - 4, itemH);
+			if (selected || hover) Gfx.fill(g, boxX + 2, iy, boxW - 4, itemH, 4,
+					selected ? com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f) : 0x18FFFFFF);
+			if (selected) Gfx.circle(g, boxX + 9, iy + itemH / 2f, 1.6f, EchoTheme.ACCENT_TEXT);
+			Gfx.text(g, font, value, boxX + 16, iy + 3, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT);
+		}
 	}
 
 	private void renderTextRow(GuiGraphics g, Font font, ModuleEntry e, int ry, int rh, int rw, boolean hover) {
@@ -307,7 +353,26 @@ public final class SettingsView {
 	/** @param bindText текущий текст бинда (нужен для плашки в шапке; сам клик по плашке запускает ожидание клавиши) */
 	public Result click(double mx, double my, int button) {
 		if (editing != null) {
-			commit(); // клик куда угодно применяет ввод (если клик по другому полю, оно откроется ниже)
+			commit();
+		}
+		if (dropdown != null) {
+			List<String> values = dropdown.def.choices();
+			int rowY = dropdownRowY();
+			int itemH = 14;
+			int boxW = 132;
+			int boxX = x + rowW() - 8 - boxW;
+			int boxH = values.size() * itemH + 4;
+			int boxY = rowY + ROW_H + 3;
+			if (boxY + boxH > scroll.y + scroll.h) boxY = rowY - boxH - 3;
+			boxY = Math.max(y + HEAD_H + 6, boxY);
+			if (Gfx.hit(mx, my, boxX, boxY, boxW, boxH)) {
+				int index = (int) ((my - boxY - 2) / itemH);
+				if (index >= 0 && index < values.size()) dropdown.def.setChoice(values.get(index));
+				dropdown = null;
+				com.pvpvisuals.config.PvpConfig.get().save();
+				return Result.CHANGED;
+			}
+			dropdown = null;
 		}
 		if (Gfx.hit(mx, my, x, y + 6, 22, 22)) {
 			return Result.BACK;
@@ -348,6 +413,19 @@ public final class SettingsView {
 				ModuleDef d = e.def;
 				if (d.isText()) {
 					beginEdit(e);
+					return Result.CONSUMED;
+				}
+				if (d.isChoice()) {
+					if (button == 1) {
+						List<String> values = d.choices();
+						if (!values.isEmpty()) {
+							int current = values.indexOf(d.choiceValue());
+							d.setChoice(values.get((current + 1) % values.size()));
+							com.pvpvisuals.config.PvpConfig.get().save();
+							return Result.CHANGED;
+						}
+					}
+					dropdown = dropdown == e ? null : e;
 					return Result.CONSUMED;
 				}
 				if (d.isSlider()) {

@@ -26,6 +26,9 @@ public final class ModuleDef {
 	private BooleanSupplier visible;
 	private Supplier<String> textGet;
 	private Consumer<String> textSet;
+	private List<String> choices;
+	private Supplier<String> choiceGet;
+	private Consumer<String> choiceSet;
 
 	private DoubleSupplier sliderGet;
 	private DoubleConsumer sliderSet;
@@ -84,6 +87,20 @@ public final class ModuleDef {
 		return visible == null || visible.getAsBoolean();
 	}
 
+	/** Выбор значения из раскрывающегося списка в стиле Svintus. */
+	public static ModuleDef choice(String name, Category category, Supplier<String> get, List<String> values, Consumer<String> set) {
+		ModuleDef d = new ModuleDef(name, category, null, null, null);
+		d.choiceGet = get;
+		d.choiceSet = set;
+		d.choices = List.copyOf(values);
+		return d;
+	}
+
+	public boolean isChoice() { return choices != null && !choices.isEmpty(); }
+	public List<String> choices() { return choices == null ? List.of() : choices; }
+	public String choiceValue() { return choiceGet == null ? "" : choiceGet.get(); }
+	public void setChoice(String value) { if (choiceSet != null && choices != null && choices.contains(value)) choiceSet.accept(value); }
+
 	/** Строка с однострочным текстовым полем (ввод обрабатывает SettingsView). */
 	public static ModuleDef text(String name, Category category, Supplier<String> get, Consumer<String> set) {
 		ModuleDef d = new ModuleDef(name, category, null, null, null);
@@ -122,7 +139,7 @@ public final class ModuleDef {
 	}
 
 	public boolean isGroup() {
-		return getter == null && action == null && sliderGet == null && textGet == null;
+		return getter == null && action == null && sliderGet == null && textGet == null && !isChoice();
 	}
 
 	public boolean enabled() {
