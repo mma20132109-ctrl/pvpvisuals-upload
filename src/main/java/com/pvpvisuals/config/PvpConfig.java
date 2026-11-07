@@ -54,6 +54,8 @@ public final class PvpConfig {
 	public MenuSettings menu = new MenuSettings();
 	public BlockOverlaySettings blockOverlay = new BlockOverlaySettings();
 	public HitBoxSettings hitBox = new HitBoxSettings();
+	/** Независимые настройки Target ESP (не затрагивают обычный HitBox). */
+	public TargetEspSettings targetEspSettings = new TargetEspSettings();
 	public RadialMenuSettings radial = new RadialMenuSettings();
 	public ViewModelSettings viewModel = new ViewModelSettings();
 	public HandShaderSettings handShader = new HandShaderSettings();
