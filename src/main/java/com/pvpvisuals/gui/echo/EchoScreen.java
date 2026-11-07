@@ -66,6 +66,7 @@ public class EchoScreen extends Screen {
 	private int wy;
 	private int ww;
 	private int wh;
+	private float uiScale = 1f;
 	private int cx0;
 	private int cy0;
 	private int cw0;
@@ -155,12 +156,19 @@ public class EchoScreen extends Screen {
 	}
 
 	private void layout() {
-		ww = Math.min(this.width - 12, 440);
-		wh = Math.min(this.height - 12, 296);
-		wx = Mth.clamp((this.width - ww) / 2 + dragOffX, 4, Math.max(4, this.width - ww - 4));
-		wy = Mth.clamp((this.height - wh) / 2 + dragOffY, 4, Math.max(4, this.height - 30));
-		dragOffX = wx - (this.width - ww) / 2;
-		dragOffY = wy - (this.height - wh) / 2;
+		// Keep the reference's logical 440x296 canvas and scale it uniformly to fit small screens.
+		ww = 440;
+		wh = 296;
+		uiScale = Math.min(1f, Math.min(Math.max(1f, this.width - 12f) / ww,
+				Math.max(1f, this.height - 12f) / wh));
+		float virtualWidth = this.width / uiScale;
+		float virtualHeight = this.height / uiScale;
+		float baseX = (virtualWidth - ww) / 2f;
+		float baseY = (virtualHeight - wh) / 2f;
+		wx = Math.round(Mth.clamp(baseX + dragOffX, 4f, Math.max(4f, virtualWidth - ww - 4f)));
+		wy = Math.round(Mth.clamp(baseY + dragOffY, 4f, Math.max(4f, virtualHeight - wh - 4f)));
+		dragOffX = Math.round(wx - baseX);
+		dragOffY = Math.round(wy - baseY);
 
 		// поиск — справа в шапке
 		int sw = Math.min(124, Math.max(90, ww - MARGIN * 2));
@@ -288,18 +296,20 @@ public class EchoScreen extends Screen {
 
 		Gfx.alpha = open;
 		float sc = 0.94f + 0.06f * open;
-		float cx = wx + ww / 2f;
-		float cy = wy + wh / 2f;
+		float cx = this.width / (2f * uiScale);
+		float cy = this.height / (2f * uiScale);
+		float virtualMouseX = mouseX / uiScale;
+		float virtualMouseY = mouseY / uiScale;
 		g.pose().pushMatrix();
-		g.pose().translate(cx, cy);
-		g.pose().scale(sc, sc);
+		g.pose().translate(this.width / 2f, this.height / 2f);
+		g.pose().scale(uiScale * sc, uiScale * sc);
 		g.pose().translate(-cx, -cy);
-		drawWindow(g, mouseX, mouseY, dt, now);
+		drawWindow(g, virtualMouseX, virtualMouseY, dt, now);
+		if (glassSettingsOpen) {
+			drawGlassSettings(g, virtualMouseX, virtualMouseY);
+		}
 		g.pose().popMatrix();
 		Gfx.alpha = 1f;
-		if (glassSettingsOpen) {
-			drawGlassSettings(g, mouseX, mouseY);
-		}
 
 		dialog.render(g, this.font, mouseX, mouseY, this.width, this.height);
 		NotificationToast.render(g, this.font, this.width, this.height);
