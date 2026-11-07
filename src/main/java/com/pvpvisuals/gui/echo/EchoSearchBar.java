@@ -77,19 +77,19 @@ public final class EchoSearchBar {
 		int ty = y + (h - 8) / 2;
 		int maxW = w - 24 - 8;
 		if (text.length() == 0) {
-			Gfx.text(g, font, "Search modules...", tx, ty, EchoTheme.DIM);
+			Gfx.textAtSize(g, font, "Поиск", tx, ty, 6.2f, EchoTheme.DIM, false);
 			if (focused && (Util.getMillis() / 500) % 2 == 0) {
 				Gfx.rect(g, tx, ty - 1, tx + 1, ty + 9, EchoTheme.TEXT);
 			}
 			return;
 		}
 		String shown = text.toString();
-		while (shown.length() > 1 && Gfx.width(font, shown) > maxW) {
+		while (shown.length() > 1 && Gfx.widthAtSize(font, shown, 6.2f) > maxW) {
 			shown = shown.substring(1);
 		}
-		Gfx.text(g, font, shown, tx, ty, EchoTheme.TEXT);
+		Gfx.textAtSize(g, font, shown, tx, ty, 6.2f, EchoTheme.TEXT, false);
 		if (focused && (Util.getMillis() / 500) % 2 == 0) {
-			int cx = tx + Gfx.width(font, shown) + 1;
+			int cx = tx + Gfx.widthAtSize(font, shown, 6.2f) + 1;
 			Gfx.rect(g, cx, ty - 1, cx + 1, ty + 9, EchoTheme.TEXT);
 		}
 	}
