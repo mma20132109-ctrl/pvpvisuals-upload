@@ -8,6 +8,7 @@ import java.util.Map;
 import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleEntry;
 import com.pvpvisuals.keybind.KeybindManager;
+import com.pvpvisuals.gui.svintus.Anim;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -31,6 +32,7 @@ public final class SettingsView {
 	private final ScrollArea scroll = new ScrollArea();
 	private final List<ModuleEntry> rows = new ArrayList<>();
 	private final Map<ModuleEntry, ToggleSwitch> switches = new IdentityHashMap<>();
+	private final Map<ModuleEntry, Anim> sliderFills = new IdentityHashMap<>();
 	private final ToggleSwitch headSwitch = new ToggleSwitch();
 
 	private int x;
@@ -198,10 +200,16 @@ public final class SettingsView {
 			int bx = x + 10;
 			int bw = rw - 20;
 			Gfx.fill(g, bx, ry + 19, bw, 4, 2, EchoTheme.CARD_BORDER);
-			float ratio = (float) d.ratio();
-			int fw = Math.max(4, Math.round(bw * ratio));
-			Gfx.fill(g, bx, ry + 19, fw, 4, 2, EchoTheme.ACCENT_A, EchoTheme.ACCENT_B);
-			Gfx.circle(g, bx + Math.round((bw - 1) * ratio), ry + 21, 4, EchoTheme.KNOB);
+			Anim fill = sliderFills.computeIfAbsent(e, key -> new Anim((float) d.ratio(), 18f));
+			float ratio = fill.to((float) d.ratio()).get();
+			int fw = Math.max(0, Math.round(bw * ratio));
+			if (fw > 0) {
+				Gfx.fill(g, bx, ry + 19, fw, 4, 2, EchoTheme.ACCENT_A, EchoTheme.ACCENT_B);
+			}
+			float knobX = bx + (bw - 1) * ratio;
+			Gfx.glow(g, knobX - 3f, ry + 18f, 6f, 6f, 3f,
+					com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.24f), 2f);
+			Gfx.circle(g, knobX, ry + 21, 3.2f, EchoTheme.KNOB);
 		} else {
 			Gfx.text(g, font, d.title(), tx, ry + (rh - 8) / 2, textC);
 			int right = x + rw - 8;
