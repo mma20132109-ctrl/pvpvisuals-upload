@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.pvpvisuals.PvpVisualsClient;
 import com.pvpvisuals.config.PvpConfig;
-import com.pvpvisuals.gui.rival.NotificationToast;
 import com.pvpvisuals.gui.echo.EchoScreen;
 import com.pvpvisuals.gui.rival.TopBar;
 import com.pvpvisuals.hud.inventory.InventoryHudComponent;
