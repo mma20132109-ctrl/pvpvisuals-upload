@@ -53,9 +53,11 @@ public final class HitBoxModule {
 		Frame f = FRAME;
 		f.count = 0;
 
-		HitBoxSettings s = PvpConfig.get().hitBox;
+		PvpConfig config = PvpConfig.get();
+		HitBoxSettings s = config.hitBox;
+		boolean targetEsp = config.targetEsp;
 		Minecraft mc = Minecraft.getInstance();
-		if (!s.enabled || mc.level == null || mc.player == null) {
+		if ((!s.enabled && !targetEsp) || mc.level == null || mc.player == null) {
 			HitBoxState.clear();
 			lastNanos = 0;
 			return;
@@ -80,7 +82,11 @@ public final class HitBoxModule {
 				continue;
 			}
 			boolean player = e instanceof Player;
-			if (player ? !s.showPlayers : !s.showMobs) {
+			// Target ESP is target-only; it does not highlight every nearby entity.
+			if (targetEsp && (e != targeted || !player)) {
+				continue;
+			}
+			if (!targetEsp && (player ? !s.showPlayers : !s.showMobs)) {
 				continue;
 			}
 			if (e.distanceToSqr(mc.player) > maxSq) {
@@ -98,7 +104,7 @@ public final class HitBoxModule {
 				continue; // за кадром (без through-walls это безопасно; сквозь стены тоже можно, но оставляем простую логику)
 			}
 
-			float progress = HitBoxState.update(e.getUUID(), e == targeted, s.transitionSpeed, dtTicks);
+			float progress = targetEsp ? 1f : HitBoxState.update(e.getUUID(), e == targeted, s.transitionSpeed, dtTicks);
 			int o = f.count * STRIDE;
 			f.boxes[o] = (float) (minX - cam.x);
 			f.boxes[o + 1] = (float) (minY - cam.y);
