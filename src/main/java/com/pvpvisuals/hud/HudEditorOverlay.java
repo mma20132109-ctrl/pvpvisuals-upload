@@ -335,11 +335,16 @@ public final class HudEditorOverlay {
 	/** @return true, если отпускание обработано (конфиг сохраняется). */
 	public static boolean onRelease() {
 		boolean was = dragging != null || resizing != null;
-		reset();
+		dragging = null;
+		resizing = null;
+		guideX = -1;
+		guideY = -1;
+		// Не закрываем contextMenu: правый клик открывает его по нажатию,
+		// а само меню должно оставаться после отпускания кнопки мыши.
 		if (was) {
 			PvpConfig.get().save();
 		}
-		return was;
+		return was || contextMenu != null;
 	}
 
 	/** Колесо над элементом меняет масштаб; Shift + колесо — прозрачность. */
