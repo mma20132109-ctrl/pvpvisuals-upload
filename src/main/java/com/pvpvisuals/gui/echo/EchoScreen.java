@@ -74,6 +74,8 @@ public class EchoScreen extends Screen {
 
 	// анимации
 	private final long openNs = System.nanoTime();
+	private long closingNs;
+	private boolean closing;
 	private long lastNs;
 	private long tabNs = System.nanoTime();
 	private long bindRefreshNs;
@@ -263,8 +265,13 @@ public class EchoScreen extends Screen {
 			// блюр уже применён в этом кадре
 		}
 
-		float open = Gfx.ease((now - openNs) / 220_000_000f);
-		interactive = open >= 0.999f && !dialog.active();
+		float open = closing ? 1f - Gfx.ease((now - closingNs) / 180_000_000f)
+				: Gfx.ease((now - openNs) / 220_000_000f);
+		if (closing && open <= 0.02f) {
+			super.onClose();
+			return;
+		}
+		interactive = !closing && open >= 0.999f && !dialog.active();
 		layout();
 		int overlayA = Math.round(Mth.clamp(PvpConfig.get().gui.overlayAlpha, 0f, 1f) * 255f * open) & 0xFF;
 		g.fill(0, 0, this.width, this.height, (overlayA << 24) | 0x0A0418);
@@ -302,11 +309,9 @@ public class EchoScreen extends Screen {
 		boolean hoverOk = interactive;
 
 		// окно: акцентное свечение, градиентная заливка, лёгкая акцентная вуаль, блик сверху и тонкая рамка
-		Gfx.glow(g, wx, wy, ww, wh, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.35f), 8);
-		Gfx.rrect(g, wx, wy, ww, wh, R, EchoTheme.WIN_TOP, EchoTheme.WIN_BOTTOM, 0, 0f);
-		Gfx.rrect(g, wx, wy, ww, wh, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.07f), 0, 0, 0f);
-		Gfx.rrect(g, wx, wy, ww, 60, R, 0x0CFFFFFF, 0x00FFFFFF, 0, 0f);
-		Gfx.ring(g, wx, wy, ww, wh, R, 1, 0x2AFFFFFF);
+		Gfx.glow(g, wx, wy, ww, wh, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 6);
+		LiquidGlassRenderer.window(g, wx, wy, ww, wh, R);
+		Gfx.rrect(g, wx + 1, wy + 1, ww - 2, 60, R - 1, 0x0AFFFFFF, 0x00FFFFFF, 0, 0f);
 
 		drawHeader(g, dt);
 		drawTabs(g, mx, my, dt, hoverOk);
@@ -701,10 +706,15 @@ public class EchoScreen extends Screen {
 
 	@Override
 	public void onClose() {
+		if (closing) {
+			return;
+		}
+		closing = true;
+		closingNs = System.nanoTime();
+		interactive = false;
 		KeybindManager.cancelListening();
 		captureExpanded();
 		save();
-		super.onClose();
 	}
 
 	/** После импорта/сброса значения изменились целиком: пересоздаём меню с новыми лямбдами. */
