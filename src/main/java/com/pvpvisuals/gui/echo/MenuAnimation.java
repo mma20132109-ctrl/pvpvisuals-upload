@@ -48,6 +48,8 @@ public final class MenuAnimation {
     private long startTimeNs;
     private long durationNs = OPEN_DURATION_NS;
 
+    private float fromAlpha;
+
     private boolean visible;
     private boolean closing;
 
@@ -91,6 +93,7 @@ public final class MenuAnimation {
         currentHeight = fromHeight;
 
         progress = 0f;
+        fromAlpha = 0f;
         currentAlpha = 0f;
         startTimeNs = nowNs;
         durationNs = OPEN_DURATION_NS;
@@ -124,7 +127,7 @@ public final class MenuAnimation {
         targetHeight = originHeight;
 
         progress = 0f;
-        currentAlpha = 1f;
+        fromAlpha = currentAlpha;
         startTimeNs = nowNs;
         durationNs = Math.max(1L, requestedDurationNs);
         closing = true;
@@ -149,7 +152,7 @@ public final class MenuAnimation {
         currentY = lerp(fromY, targetY, eased);
         currentWidth = lerp(fromWidth, targetWidth, eased);
         currentHeight = lerp(fromHeight, targetHeight, eased);
-        currentAlpha = closing ? 1f - eased : eased;
+        currentAlpha = closing ? fromAlpha * (1f - eased) : eased;
 
         if (progress >= 1f) {
             currentX = targetX;
