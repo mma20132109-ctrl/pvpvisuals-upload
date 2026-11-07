@@ -5,6 +5,7 @@ import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleEntry;
 import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.keybind.KeybindManager;
+import com.pvpvisuals.gui.svintus.Anim;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -39,6 +40,8 @@ public final class ModuleCard {
 	public String bindText;
 
 	private final ToggleSwitch sw = new ToggleSwitch();
+	private final Anim hoverAnim = new Anim(0f, 14f);
+	private final Anim enabledAnim;
 	private float hov;
 	private float on;
 	private boolean hovered;
@@ -56,6 +59,7 @@ public final class ModuleCard {
 		this.desc = ModuleInfo.desc(def.name);
 		this.descLower = desc.toLowerCase(java.util.Locale.ROOT);
 		this.on = def.isToggle() && def.enabled() ? 1f : 0f;
+		this.enabledAnim = new Anim(this.on, 14f);
 	}
 
 	public String description() {
@@ -138,10 +142,9 @@ public final class ModuleCard {
 	}
 
 	public void update(float dtMs) {
-		float k = Math.min(1f, dtMs / 80f);
-		hov += ((hovered ? 1f : 0f) - hov) * k;
-		float target = def.isToggle() ? (def.enabled() ? 1f : 0f) : 0f;
-		on += (target - on) * Math.min(1f, dtMs / 90f);
+		hov = hoverAnim.to(hovered).get();
+		float target = def.isToggle() && def.enabled() ? 1f : 0f;
+		on = enabledAnim.to(target).get();
 		sw.update(def.enabled(), dtMs);
 	}
 
