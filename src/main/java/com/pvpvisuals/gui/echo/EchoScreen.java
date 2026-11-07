@@ -764,9 +764,13 @@ public class EchoScreen extends Screen {
 			return true;
 		}
 		if (draggingWindow) {
+			int oldWx = wx;
+			int oldWy = wy;
 			dragOffX += Math.round(dragX / uiScale);
 			dragOffY += Math.round(dragY / uiScale);
 			layout();
+			settingsMorph.shift(wx - oldWx, wy - oldWy);
+			layoutSideSettings();
 			return true;
 		}
 		if (settings != null && settingsMorph.isOpen() && settings.isDragging()) {
