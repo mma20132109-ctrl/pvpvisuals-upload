@@ -108,7 +108,7 @@ public final class HudEditorOverlay {
 
 		toolbar(g, font, t, cfg, mx, my, sw);
 
-		String hint = "ЛКМ — переместить  •  ПКМ — настройки  •  Угол — изменить размер  •  Shift+колесо — прозрачность  •  Esc — сохранить";
+		String hint = "ЛКМ — переместить  •  ПКМ — настройки  •  Колесо — масштаб  •  Угол — размер  •  Shift+колесо — альфа  •  Esc — сохранить";
 		int hintW = font.width(hint);
 		int hintX = (sw - hintW) / 2 - 6;
 		HudStyle.panel(g, hintX, hintY - 4, hintW + 12, 16, 5, 0.92f);
@@ -342,17 +342,34 @@ public final class HudEditorOverlay {
 		return was;
 	}
 
-	/** Shift + колесо над элементом меняет его прозрачность. */
+	/** Колесо над элементом меняет масштаб; Shift + колесо — прозрачность. */
 	public static boolean onScroll(double mx, double my, double scrollY, boolean shift) {
-		if (!shift || contextMenu != null) {
+		if (contextMenu != null || scrollY == 0.0) {
 			return false;
 		}
 		AbstractHudModule m = top(mx, my);
 		if (m == null) {
 			return false;
 		}
-		float a = Mth.clamp(m.alpha() + (scrollY > 0 ? 0.05f : -0.05f), AbstractHudModule.MIN_ALPHA, 1.0f);
-		m.settings().alpha = Math.round(a * 100f) / 100f;
+
+		if (shift) {
+			float a = Mth.clamp(m.alpha() + (scrollY > 0 ? 0.05f : -0.05f),
+					AbstractHudModule.MIN_ALPHA, 1.0f);
+			m.settings().alpha = Math.round(a * 100f) / 100f;
+		} else {
+			var window = Minecraft.getInstance().getWindow();
+			int sw = window.getGuiScaledWidth();
+			int sh = window.getGuiScaledHeight();
+			float centerX = m.bounds.x + m.bounds.width / 2f;
+			float centerY = m.bounds.y + m.bounds.height / 2f;
+
+			float scale = Mth.clamp(m.scale() + (scrollY > 0 ? 0.05f : -0.05f),
+					AbstractHudModule.MIN_SCALE, AbstractHudModule.MAX_SCALE);
+			m.settings().scale = Math.round(scale * 100f) / 100f;
+			int newX = Math.round(centerX - m.width() / 2f);
+			int newY = Math.round(centerY - m.height() / 2f);
+			m.setScreenPos(newX, newY, sw, sh);
+		}
 		PvpConfig.get().save();
 		return true;
 	}
