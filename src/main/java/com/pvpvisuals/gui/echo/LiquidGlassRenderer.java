@@ -44,11 +44,24 @@ public final class LiquidGlassRenderer {
     }
 
     public static void window(GuiGraphics graphics, float x, float y, float width, float height, float radius) {
-        blurRect(graphics, x, y, width, height, radius, EchoTheme.WIN_TOP, EchoTheme.WIN_BOTTOM);
+        window(graphics, x, y, width, height, radius, 1f);
+    }
+
+    /**
+     * Draws the glass window with an explicit transition opacity.
+     * The opacity is applied to the blur tint, reflection and border colors,
+     * so the custom GUI render pipeline follows the same fade as ordinary Gfx calls.
+     */
+    public static void window(GuiGraphics graphics, float x, float y, float width, float height,
+            float radius, float opacity) {
+        float alpha = Math.max(0f, Math.min(1f, opacity));
+        blurRect(graphics, x, y, width, height, radius,
+                withAlpha(EchoTheme.WIN_TOP, alpha), withAlpha(EchoTheme.WIN_BOTTOM, alpha));
         roundRect(graphics, x + 1f, y + 1f, width - 2f, Math.min(54f, height * 0.22f),
-                Math.max(1f, radius - 1f), 0x18FFFFFF, 0x00FFFFFF, 0, 0f);
+                Math.max(1f, radius - 1f),
+                withAlpha(0x18FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
         roundRect(graphics, x + 0.6f, y + 0.6f, width - 1.2f, height - 1.2f,
-                Math.max(1f, radius - 0.6f), 0, 0, 0x55FFFFFF, 0.8f);
+                Math.max(1f, radius - 0.6f), 0, 0, withAlpha(0x55FFFFFF, alpha), 0.8f);
     }
 
     public static void surface(GuiGraphics graphics, float x, float y, float width, float height, float radius,
