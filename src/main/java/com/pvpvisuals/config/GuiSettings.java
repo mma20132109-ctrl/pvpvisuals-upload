@@ -4,7 +4,7 @@ package com.pvpvisuals.config;
 public class GuiSettings {
 	/** Непрозрачность тёмного оверлея за меню (0..0.8). */
 	public float overlayAlpha = 0.33f;
-	/** Множитель непрозрачности панелей (0.3..1). */
+	/** Непрозрачность тонировки стеклянных панелей (0 = прозрачнее, 1 = плотнее). */
 	public float panelOpacity = 1.0f;
 	/** Плавный рендер GUI (скругления, обводки, свечение с мягкими краями). false — старый построчный рендер. */
 	public boolean smoothGui = true;
