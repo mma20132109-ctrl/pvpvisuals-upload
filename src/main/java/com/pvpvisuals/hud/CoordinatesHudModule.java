@@ -26,7 +26,7 @@ public final class CoordinatesHudModule extends AbstractHudModule {
  @Override protected int contentWidth(){
   update(); var f=Minecraft.getInstance().font;
   int w=7+Gfx.widthAtSize(f,"XYZ",6.2f)+5+Gfx.widthAtSize(f,coords,6.2f)+7;
-  if(!direction.isEmpty())w+=20+Gfx.widthAtSize(f,direction,6.2f);
+  if(!direction.isEmpty())w+=22+Gfx.widthAtSize(f,direction,6.2f);
   if(!other.isEmpty())w+=10+Gfx.widthAtSize(f,other,5.6f);
   return w;
  }
@@ -37,6 +37,6 @@ public final class CoordinatesHudModule extends AbstractHudModule {
   int x=7; Gfx.textAtSize(g,f,"XYZ",x,4.2f,6.2f,HudAlpha.mul(HudStyle.ACCENT),false); x+=Gfx.widthAtSize(f,"XYZ",6.2f)+5;
   Gfx.textAtSize(g,f,coords,x,4.2f,6.2f,HudAlpha.mul(HudStyle.TEXT),false); x+=Gfx.widthAtSize(f,coords,6.2f);
   if(!other.isEmpty()){x+=5;Gfx.fill(g,x,4,1,7,0,HudAlpha.mul(0x30FFFFFF));x+=5;Gfx.textAtSize(g,f,other,x,4.5f,5.6f,HudAlpha.mul(HudStyle.MUTED),false);x+=Gfx.widthAtSize(f,other,5.6f);}
-  if(!direction.isEmpty()){x+=6;Gfx.fill(g,x,4,1,7,0,HudAlpha.mul(0x30FFFFFF));x+=6;Gfx.textAtSize(g,f,"◆ "+direction,x,4.2f,6.2f,HudAlpha.mul(HudStyle.ACCENT),false);}
+  if(!direction.isEmpty()){x+=6;HudStyle.separator(g,x,4f,7f,HudAlpha.current);x+=6;HudIcons.compass(g,x+3f,7.5f,3.1f,HudAlpha.mul(HudStyle.ACCENT));x+=8;Gfx.textAtSize(g,f,direction,x,4.2f,6.2f,HudAlpha.mul(HudStyle.ACCENT),false);}
  }
 }
