@@ -257,13 +257,8 @@ public class EchoScreen extends Screen {
 		float dt = lastNs == 0 ? 16f : Math.min(50f, (now - lastNs) / 1_000_000f);
 		lastNs = now;
 
-		// Размытие фона: Screen#renderBackground. В 1.21.11 блюр применяется один раз за кадр; если ваниль уже
-		// нарисовала фон, повторный вызов бросает IllegalStateException — пропускаем.
-		try {
-			this.renderBackground(g, mouseX, mouseY, delta);
-		} catch (IllegalStateException alreadyBlurred) {
-			// блюр уже применён в этом кадре
-		}
+		// Снимок сцены нужен стеклянным панелям для локального размытия.
+		LiquidGlassRenderer.captureBackground();
 
 		float open = closing ? 1f - Gfx.ease((now - closingNs) / 180_000_000f)
 				: Gfx.ease((now - openNs) / 220_000_000f);
