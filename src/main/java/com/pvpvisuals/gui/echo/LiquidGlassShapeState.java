@@ -3,7 +3,7 @@ package com.pvpvisuals.gui.echo;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.render.TextureSetup;
-import net.minecraft.client.gui.render.state.SimpleGuiElementRenderState;
+import net.minecraft.client.gui.render.state.GuiElementRenderState;
 import org.joml.Matrix3x2f;
 
 /** Immutable rounded-rectangle submission for Minecraft's 1.21.11 GUI render-state pipeline. */
@@ -13,7 +13,7 @@ public record LiquidGlassShapeState(
         float radius, float border,
         int topLeft, int topRight, int bottomRight, int bottomLeft,
         ScreenRectangle bounds
-) implements SimpleGuiElementRenderState {
+) implements GuiElementRenderState {
 
     @Override
     public com.mojang.blaze3d.pipeline.RenderPipeline pipeline() {
@@ -26,12 +26,17 @@ public record LiquidGlassShapeState(
     }
 
     @Override
+    public ScreenRectangle bounds() {
+        return bounds;
+    }
+
+    @Override
     public ScreenRectangle scissorArea() {
         return null;
     }
 
     @Override
-    public void setupVertices(VertexConsumer vertices) {
+    public void buildVertices(VertexConsumer vertices) {
         float x0 = x;
         float y0 = y;
         float x1 = x + width;
