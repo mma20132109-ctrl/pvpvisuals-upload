@@ -52,7 +52,7 @@ public final class ModuleRegistry {
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.BOX_3D))
 						.child(ModuleDef.slider("Fill Alpha", Category.VISUAL, 0.02, 0.35, 2, () -> c.targetEspSettings.fillAlpha, v -> c.targetEspSettings.fillAlpha = (float) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.BOX_3D))
-						.child(ModuleDef.slider("Ghost Count", Category.VISUAL, 4, 48, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
+						.child(ModuleDef.slider("Soul Particles / sec", Category.VISUAL, 4, 48, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
 						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 4.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
 						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0)))
