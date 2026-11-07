@@ -330,11 +330,12 @@ public class EchoScreen extends Screen {
 		float tf = Gfx.ease((now - tabNs) / 180_000_000f);
 		float prev = Gfx.alpha;
 		Gfx.alpha = prev * tf;
+		// Keep the clip fixed in screen space. Applying it after the tab-transition
+		// translation moves the clip together with the cards and can expose pixels
+		// beyond the GUI body while the content animates.
+		g.enableScissor(cx0, cy0, cx0 + cw0, cy0 + ch0);
 		g.pose().pushMatrix();
 		g.pose().translate(0f, (1f - tf) * 8f);
-		// Hard boundary for the complete content region. This also clips expanded
-		// module settings and popups, not only the main module-card grid.
-		g.enableScissor(cx0, cy0, cx0 + cw0, cy0 + ch0);
 		if (settings != null) {
 			settings.layout(cx0, cy0, cw0, ch0);
 			String bt = settings.card().bindText;
