@@ -21,6 +21,7 @@ public final class TargetEspSettings {
     public boolean fillBox = true;
     public float fillAlpha = 0.10f;
 
+    /** Количество одновременно рисуемых текстурных призраков (4..48). */
     public int ghostCount = 12;
     public float animationSpeed = 1.0f;
     public float fadeOutSeconds = 0.30f;
