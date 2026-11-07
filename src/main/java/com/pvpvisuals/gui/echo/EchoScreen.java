@@ -56,8 +56,9 @@ public class EchoScreen extends Screen {
 	private final ScrollableGrid grid = new ScrollableGrid();
 	private final ConfigDialog dialog = new ConfigDialog();
 	private SettingsView settings;
+	private ModuleCard pendingFocusCard;
 	private boolean sideSettingsLeft;
-	private long sideSettingsNs;
+	private final MenuAnimation settingsMorph = new MenuAnimation();
 
 	private Category selected = Category.VISUAL;
 	private String lastQuery;
@@ -117,7 +118,7 @@ public class EchoScreen extends Screen {
 		for (ModuleCard c : all) {
 			if (c.def.title().equalsIgnoreCase(focusModule)) {
 				selected = c.def.category;
-				settings = new SettingsView(c);
+				pendingFocusCard = c;
 				break;
 			}
 		}
@@ -220,17 +221,49 @@ public class EchoScreen extends Screen {
 	private void select(Category c) {
 		if (c != selected || settings != null || !search.isEmpty()) {
 			selected = c;
-			settings = null;
+			if (settings != null) {
+				closeSettings();
+			}
 			search.clear();
 			tabNs = System.nanoTime();
 		}
 	}
 
-	private void openSettings(ModuleCard card) {
+	private void openSettings(ModuleCard card, int cardY) {
+		openSettings(card, card.x, cardY, card.w, ModuleCard.H);
+	}
+
+	/**
+	 * Open settings by morphing from the clicked card rectangle.
+	 * Coordinates use EchoScreen's virtual GUI space.
+	 */
+	private void openSettings(ModuleCard card, float sourceX, float sourceY,
+			float sourceWidth, float sourceHeight) {
+		long now = System.nanoTime();
+
 		settings = new SettingsView(card);
 		sideSettingsLeft = card.x < wx + ww / 2;
-		sideSettingsNs = System.nanoTime();
 		layoutSideSettings();
+
+		int panelX = sideSettingsLeft ? wx - sideSettingsWidth() : wx + ww;
+		settingsMorph.open(
+				sourceX, sourceY, sourceWidth, sourceHeight,
+				panelX, cy0, sideSettingsWidth(), ch0,
+				now
+		);
+		settings.startIntro(now + MenuAnimation.OPEN_DURATION_NS);
+	}
+
+	/** Reverse the row cascade, then shrink the panel back to its source card. */
+	private void closeSettings() {
+		if (settings == null || settingsMorph.isClosing() || !settingsMorph.isVisible()) {
+			return;
+		}
+
+		long now = System.nanoTime();
+		settings.endDrag();
+		settings.startOutro(now);
+		settingsMorph.close(now, settings.outroDurationNs());
 	}
 
 	private int sideSettingsWidth() { return 176; }
@@ -289,6 +322,13 @@ public class EchoScreen extends Screen {
 		}
 		interactive = !closing && open >= 0.999f && !dialog.active();
 		layout();
+		if (pendingFocusCard != null && settings == null) {
+			ModuleCard focus = pendingFocusCard;
+			pendingFocusCard = null;
+			// HUD-editor entry point has no visible source card: morph from a small
+			// anchor at the center of the main GUI toward the attached settings panel.
+			openSettings(focus, wx + ww / 2f - 10f, cy0 + ch0 / 2f - 10f, 20f, 20f);
+		}
 		int overlayA = Math.round(Mth.clamp(PvpConfig.get().gui.overlayAlpha, 0f, 1f) * 255f * open) & 0xFF;
 		g.fill(0, 0, this.width, this.height, (overlayA << 24) | 0x0A0418);
 
@@ -362,55 +402,49 @@ public class EchoScreen extends Screen {
 	}
 
 	private void drawSideSettings(GuiGraphics g, int mx, int my, float dt, boolean hoverOk, long now) {
-		layoutSideSettings();
-		int panelWidth = sideSettingsWidth();
-		int targetX = sideSettingsLeft ? wx - panelWidth : wx + ww;
-		float raw = Mth.clamp((now - sideSettingsNs) / 620_000_000f, 0f, 1f);
-		float t = Gfx.ease(raw);
-		float pulse = (float) Math.sin(raw * Math.PI);
-		float surfaceX = sideSettingsLeft ? wx : wx + ww;
-		float surfaceY = cy0 + ch0 * 0.5f;
-		float oldAlpha = Gfx.alpha;
-
-		// The GUI edge is the fixed waterline: the panel grows out of it,
-		// rather than sliding in as a separate floating window.
-		float growth = Mth.clamp(t + pulse * 0.045f, 0.015f, 1.035f);
-		float visibleWidth = panelWidth * growth;
-		float drawX = sideSettingsLeft ? surfaceX - visibleWidth : surfaceX;
-
-		if (raw < 1f) {
-			float rippleFade = (1f - raw) * 0.72f;
-			Gfx.alpha = oldAlpha * Math.min(1f, raw * 2.5f + 0.08f);
-			for (int i = 0; i < 4; i++) {
-				float radius = 7f + raw * 32f + i * 9f;
-				int color = RoundedRender.scaleAlpha(EchoTheme.ACCENT_TEXT, rippleFade * (1f - i * 0.16f));
-				Gfx.ringCircle(g, surfaceX, surfaceY, radius, 1.1f, color);
-			}
-			// A wavering vertical seam follows the expanding panel edge.
-			for (int i = 0; i < 9; i++) {
-				float y = cy0 + 7f + i * ((ch0 - 14f) / 8f);
-				float wobble = (float) Math.sin(raw * 13f + i * 0.9f) * (1f - raw) * 5f;
-				float edge = sideSettingsLeft ? surfaceX - visibleWidth : surfaceX + visibleWidth;
-				int color = RoundedRender.scaleAlpha(EchoTheme.TEXT, rippleFade * (0.75f - i * 0.035f));
-				Gfx.line(g, edge - wobble, y - 3f, edge + wobble, y + 3f, 1.15f, color);
-			}
+		if (settings == null) {
+			return;
 		}
 
-		Gfx.alpha = oldAlpha * Mth.clamp(t * 1.15f, 0f, 1f);
-		g.pose().pushMatrix();
-		// Scale from the shared GUI border so the inner edge never detaches.
-		g.pose().translate(surfaceX, surfaceY);
-		g.pose().scale(growth, 0.985f + 0.015f * t + pulse * 0.025f);
-		g.pose().translate(-surfaceX, -surfaceY);
-		Gfx.glow(g, targetX, cy0, panelWidth, ch0, 10, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 6);
-		LiquidGlassRenderer.window(g, targetX, cy0, panelWidth, ch0, 10);
-		Gfx.rrect(g, targetX + 1, cy0 + 1, panelWidth - 2, 34, 9, 0x12FFFFFF, 0x00FFFFFF, 0, 0f);
-		g.enableScissor(targetX, cy0, targetX + panelWidth, cy0 + ch0);
-		settings.render(g, this.font, mx, my, dt, hoverOk && raw > 0.96f, settings.card().bindText);
-		g.disableScissor();
-		g.pose().popMatrix();
-		Gfx.alpha = oldAlpha;
+		layoutSideSettings();
+		settingsMorph.update(now);
+		if (!settingsMorph.isVisible()) {
+			settings = null;
+			return;
+		}
+
+		float x = settingsMorph.currentX;
+		float y = settingsMorph.currentY;
+		float w = settingsMorph.currentWidth;
+		float h = settingsMorph.currentHeight;
+		float alpha = settingsMorph.revealProgress();
+		float radius = Math.min(10f, Math.min(w, h) * 0.12f);
+		float oldAlpha = Gfx.alpha;
+
+		Gfx.alpha = oldAlpha * alpha;
+		Gfx.glow(g, x, y, w, h, radius,
+				RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 5f);
+		LiquidGlassRenderer.window(g, x, y, w, h, radius, alpha);
+
+		// Clip to the visible morph rectangle before applying the panel transform.
+		g.enableScissor(
+				(int) Math.floor(x),
+				(int) Math.floor(y),
+				(int) Math.ceil(x + w),
+				(int) Math.ceil(y + h)
+		);
+
+		settingsMorph.apply(g);
+		try {
+			settings.render(g, this.font, mx, my, dt,
+					hoverOk && settingsMorph.isOpen(), settings.card().bindText);
+		} finally {
+			settingsMorph.restore(g);
+			g.disableScissor();
+			Gfx.alpha = oldAlpha;
+		}
 	}
+
 	private void drawHeader(GuiGraphics g, float dt) {
 		PvpConfig cfg = PvpConfig.get();
 		int lx = wx + MARGIN;
@@ -623,6 +657,9 @@ public class EchoScreen extends Screen {
 		if (!interactive) {
 			return true;
 		}
+		if (settings != null && !settingsMorph.isOpen()) {
+			return true;
+		}
 		// GUI hit testing uses the same virtual coordinates as the scaled reference canvas.
 		mx /= uiScale;
 		my /= uiScale;
@@ -692,7 +729,7 @@ public class EchoScreen extends Screen {
 
 		if (settings != null && settings.contains(mx, my)) {
 			SettingsView.Result r = settings.click(mx, my, btn);
-			if (r == SettingsView.Result.BACK) settings = null;
+			if (r == SettingsView.Result.BACK) closeSettings();
 			else if (r == SettingsView.Result.CHANGED) save();
 			return r != SettingsView.Result.NONE;
 		}
@@ -705,12 +742,12 @@ public class EchoScreen extends Screen {
 		ModuleDef def = card.def;
 		switch (hit.zone()) {
 			case BIND -> { if (btn == 1) KeybindManager.clear(def.name); else KeybindManager.startListening(def.name); }
-			case MORE -> openSettings(card);
-			case INLINE_SETTINGS -> openSettings(card);
-			case TOGGLE -> { if (btn == 1 && (card.hasSettings() || def.isGroup())) openSettings(card); else if (btn == 0 && def.activate()) save(); }
+			case MORE -> openSettings(card, hit.screenY());
+			case INLINE_SETTINGS -> openSettings(card, hit.screenY());
+			case TOGGLE -> { if (btn == 1 && (card.hasSettings() || def.isGroup())) openSettings(card, hit.screenY()); else if (btn == 0 && def.activate()) save(); }
 			case BODY -> {
-				if (btn == 1) { if (card.hasSettings() || def.isGroup()) openSettings(card); }
-				else if (def.isGroup()) openSettings(card);
+				if (btn == 1) { if (card.hasSettings() || def.isGroup()) openSettings(card, hit.screenY()); }
+				else if (def.isGroup()) openSettings(card, hit.screenY());
 				else if (def.activate()) save();
 			}
 			default -> { }
@@ -725,12 +762,16 @@ public class EchoScreen extends Screen {
 			return true;
 		}
 		if (draggingWindow) {
+			int oldWx = wx;
+			int oldWy = wy;
 			dragOffX += Math.round(dragX / uiScale);
 			dragOffY += Math.round(dragY / uiScale);
 			layout();
+			settingsMorph.shift(wx - oldWx, wy - oldWy);
+			layoutSideSettings();
 			return true;
 		}
-		if (settings != null && settings.isDragging()) {
+		if (settings != null && settingsMorph.isOpen() && settings.isDragging()) {
 			settings.dragTo(event.x() / uiScale);
 			return true;
 		}
@@ -766,7 +807,7 @@ public class EchoScreen extends Screen {
 		mouseX /= uiScale;
 		mouseY /= uiScale;
 		float px = (float) (-scrollY * 28);
-		if (settings != null && settings.contains(mouseX, mouseY)) {
+		if (settings != null && settingsMorph.isOpen() && settings.contains(mouseX, mouseY)) {
 			settings.scrollBy(px);
 			return true;
 		}
@@ -797,7 +838,7 @@ public class EchoScreen extends Screen {
 			if (search.focused()) {
 				search.setFocused(false);
 			} else if (settings != null) {
-				settings = null;
+				closeSettings();
 				tabNs = System.nanoTime();
 			} else {
 				this.onClose();
@@ -839,7 +880,9 @@ public class EchoScreen extends Screen {
 		if (cp >= 32 && cp != 127) {
 			search.setFocused(true);
 			search.type(cp);
-			settings = null; // поиск работает по сетке
+			if (settings != null) {
+				closeSettings();
+			} // поиск работает по сетке
 			return true;
 		}
 		return false;
