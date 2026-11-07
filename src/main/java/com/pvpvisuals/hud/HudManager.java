@@ -64,6 +64,10 @@ public final class HudManager {
 
 		float pt = tracker.getGameTimeDeltaPartialTick(false);
 
+		// Capture the world + vanilla HUD once before any PvPVisuals overlays are submitted.
+		// All Liquid Glass HUD panels sample this same frame snapshot.
+		com.pvpvisuals.gui.echo.LiquidGlassRenderer.captureBackground();
+
 		TrajectoryRenderer.renderHud(g, mc, pt);
 		DamageNumbers.render(g, mc, pt);
 		CritEffect.render(g, mc, pt);
