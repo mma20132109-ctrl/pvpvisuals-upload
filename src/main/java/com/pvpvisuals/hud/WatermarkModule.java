@@ -15,6 +15,7 @@ import com.pvpvisuals.render.LogoSizeMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.PlayerFaceRenderer;
 
 /**
  * Сегментированная Watermark-плашка в стиле Svintus:
@@ -113,6 +114,8 @@ public final class WatermarkModule extends AbstractHudModule {
 
         if (logo()) {
             LogoRenderer.renderLogoAuto(g, mode(), 6, 3, 14, 1f, HudAlpha.current);
+        } else if (mc.player != null) {
+            PlayerFaceRenderer.draw(g, mc.player.getSkin(), 6, 3, 14);
         } else {
             HudIcons.player(g, 12.5f, 10f, 6f, HudAlpha.mul(HudStyle.ACCENT));
         }
