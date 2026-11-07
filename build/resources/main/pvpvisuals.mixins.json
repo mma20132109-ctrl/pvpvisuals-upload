@@ -1,0 +1,29 @@
+{
+	"required": true,
+	"package": "com.pvpvisuals.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"CapeLayerMixin",
+		"SkyRendererMixin",
+		"CloudRendererMixin",
+		"FreelookCameraMixin",
+		"FreelookMouseMixin",
+		"LoadingOverlayMixin",
+		"MinecraftScreenMixin",
+		"ScreenBackgroundMixin",
+		"AbstractButtonMixin",
+		"AbstractSliderButtonMixin",
+		"EditBoxMixin",
+		"AbstractSelectionListMixin",
+		"LevelLoadingScreenMixin",
+		"GenericMessageScreenMixin",
+		"FocusableTextWidgetMixin",
+		"ScreenDiagMixin",
+		"ItemInHandRendererMixin",
+		"GameRendererBobMixin",
+		"OptionInstanceAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

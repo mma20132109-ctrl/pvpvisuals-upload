@@ -1,0 +1,28 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "minecraft:trader_llama_spawn_egg": 1
+    },
+    "minecraft:killed": {
+      "minecraft:slime": 7
+    },
+    "minecraft:picked_up": {
+      "minecraft:egg": 1
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 2816,
+      "minecraft:walk_one_cm": 7117,
+      "minecraft:total_world_time": 2816,
+      "minecraft:leave_game": 1,
+      "minecraft:fly_one_cm": 8103,
+      "minecraft:mob_kills": 7,
+      "minecraft:crouch_one_cm": 79,
+      "minecraft:sneak_time": 42,
+      "minecraft:play_time": 2816,
+      "minecraft:damage_dealt": 710,
+      "minecraft:jump": 46,
+      "minecraft:time_since_death": 2816
+    }
+  },
+  "DataVersion": 4671
+}

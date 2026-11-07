@@ -1,0 +1,30 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "minecraft:netherite_axe": 7
+    },
+    "minecraft:custom": {
+      "minecraft:sprint_one_cm": 242,
+      "minecraft:time_since_rest": 1087,
+      "minecraft:walk_one_cm": 1016,
+      "minecraft:total_world_time": 1087,
+      "minecraft:leave_game": 1,
+      "minecraft:fly_one_cm": 4270,
+      "minecraft:mob_kills": 4,
+      "minecraft:play_time": 1087,
+      "minecraft:damage_dealt": 500,
+      "minecraft:jump": 25,
+      "minecraft:time_since_death": 1087
+    },
+    "minecraft:killed": {
+      "minecraft:zombie": 1,
+      "minecraft:slime": 2,
+      "minecraft:spider": 1
+    },
+    "minecraft:picked_up": {
+      "minecraft:string": 1,
+      "minecraft:slime_ball": 2
+    }
+  },
+  "DataVersion": 4671
+}

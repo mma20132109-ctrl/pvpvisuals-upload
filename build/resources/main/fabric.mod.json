@@ -1,0 +1,29 @@
+{
+	"schemaVersion": 1,
+	"id": "pvpvisuals",
+	"version": "1.0.0",
+	"name": "PvP Visuals",
+	"description": "Client-side PvP visuals: hit particles, target HUD, damage numbers, crit effect, trajectory prediction and a draggable HUD.",
+	"authors": [
+		"You"
+	],
+	"license": "MIT",
+	"environment": "client",
+	"mixins": [
+		{
+			"config": "pvpvisuals.mixins.json",
+			"environment": "client"
+		}
+	],
+	"entrypoints": {
+		"client": [
+			"com.pvpvisuals.PvpVisualsClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.3",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

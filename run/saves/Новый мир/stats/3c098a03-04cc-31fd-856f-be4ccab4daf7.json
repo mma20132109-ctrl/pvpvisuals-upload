@@ -1,0 +1,32 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "minecraft:anvil": 1,
+      "minecraft:crossbow": 1,
+      "minecraft:bow": 11
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 7931,
+      "minecraft:walk_one_cm": 2047,
+      "minecraft:leave_game": 2,
+      "minecraft:mob_kills": 2,
+      "minecraft:play_time": 7931,
+      "minecraft:damage_dealt": 10,
+      "minecraft:jump": 26,
+      "minecraft:time_since_death": 7931,
+      "minecraft:sprint_one_cm": 1060,
+      "minecraft:total_world_time": 9478,
+      "minecraft:fly_one_cm": 4827,
+      "minecraft:interact_with_anvil": 1,
+      "minecraft:crouch_one_cm": 24,
+      "minecraft:sneak_time": 52
+    },
+    "minecraft:killed": {
+      "minecraft:slime": 2
+    },
+    "minecraft:picked_up": {
+      "minecraft:slime_ball": 2
+    }
+  },
+  "DataVersion": 4671
+}
