@@ -5,6 +5,7 @@ import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleEntry;
 import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.keybind.KeybindManager;
+import com.pvpvisuals.gui.svintus.Anim;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -18,9 +19,12 @@ import net.minecraft.util.Util;
  * Позиция x/y — в координатах содержимого (без прокрутки).
  */
 public final class ModuleCard {
-	public enum Zone { NONE, TOGGLE, BIND, MORE, BODY }
+	public enum Zone { NONE, TOGGLE, BIND, MORE, INLINE_SETTINGS, BODY }
 
 	public static final int H = 32;
+	public static final int INLINE_H = 112;
+	public boolean expanded;
+	public final SettingsView inlineSettings;
 	private static final int PAD = 10;
 	private static final int R = 9;
 
@@ -39,6 +43,8 @@ public final class ModuleCard {
 	public String bindText;
 
 	private final ToggleSwitch sw = new ToggleSwitch();
+	private final Anim hoverAnim = new Anim(0f, 14f);
+	private final Anim enabledAnim;
 	private float hov;
 	private float on;
 	private boolean hovered;
@@ -51,11 +57,13 @@ public final class ModuleCard {
 	public ModuleCard(ModuleDef def) {
 		this.def = def;
 		this.root = new ModuleEntry(def, 0);
+		this.inlineSettings = new SettingsView(this, true);
 		this.bindable = def.isToggle() && KeybindManager.isBindable(def.name);
 		this.glyph = ModuleInfo.glyph(def.name, def.category);
 		this.desc = ModuleInfo.desc(def.name);
 		this.descLower = desc.toLowerCase(java.util.Locale.ROOT);
 		this.on = def.isToggle() && def.enabled() ? 1f : 0f;
+		this.enabledAnim = new Anim(this.on, 14f);
 	}
 
 	public String description() {
@@ -64,6 +72,10 @@ public final class ModuleCard {
 
 	public Glyph glyph() {
 		return glyph;
+	}
+
+	public int totalHeight() {
+		return H + (expanded ? 4 + INLINE_H : 0);
 	}
 
 	public boolean hasSettings() {
@@ -108,25 +120,21 @@ public final class ModuleCard {
 			return;
 		}
 		cacheKey = key;
-		chipW = chip.isEmpty() ? 0 : Math.min(60, Gfx.width(font, chip) + 10);
+		chipW = chip.isEmpty() ? 0 : Math.min(60, Gfx.widthAtSize(font, chip, 5.4f) + 8);
 		int reserve = PAD + rightButtonW() + (opensSettings() ? 18 : 6) + (chipW > 0 ? chipW + 6 : 0);
 		int avail = w - PAD - reserve;
-		titleC = Component.literal(trim(font, def.title(), avail, true)).withStyle(ChatFormatting.BOLD);
-		descShown = trim(font, desc, avail, false);
+		titleC = Component.literal(trimAtSize(font, def.title(), avail, 7.4f)).withStyle(ChatFormatting.BOLD);
+		descShown = Gfx.trimAtSize(font, desc, avail, 5.8f);
 	}
 
-	private static String trim(Font font, String s, int maxW, boolean bold) {
-		Component c = bold ? Component.literal(s).withStyle(ChatFormatting.BOLD) : Component.literal(s);
-		if (Gfx.width(font, c) <= maxW) {
-			return s;
-		}
+	private static String trimAtSize(Font font, String s, int maxW, float size) {
 		String shown = s;
+		Component full = Component.literal(shown).withStyle(ChatFormatting.BOLD);
+		if (Gfx.widthAtSize(font, full, size) <= maxW) return shown;
 		while (shown.length() > 1) {
 			shown = shown.substring(0, shown.length() - 1);
-			Component t = bold ? Component.literal(shown + "…").withStyle(ChatFormatting.BOLD) : Component.literal(shown + "…");
-			if (Gfx.width(font, t) <= maxW) {
-				break;
-			}
+			Component candidate = Component.literal(shown + "…").withStyle(ChatFormatting.BOLD);
+			if (Gfx.widthAtSize(font, candidate, size) <= maxW) break;
 		}
 		return shown + "…";
 	}
@@ -138,10 +146,9 @@ public final class ModuleCard {
 	}
 
 	public void update(float dtMs) {
-		float k = Math.min(1f, dtMs / 80f);
-		hov += ((hovered ? 1f : 0f) - hov) * k;
-		float target = def.isToggle() ? (def.enabled() ? 1f : 0f) : 0f;
-		on += (target - on) * Math.min(1f, dtMs / 90f);
+		hov = hoverAnim.to(hovered).get();
+		float target = def.isToggle() && def.enabled() ? 1f : 0f;
+		on = enabledAnim.to(target).get();
 		sw.update(def.enabled(), dtMs);
 	}
 
@@ -181,8 +188,8 @@ public final class ModuleCard {
 		}
 
 		int nameC = RoundedRender.lerp(EchoTheme.MUTED, EchoTheme.TEXT, Math.max(on, Math.max(hov * 0.6f, def.isToggle() ? 0f : 0.8f)));
-		Gfx.text(g, font, titleC, x + PAD, sy + 6, nameC, false);
-		Gfx.text(g, font, descShown, x + PAD, sy + 18, RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, Math.max(on, hov * 0.5f)));
+		Gfx.textAtSize(g, font, titleC, x + PAD, sy + 6, 7.4f, nameC, false);
+		Gfx.textAtSize(g, font, descShown, x + PAD, sy + 19, 5.8f, RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, Math.max(on, hov * 0.5f)), false);
 
 		if (showChip()) {
 			boolean listening = def.name.equals(KeybindManager.listeningModule());
@@ -191,10 +198,10 @@ public final class ModuleCard {
 			Gfx.rrect(g, cx, sy + (H - 12) / 2f, chipW, 12, 4f, EchoTheme.PILL, EchoTheme.PILL,
 					listening ? EchoTheme.NEON : 0, listening ? 1f : 0f);
 			String shown = label;
-			while (shown.length() > 1 && Gfx.width(font, shown) > chipW - 6) {
+			while (shown.length() > 1 && Gfx.widthAtSize(font, shown, 5.4f) > chipW - 6) {
 				shown = shown.substring(0, shown.length() - 1);
 			}
-			Gfx.text(g, font, shown, cx + (chipW - Gfx.width(font, shown)) / 2, sy + (H - 8) / 2, EchoTheme.MUTED);
+			Gfx.textAtSize(g, font, shown, cx + (chipW - Gfx.widthAtSize(font, shown, 5.4f)) / 2f, sy + 11, 5.4f, EchoTheme.MUTED, false);
 		}
 
 		if (opensSettings()) {

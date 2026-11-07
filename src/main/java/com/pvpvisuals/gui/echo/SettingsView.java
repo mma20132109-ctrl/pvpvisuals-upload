@@ -7,6 +7,7 @@ import java.util.Map;
 
 import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleEntry;
+import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.keybind.KeybindManager;
 import com.pvpvisuals.gui.svintus.Anim;
 
@@ -29,10 +30,12 @@ public final class SettingsView {
 	private static final int PILL_H = 14;
 
 	private final ModuleCard card;
+	private final boolean inline;
 	private final ScrollArea scroll = new ScrollArea();
 	private final List<ModuleEntry> rows = new ArrayList<>();
 	private final Map<ModuleEntry, ToggleSwitch> switches = new IdentityHashMap<>();
 	private final Map<ModuleEntry, Anim> sliderFills = new IdentityHashMap<>();
+	private final Map<ModuleEntry, Anim> rowHovers = new IdentityHashMap<>();
 	private final ToggleSwitch headSwitch = new ToggleSwitch();
 
 	private int x;
@@ -49,11 +52,21 @@ public final class SettingsView {
 	private float anim;
 
 	public SettingsView(ModuleCard card) {
-		this.card = card;
+		this(card, false);
 	}
+
+	public SettingsView(ModuleCard card, boolean inline) {
+		this.card = card;
+		this.inline = inline;
+}
 
 	public ModuleCard card() {
 		return card;
+	}
+
+	public void layoutInline(int x, int y, int w, int h) {
+		this.x = x; this.y = y; this.w = w; this.h = h;
+		scroll.setBounds(x, y, w, h);
 	}
 
 	public void layout(int x, int y, int w, int h) {
@@ -115,7 +128,8 @@ public final class SettingsView {
 		scroll.update(dtMs);
 		anim = Math.min(1f, anim + dtMs / 180f);
 
-		// шапка
+		// Шапка отдельного экрана; встроенный режим показывает только строки настроек.
+		if (!inline) {
 		boolean backHover = allowHover && Gfx.hit(mx, my, x, y + 6, 22, 22);
 		Gfx.fill(g, x, y + 6, 22, 22, 6, backHover ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
 		Gfx.ring(g, x, y + 6, 22, 22, 6, 1, backHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
@@ -124,12 +138,12 @@ public final class SettingsView {
 		Component title = Component.literal(card.def.title()).withStyle(ChatFormatting.BOLD);
 		g.pose().pushMatrix();
 		g.pose().translate(x + 30, y + 9);
-		g.pose().scale(1.2f, 1.2f);
-		Gfx.text(g, font, title, 0, 0, EchoTheme.TEXT, true);
+		g.pose().scale(1f, 1f);
+		Gfx.textAtSize(g, font, title, 0, 0, 7.4f, EchoTheme.TEXT, true);
 		g.pose().popMatrix();
 		String d = card.description();
 		if (!d.isEmpty()) {
-			Gfx.text(g, font, d, x + 30, y + 22, EchoTheme.MUTED);
+			Gfx.textAtSize(g, font, d, x + 30, y + 22, 5.8f, EchoTheme.MUTED, false);
 		}
 
 		int right = x + w - 8;
@@ -142,13 +156,13 @@ public final class SettingsView {
 		if (card.bindable) {
 			boolean listening = card.def.name.equals(KeybindManager.listeningModule());
 			String label = listening ? "PRESS KEY" : bindText != null ? bindText : "NONE";
-			pillW = Math.max(34, Gfx.width(font, label) + 12);
+			pillW = Math.max(34, Gfx.widthAtSize(font, label, 5.4f) + 12);
 			int px = right - pillW;
 			int py = y + 6 + 4;
 			Gfx.fill(g, px, py, pillW, PILL_H, 5, EchoTheme.PILL);
 			Gfx.ring(g, px, py, pillW, PILL_H, 5, 1, listening ? EchoTheme.NEON : EchoTheme.PILL_BORDER);
-			Gfx.text(g, font, label, px + (pillW - Gfx.width(font, label)) / 2, py + 3,
-					listening ? EchoTheme.TEXT : (bindText != null ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM));
+			Gfx.textAtSize(g, font, label, px + (pillW - Gfx.widthAtSize(font, label, 5.4f)) / 2f, py + 4, 5.4f,
+					listening ? EchoTheme.TEXT : (bindText != null ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM), false);
 			if (bindText != null && !listening) {
 				boolean hv = allowHover && Gfx.hit(mx, my, px - 18, py, 14, PILL_H);
 				Gfx.fill(g, px - 18, py, 14, PILL_H, 5, hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL);
@@ -157,9 +171,12 @@ public final class SettingsView {
 			}
 		}
 		Gfx.rect(g, x, y + HEAD_H, x + w, y + HEAD_H + 1, EchoTheme.DIVIDER);
+		}
 
 		// строки
 		float fade = Gfx.ease(anim);
+		// Keep a second clip for inline settings: the grid clip alone lets long setting
+		// lists draw over the next module card while this panel is scrolled.
 		scroll.begin(g);
 		int off = scroll.offset();
 		int ry = scroll.y - off;
@@ -172,7 +189,7 @@ public final class SettingsView {
 			ry += rh + ROW_GAP;
 		}
 		scroll.end(g);
-		scroll.renderBar(g);
+		if (!inline) scroll.renderBar(g);
 		renderDropdown(g, font, mx, my, allowHover);
 	}
 
@@ -180,25 +197,30 @@ public final class SettingsView {
 			float fade) {
 		ModuleDef d = e.def;
 		int rw = rowW();
+		Anim hoverAnim = rowHovers.computeIfAbsent(e, key -> new Anim(0f, 14f));
+		float hoverProgress = hoverAnim.to(hover).get();
+		boolean rowHovered = hoverProgress > 0.02f;
 		float prev = Gfx.alpha;
 		Gfx.alpha = prev * fade;
 
 		if (d.isText()) {
-			renderTextRow(g, font, e, ry, rh, rw, hover);
+			renderTextRow(g, font, e, ry, rh, rw, rowHovered);
 			Gfx.alpha = prev;
 			return;
 		}
-		Gfx.fill(g, x, ry, rw, rh, 7, hover ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
-		Gfx.ring(g, x, ry, rw, rh, 7, 1, hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
+		Gfx.fill(g, x, ry, rw, rh, 7, RoundedRender.lerp(EchoTheme.CARD, EchoTheme.CARD_HOVER, hoverProgress));
+		Gfx.ring(g, x, ry, rw, rh, 7, 1, RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hoverProgress));
 
 		int tx = x + 10 + e.depth * 8 - 8;
 		boolean lit = d.enabled() || d.isGroup() || d.isSlider();
 		int textC = lit ? EchoTheme.TEXT : EchoTheme.MUTED;
 
 		if (d.isSlider()) {
-			Gfx.text(g, font, d.title(), tx, ry + 5, EchoTheme.TEXT);
 			String v = d.valueText();
-			Gfx.text(g, font, v, x + rw - 10 - Gfx.width(font, v), ry + 5, EchoTheme.ACCENT_TEXT);
+			int valueX = x + rw - 10 - Gfx.widthAtSize(font, v, 6.2f);
+			String label = Gfx.trimAtSize(font, d.title(), Math.max(12, valueX - tx - 8), 6.6f);
+			Gfx.textAtSize(g, font, label, tx, ry + 5, 6.6f, EchoTheme.TEXT, false);
+			Gfx.textAtSize(g, font, v, valueX, ry + 5, 6.2f, EchoTheme.ACCENT_TEXT, false);
 			int bx = x + 10;
 			int bw = rw - 20;
 			Gfx.fill(g, bx, ry + 19, bw, 4, 2, EchoTheme.CARD_BORDER);
@@ -213,19 +235,26 @@ public final class SettingsView {
 					com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.24f), 2f);
 			Gfx.circle(g, knobX, ry + 21, 3.2f, EchoTheme.KNOB);
 		} else {
-			Gfx.text(g, font, d.title(), tx, ry + (rh - 8) / 2, textC);
 			int right = x + rw - 8;
 			if (d.isChoice()) {
 				String value = d.choiceValue();
-				int pw = 132;
+				int pw = Math.min(132, Math.max(64, rw / 2));
 				int px = right - pw;
+				String label = Gfx.trimAtSize(font, d.title(), Math.max(12, px - tx - 8), 6.6f);
+				Gfx.textAtSize(g, font, label, tx, ry + (rh - 7) / 2, 6.6f, textC, false);
 				Gfx.fill(g, px, ry + 4, pw, rh - 8, 5, EchoTheme.PILL);
 				Gfx.ring(g, px, ry + 4, pw, rh - 8, 5, 1, dropdown == e ? EchoTheme.ACCENT_TEXT : EchoTheme.PILL_BORDER);
-				Gfx.text(g, font, value, px + 7, ry + (rh - 8) / 2, EchoTheme.TEXT);
+				String shownValue = Gfx.trimAtSize(font, value, pw - 22, 6.2f);
+				Gfx.textAtSize(g, font, shownValue, px + 7, ry + (rh - 7) / 2, 6.2f, EchoTheme.TEXT, false);
 				EchoIcons.chevron(g, right - 11, ry + (rh - 8) / 2 + 1, dropdown == e ? 3 : 1, EchoTheme.MUTED);
 			} else if (e.hasKids()) {
 				EchoIcons.chevron(g, right - 7, ry + (rh - 4) / 2 - 1, 2, e.expanded ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM);
 				right -= 16;
+			}
+			if (!d.isChoice()) {
+				int labelRight = d.isToggle() ? right - 28 : (e.hasKids() ? right - 16 : right - 8);
+				String label = Gfx.trimAtSize(font, d.title(), Math.max(12, labelRight - tx), 6.6f);
+				Gfx.textAtSize(g, font, label, tx, ry + (rh - 7) / 2, 6.6f, textC, false);
 			}
 			if (d.isToggle()) {
 				ToggleSwitch sw = switches.computeIfAbsent(e, k -> new ToggleSwitch());
@@ -249,28 +278,40 @@ public final class SettingsView {
 		return y;
 	}
 
-	private void renderDropdown(GuiGraphics g, Font font, int mx, int my, boolean allowHover) {
-		if (dropdown == null || !dropdown.def.isChoice()) return;
+	private record PopupBounds(int x, int y, int w, int h, int itemH, int visibleCount) { }
+
+	private PopupBounds popupBounds() {
+		if (dropdown == null || !dropdown.def.isChoice()) return null;
 		List<String> values = dropdown.def.choices();
-		int rowY = dropdownRowY();
+		if (values.isEmpty() || scroll.w < 24 || scroll.h < 20) return null;
 		int itemH = 14;
-		int boxW = 132;
-		int boxX = x + rowW() - 8 - boxW;
-		int boxH = values.size() * itemH + 4;
-		int boxY = rowY + ROW_H + 3;
+		int boxW = Math.min(132, scroll.w - 8);
+		int boxX = Math.max(scroll.x + 4, Math.min(x + rowW() - 8 - boxW, scroll.x + scroll.w - boxW - 4));
+		int visibleCount = Math.max(1, Math.min(values.size(), (Math.max(18, scroll.h - 4) - 4) / itemH));
+		int boxH = visibleCount * itemH + 4;
+		int rowY = dropdownRowY();
+		int boxY = rowY + rowHeight(dropdown) + 3;
 		if (boxY + boxH > scroll.y + scroll.h) boxY = rowY - boxH - 3;
-		boxY = Math.max(y + HEAD_H + 6, boxY);
-		Gfx.fill(g, boxX, boxY, boxW, boxH, 7, 0xF01B1E28);
-		Gfx.ring(g, boxX, boxY, boxW, boxH, 7, 1, EchoTheme.CARD_BORDER_HOT);
-		for (int i = 0; i < values.size(); i++) {
+		boxY = Math.max(scroll.y + 2, Math.min(boxY, scroll.y + scroll.h - boxH - 2));
+		return new PopupBounds(boxX, boxY, boxW, boxH, itemH, visibleCount);
+	}
+
+	private void renderDropdown(GuiGraphics g, Font font, int mx, int my, boolean allowHover) {
+		PopupBounds bounds = popupBounds();
+		if (bounds == null) return;
+		List<String> values = dropdown.def.choices();
+		Gfx.fill(g, bounds.x(), bounds.y(), bounds.w(), bounds.h(), 7, 0xF01B1E28);
+		Gfx.ring(g, bounds.x(), bounds.y(), bounds.w(), bounds.h(), 7, 1, EchoTheme.CARD_BORDER_HOT);
+		for (int i = 0; i < bounds.visibleCount(); i++) {
 			String value = values.get(i);
-			int iy = boxY + 2 + i * itemH;
+			int iy = bounds.y() + 2 + i * bounds.itemH();
 			boolean selected = value.equals(dropdown.def.choiceValue());
-			boolean hover = allowHover && Gfx.hit(mx, my, boxX + 2, iy, boxW - 4, itemH);
-			if (selected || hover) Gfx.fill(g, boxX + 2, iy, boxW - 4, itemH, 4,
-					selected ? com.pvpvisuals.gui.rival.RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f) : 0x18FFFFFF);
-			if (selected) Gfx.circle(g, boxX + 9, iy + itemH / 2f, 1.6f, EchoTheme.ACCENT_TEXT);
-			Gfx.text(g, font, value, boxX + 16, iy + 3, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT);
+			boolean hover = allowHover && Gfx.hit(mx, my, bounds.x() + 2, iy, bounds.w() - 4, bounds.itemH());
+			if (selected || hover) Gfx.fill(g, bounds.x() + 2, iy, bounds.w() - 4, bounds.itemH(), 4,
+					selected ? RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f) : 0x18FFFFFF);
+			if (selected) Gfx.circle(g, bounds.x() + 9, iy + bounds.itemH() / 2f, 1.6f, EchoTheme.ACCENT_TEXT);
+			String shown = Gfx.trimAtSize(font, value, bounds.w() - 24, 6.2f);
+			Gfx.textAtSize(g, font, shown, bounds.x() + 16, iy + 3, 6.2f, selected ? EchoTheme.ACCENT_TEXT : EchoTheme.TEXT, false);
 		}
 	}
 
@@ -278,7 +319,9 @@ public final class SettingsView {
 		boolean edit = e == editing;
 		Gfx.fill(g, x, ry, rw, rh, 7, hover || edit ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
 		Gfx.ring(g, x, ry, rw, rh, 7, 1, edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
-		Gfx.text(g, font, e.def.title(), x + 10 + e.depth * 8 - 8, ry + (rh - 8) / 2, EchoTheme.TEXT);
+		int labelX = x + 10 + e.depth * 8 - 8;
+		String label = Gfx.trimAtSize(font, e.def.title(), Math.max(12, x + (int) (rw * 0.36f) - labelX - 12), 6.6f);
+		Gfx.textAtSize(g, font, label, labelX, ry + (rh - 7) / 2, 6.6f, EchoTheme.TEXT, false);
 		int fx = x + (int) (rw * 0.36f);
 		int fw = rw - (fx - x) - 6;
 		Gfx.fill(g, fx, ry + 3, fw, rh - 6, 5, EchoTheme.CARD);
@@ -287,13 +330,13 @@ public final class SettingsView {
 		boolean caret = edit && (System.currentTimeMillis() / 500) % 2 == 0;
 		String shown = caret ? s + "_" : s;
 		// длинный текст показываем с конца, чтобы был виден ввод
-		while (shown.length() > 1 && Gfx.width(font, shown) > fw - 10) {
+		while (shown.length() > 1 && Gfx.widthAtSize(font, shown, 6.2f) > fw - 10) {
 			shown = shown.substring(1);
 		}
 		if (s.isEmpty() && !edit) {
-			Gfx.text(g, font, "empty", fx + 5, ry + (rh - 8) / 2, EchoTheme.DIM);
+			Gfx.textAtSize(g, font, "пусто", fx + 5, ry + (rh - 7) / 2, 6.2f, EchoTheme.DIM, false);
 		} else {
-			Gfx.text(g, font, shown, fx + 5, ry + (rh - 8) / 2, EchoTheme.TEXT);
+			Gfx.textAtSize(g, font, shown, fx + 5, ry + (rh - 7) / 2, 6.2f, EchoTheme.TEXT, false);
 		}
 	}
 
@@ -356,29 +399,24 @@ public final class SettingsView {
 			commit();
 		}
 		if (dropdown != null) {
+			PopupBounds bounds = popupBounds();
 			List<String> values = dropdown.def.choices();
-			int rowY = dropdownRowY();
-			int itemH = 14;
-			int boxW = 132;
-			int boxX = x + rowW() - 8 - boxW;
-			int boxH = values.size() * itemH + 4;
-			int boxY = rowY + ROW_H + 3;
-			if (boxY + boxH > scroll.y + scroll.h) boxY = rowY - boxH - 3;
-			boxY = Math.max(y + HEAD_H + 6, boxY);
-			if (Gfx.hit(mx, my, boxX, boxY, boxW, boxH)) {
-				int index = (int) ((my - boxY - 2) / itemH);
-				if (index >= 0 && index < values.size()) dropdown.def.setChoice(values.get(index));
-				dropdown = null;
-				com.pvpvisuals.config.PvpConfig.get().save();
-				return Result.CHANGED;
+			if (bounds != null && Gfx.hit(mx, my, bounds.x(), bounds.y(), bounds.w(), bounds.h())) {
+				int index = (int) ((my - bounds.y() - 2) / bounds.itemH());
+				if (index >= 0 && index < bounds.visibleCount() && index < values.size()) {
+					dropdown.def.setChoice(values.get(index));
+					dropdown = null;
+					com.pvpvisuals.config.PvpConfig.get().save();
+					return Result.CHANGED;
+				}
 			}
 			dropdown = null;
 		}
-		if (Gfx.hit(mx, my, x, y + 6, 22, 22)) {
+		if (!inline && Gfx.hit(mx, my, x, y + 6, 22, 22)) {
 			return Result.BACK;
 		}
 		// шапка: тумблер и бинд
-		if (my >= y && my < y + HEAD_H) {
+		if (!inline && my >= y && my < y + HEAD_H) {
 			int right = x + w - 8;
 			if (card.def.isToggle()) {
 				right -= ToggleSwitch.W;

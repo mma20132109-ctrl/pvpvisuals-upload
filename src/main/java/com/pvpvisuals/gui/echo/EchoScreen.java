@@ -66,6 +66,7 @@ public class EchoScreen extends Screen {
 	private int wy;
 	private int ww;
 	private int wh;
+	private float uiScale = 1f;
 	private int cx0;
 	private int cy0;
 	private int cw0;
@@ -155,15 +156,22 @@ public class EchoScreen extends Screen {
 	}
 
 	private void layout() {
-		ww = Math.min(this.width - 12, 440);
-		wh = Math.min(this.height - 12, 296);
-		wx = Mth.clamp((this.width - ww) / 2 + dragOffX, 4, Math.max(4, this.width - ww - 4));
-		wy = Mth.clamp((this.height - wh) / 2 + dragOffY, 4, Math.max(4, this.height - 30));
-		dragOffX = wx - (this.width - ww) / 2;
-		dragOffY = wy - (this.height - wh) / 2;
+		// Keep the reference's logical 440x296 canvas and scale it uniformly to fit small screens.
+		ww = 440;
+		wh = 296;
+		uiScale = Math.min(1f, Math.min(Math.max(1f, this.width - 12f) / ww,
+				Math.max(1f, this.height - 12f) / wh));
+		float virtualWidth = this.width / uiScale;
+		float virtualHeight = this.height / uiScale;
+		float baseX = (virtualWidth - ww) / 2f;
+		float baseY = (virtualHeight - wh) / 2f;
+		wx = Math.round(Mth.clamp(baseX + dragOffX, 4f, Math.max(4f, virtualWidth - ww - 4f)));
+		wy = Math.round(Mth.clamp(baseY + dragOffY, 4f, Math.max(4f, virtualHeight - wh - 4f)));
+		dragOffX = Math.round(wx - baseX);
+		dragOffY = Math.round(wy - baseY);
 
 		// поиск — справа в шапке
-		int sw = Mth.clamp(ww / 3, 90, 150);
+		int sw = Math.min(124, Math.max(90, ww - MARGIN * 2));
 		search.w = sw;
 		search.h = SEARCH_H;
 		search.x = wx + ww - MARGIN - sw;
@@ -195,7 +203,7 @@ public class EchoScreen extends Screen {
 	private int cfgX(Font font, int i) {
 		int x = dotX(0) - 12;
 		for (int k = CFG_LABELS.length - 1; k >= i; k--) {
-			cfgW[k] = Gfx.width(font, CFG_LABELS[k]) + 14;
+			cfgW[k] = Gfx.widthAtSize(font, CFG_LABELS[k], 5.8f) + 14;
 			x -= cfgW[k] + (k == CFG_LABELS.length - 1 ? 0 : 4);
 		}
 		return x;
@@ -288,18 +296,20 @@ public class EchoScreen extends Screen {
 
 		Gfx.alpha = open;
 		float sc = 0.94f + 0.06f * open;
-		float cx = wx + ww / 2f;
-		float cy = wy + wh / 2f;
+		float cx = this.width / (2f * uiScale);
+		float cy = this.height / (2f * uiScale);
+		float virtualMouseX = mouseX / uiScale;
+		float virtualMouseY = mouseY / uiScale;
 		g.pose().pushMatrix();
-		g.pose().translate(cx, cy);
-		g.pose().scale(sc, sc);
+		g.pose().translate(this.width / 2f, this.height / 2f);
+		g.pose().scale(uiScale * sc, uiScale * sc);
 		g.pose().translate(-cx, -cy);
-		drawWindow(g, mouseX, mouseY, dt, now);
+		drawWindow(g, Math.round(virtualMouseX), Math.round(virtualMouseY), dt, now);
+		if (glassSettingsOpen) {
+			drawGlassSettings(g, Math.round(virtualMouseX), Math.round(virtualMouseY));
+		}
 		g.pose().popMatrix();
 		Gfx.alpha = 1f;
-		if (glassSettingsOpen) {
-			drawGlassSettings(g, mouseX, mouseY);
-		}
 
 		dialog.render(g, this.font, mouseX, mouseY, this.width, this.height);
 		NotificationToast.render(g, this.font, this.width, this.height);
@@ -320,6 +330,10 @@ public class EchoScreen extends Screen {
 		float tf = Gfx.ease((now - tabNs) / 180_000_000f);
 		float prev = Gfx.alpha;
 		Gfx.alpha = prev * tf;
+		// Keep the clip fixed in screen space. Applying it after the tab-transition
+		// translation moves the clip together with the cards and can expose pixels
+		// beyond the GUI body while the content animates.
+		g.enableScissor(cx0, cy0, cx0 + cw0, cy0 + ch0);
 		g.pose().pushMatrix();
 		g.pose().translate(0f, (1f - tf) * 8f);
 		if (settings != null) {
@@ -334,6 +348,7 @@ public class EchoScreen extends Screen {
 				grid.render(g, this.font, mx, my, dt, hoverOk);
 			}
 		}
+		g.disableScissor();
 		g.pose().popMatrix();
 		Gfx.alpha = prev;
 
@@ -346,7 +361,7 @@ public class EchoScreen extends Screen {
 		int ly = wy + HEADER_Y;
 
 		// плитка с логотипом (LogoRenderer)
-		int logoH = LOGO - 8;
+		int logoH = LOGO - 10;
 		int logoW = cfg.logo.showInGui ? LogoRenderer.widthFor(LogoSizeMode.byName(cfg.logo.sizeGui), logoH, 1f) : 0;
 		int tileW = Math.max(LOGO, logoW + 12);
 		Gfx.glow(g, lx, ly, tileW, LOGO, 8, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.30f), 4);
@@ -359,10 +374,9 @@ public class EchoScreen extends Screen {
 
 		int tx = lx + tileW + 9;
 		float ty = ly + 3;
-		Gfx.textScaled(g, this.font, "Echo ", tx, ty, 1.2f, EchoTheme.TEXT, false);
-		Gfx.textScaled(g, this.font, "Visual", tx + Gfx.width(this.font, "Echo ") * 1.2f, ty, 1.2f, EchoTheme.ACCENT_TEXT,
-				false);
-		Gfx.text(g, this.font, "PvP visuals client", tx, ly + 17, EchoTheme.DIM);
+		Gfx.textAtSize(g, this.font, "Echo ", tx, ly + 5, 9f, EchoTheme.TEXT, false);
+		Gfx.textAtSize(g, this.font, "Visual", tx + Gfx.widthAtSize(this.font, "Echo ", 9f), ly + 5, 9f, EchoTheme.ACCENT_TEXT, false);
+		Gfx.textAtSize(g, this.font, "PvP visuals client", tx, ly + 19, 5.8f, EchoTheme.DIM, false);
 
 		search.update(dt);
 		search.render(g, this.font);
@@ -400,22 +414,28 @@ public class EchoScreen extends Screen {
 			int base = RoundedRender.lerp(EchoTheme.DIM, EchoTheme.MUTED, tabHover[i]);
 			int textC = RoundedRender.lerp(base, EchoTheme.TEXT, a);
 			int iconC = RoundedRender.lerp(base, EchoTheme.ACCENT_TEXT, a);
-			int contentW = 12 + 5 + Gfx.width(this.font, c.title);
+			int textW = Gfx.widthAtSize(this.font, c.title, 6.2f);
+			int contentW = 9 + 4 + textW;
 			int cx = sx + (slot - contentW) / 2;
-			EchoIcons.category(g, c, cx, y + (TABS_H - 12) / 2, iconC);
-			Gfx.text(g, this.font, c.title, cx + 17, y + (TABS_H - 8) / 2, textC);
+			g.pose().pushMatrix();
+			g.pose().translate(cx + 6f, y + TABS_H / 2f);
+			g.pose().scale(0.75f, 0.75f);
+			g.pose().translate(-cx - 6f, -(y + TABS_H / 2f));
+			EchoIcons.category(g, c, cx, y + 5, iconC);
+			g.pose().popMatrix();
+			Gfx.textAtSize(g, this.font, c.title, cx + 13, y + (TABS_H - 7) / 2, 6.2f, textC, false);
 		}
 	}
 
 	private void drawEmpty(GuiGraphics g) {
-		String title = search.isEmpty() ? "Nothing here yet" : "No modules found";
-		String sub = search.isEmpty() ? "Modules of this category will appear here" : "Try another search";
+		String title = search.isEmpty() ? "Здесь пока пусто" : "Ничего не найдено";
+		String sub = search.isEmpty() ? "Модули этой категории появятся здесь" : "Попробуй другой запрос";
 		int cx = cx0 + cw0 / 2;
 		int cy = cy0 + ch0 / 2 - 10;
 		Gfx.circle(g, (float) cx, (float) cy, 18f, 0x0AFFFFFF);
 		Gfx.ringCircle(g, (float) cx, (float) cy, 18f, 0.8f, 0x14FFFFFF);
-		Gfx.text(g, this.font, title, cx - Gfx.width(this.font, title) / 2, cy + 26, EchoTheme.MUTED);
-		Gfx.text(g, this.font, sub, cx - Gfx.width(this.font, sub) / 2, cy + 38, EchoTheme.DIM);
+		Gfx.textAtSize(g, this.font, title, cx - Gfx.widthAtSize(this.font, title, 7.4f) / 2, cy + 24, 7.4f, EchoTheme.MUTED, false);
+		Gfx.textAtSize(g, this.font, sub, cx - Gfx.widthAtSize(this.font, sub, 6f) / 2, cy + 35, 6f, EchoTheme.DIM, false);
 	}
 
 	private void drawFooter(GuiGraphics g, int mx, int my, float dt, boolean hoverOk) {
@@ -435,7 +455,7 @@ public class EchoScreen extends Screen {
 		Gfx.rrect(g, gx, cfgY(), 36, CFG_H, 6f, glassSettingsOpen || glassHover ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
 				glassSettingsOpen || glassHover ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
 				glassHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER, 1f);
-		Gfx.text(g, this.font, "Glass", gx + 6, cfgY() + 3, glassSettingsOpen || glassHover ? EchoTheme.TEXT : EchoTheme.MUTED);
+		Gfx.textAtSize(g, this.font, "Glass", gx + 6, cfgY() + 3, 5.8f, glassSettingsOpen || glassHover ? EchoTheme.TEXT : EchoTheme.MUTED, false);
 
 		// Import / Export / Reset
 		for (int i = 0; i < CFG_LABELS.length; i++) {
@@ -445,8 +465,8 @@ public class EchoScreen extends Screen {
 			int fill = hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL;
 			Gfx.rrect(g, bx, by, cfgW[i], CFG_H, 6f, fill, fill,
 					hv ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER, 1f);
-			Gfx.text(g, this.font, CFG_LABELS[i], bx + (cfgW[i] - Gfx.width(this.font, CFG_LABELS[i])) / 2, by + 3,
-					hv ? EchoTheme.TEXT : EchoTheme.MUTED);
+			Gfx.textAtSize(g, this.font, CFG_LABELS[i], bx + (cfgW[i] - Gfx.widthAtSize(this.font, CFG_LABELS[i], 5.8f)) / 2f, by + 3, 5.8f,
+					hv ? EchoTheme.TEXT : EchoTheme.MUTED, false);
 		}
 
 		// точки выбора темы
@@ -487,9 +507,9 @@ public class EchoScreen extends Screen {
 	}
 
 	private void drawGlassSlider(GuiGraphics g, int x, int y, int width, int id, String label, int value) {
-		Gfx.text(g, this.font, label, x, y, EchoTheme.MUTED);
+		Gfx.textAtSize(g, this.font, label, x, y, 5.8f, EchoTheme.MUTED, false);
 		String shown = value + "%";
-		Gfx.text(g, this.font, shown, x + width - Gfx.width(this.font, shown), y, EchoTheme.ACCENT_TEXT);
+		Gfx.textAtSize(g, this.font, shown, x + width - Gfx.widthAtSize(this.font, shown, 5.8f), y, 5.8f, EchoTheme.ACCENT_TEXT, false);
 		int barY = y + 13;
 		Gfx.fill(g, x, barY, width, 4, 2, EchoTheme.CARD_BORDER);
 		float ratio = id == 0 ? value / 100f : value / 80f;
@@ -511,11 +531,11 @@ public class EchoScreen extends Screen {
 	}
 
 	private int hint(GuiGraphics g, int x, int cy, String key, String text) {
-		int kw = Gfx.width(this.font, key) + 8;
+		int kw = Gfx.widthAtSize(this.font, key, 5.2f) + 8;
 		Gfx.rrect(g, x, cy - 6, kw, 12, 4f, 0x10FFFFFF, 0x10FFFFFF, 0, 0f);
-		Gfx.text(g, this.font, key, x + 4, cy - 4, EchoTheme.MUTED);
-		Gfx.text(g, this.font, text, x + kw + 4, cy - 4, EchoTheme.DIM);
-		return x + kw + 4 + Gfx.width(this.font, text);
+		Gfx.textAtSize(g, this.font, key, x + 4, cy - 3, 5.2f, EchoTheme.MUTED, false);
+		Gfx.textAtSize(g, this.font, text, x + kw + 4, cy - 3, 5.6f, EchoTheme.DIM, false);
+		return x + kw + 4 + Gfx.widthAtSize(this.font, text, 5.6f);
 	}
 
 	// ---------- ввод ----------
@@ -547,6 +567,9 @@ public class EchoScreen extends Screen {
 		if (!interactive) {
 			return true;
 		}
+		// GUI hit testing uses the same virtual coordinates as the scaled reference canvas.
+		mx /= uiScale;
+		my /= uiScale;
 		if (btn != 0 && btn != 1) {
 			return false;
 		}
@@ -631,24 +654,16 @@ public class EchoScreen extends Screen {
 		ModuleCard card = hit.card();
 		ModuleDef def = card.def;
 		switch (hit.zone()) {
-			case BIND -> {
-				if (btn == 1) {
-					KeybindManager.clear(def.name);
-				} else {
-					KeybindManager.startListening(def.name);
-				}
+			case BIND -> { if (btn == 1) KeybindManager.clear(def.name); else KeybindManager.startListening(def.name); }
+			case MORE -> card.expanded = !card.expanded;
+			case INLINE_SETTINGS -> {
+				SettingsView.Result result = card.inlineSettings.click(mx, my, btn);
+				if (result == SettingsView.Result.CHANGED) save();
 			}
-			case MORE -> openSettings(card);
 			case TOGGLE, BODY -> {
-				if (btn == 1) { // ПКМ — настройки
-					if (card.hasSettings() || def.isGroup()) {
-						openSettings(card);
-					}
-				} else if (def.isGroup()) {
-					openSettings(card);
-				} else if (def.activate()) { // ЛКМ — вкл/выкл (или запуск)
-					save();
-				}
+				if (btn == 1) { if (card.hasSettings() || def.isGroup()) card.expanded = !card.expanded; }
+				else if (def.isGroup()) card.expanded = !card.expanded;
+				else if (def.activate()) save();
 			}
 			default -> { }
 		}
@@ -658,19 +673,20 @@ public class EchoScreen extends Screen {
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
 		if (glassSliderDragging >= 0) {
-			updateGlassSlider(event.x());
+			updateGlassSlider(event.x() / uiScale);
 			return true;
 		}
 		if (draggingWindow) {
-			dragOffX += Math.round(dragX);
-			dragOffY += Math.round(dragY);
+			dragOffX += Math.round(dragX / uiScale);
+			dragOffY += Math.round(dragY / uiScale);
 			layout();
 			return true;
 		}
 		if (settings != null && settings.isDragging()) {
-			settings.dragTo(event.x());
+			settings.dragTo(event.x() / uiScale);
 			return true;
 		}
+		if (grid.dragInline(event.x() / uiScale)) return true;
 		return super.mouseDragged(event, dragX, dragY);
 	}
 
@@ -690,6 +706,7 @@ public class EchoScreen extends Screen {
 			save();
 			return true;
 		}
+		if (grid.releaseInline()) { save(); return true; }
 		return super.mouseReleased(event);
 	}
 
@@ -698,6 +715,8 @@ public class EchoScreen extends Screen {
 		if (dialog.active()) {
 			return dialog.scroll(scrollY);
 		}
+		mouseX /= uiScale;
+		mouseY /= uiScale;
 		float px = (float) (-scrollY * 28);
 		if (settings != null) {
 			if (settings.contains(mouseX, mouseY)) {
@@ -706,6 +725,7 @@ public class EchoScreen extends Screen {
 			}
 			return false;
 		}
+		if (grid.scrollInlineAt(mouseX, mouseY, px)) return true;
 		if (grid.scroll().contains(mouseX, mouseY)) {
 			grid.scroll().scrollBy(px);
 			return true;
