@@ -195,7 +195,7 @@ public class EchoScreen extends Screen {
 	private int cfgX(Font font, int i) {
 		int x = dotX(0) - 12;
 		for (int k = CFG_LABELS.length - 1; k >= i; k--) {
-			cfgW[k] = Gfx.width(font, CFG_LABELS[k]) + 14;
+			cfgW[k] = Gfx.widthAtSize(font, CFG_LABELS[k], 5.8f) + 14;
 			x -= cfgW[k] + (k == CFG_LABELS.length - 1 ? 0 : 4);
 		}
 		return x;
@@ -346,7 +346,7 @@ public class EchoScreen extends Screen {
 		int ly = wy + HEADER_Y;
 
 		// плитка с логотипом (LogoRenderer)
-		int logoH = LOGO - 8;
+		int logoH = LOGO - 10;
 		int logoW = cfg.logo.showInGui ? LogoRenderer.widthFor(LogoSizeMode.byName(cfg.logo.sizeGui), logoH, 1f) : 0;
 		int tileW = Math.max(LOGO, logoW + 12);
 		Gfx.glow(g, lx, ly, tileW, LOGO, 8, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.30f), 4);
@@ -359,10 +359,9 @@ public class EchoScreen extends Screen {
 
 		int tx = lx + tileW + 9;
 		float ty = ly + 3;
-		Gfx.textScaled(g, this.font, "Echo ", tx, ty, 1.2f, EchoTheme.TEXT, false);
-		Gfx.textScaled(g, this.font, "Visual", tx + Gfx.width(this.font, "Echo ") * 1.2f, ty, 1.2f, EchoTheme.ACCENT_TEXT,
-				false);
-		Gfx.textAtSize(g, this.font, "PvP visuals client", tx, ly + 17, 5.8f, EchoTheme.DIM, false);
+		Gfx.textAtSize(g, this.font, "Echo ", tx, ly + 5, 9f, EchoTheme.TEXT, false);
+		Gfx.textAtSize(g, this.font, "Visual", tx + Gfx.widthAtSize(this.font, "Echo ", 9f), ly + 5, 9f, EchoTheme.ACCENT_TEXT, false);
+		Gfx.textAtSize(g, this.font, "PvP visuals client", tx, ly + 19, 5.8f, EchoTheme.DIM, false);
 
 		search.update(dt);
 		search.render(g, this.font);
@@ -414,14 +413,14 @@ public class EchoScreen extends Screen {
 	}
 
 	private void drawEmpty(GuiGraphics g) {
-		String title = search.isEmpty() ? "Nothing here yet" : "No modules found";
-		String sub = search.isEmpty() ? "Modules of this category will appear here" : "Try another search";
+		String title = search.isEmpty() ? "Здесь пока пусто" : "Ничего не найдено";
+		String sub = search.isEmpty() ? "Модули этой категории появятся здесь" : "Попробуй другой запрос";
 		int cx = cx0 + cw0 / 2;
 		int cy = cy0 + ch0 / 2 - 10;
 		Gfx.circle(g, (float) cx, (float) cy, 18f, 0x0AFFFFFF);
 		Gfx.ringCircle(g, (float) cx, (float) cy, 18f, 0.8f, 0x14FFFFFF);
-		Gfx.text(g, this.font, title, cx - Gfx.width(this.font, title) / 2, cy + 26, EchoTheme.MUTED);
-		Gfx.text(g, this.font, sub, cx - Gfx.width(this.font, sub) / 2, cy + 38, EchoTheme.DIM);
+		Gfx.textAtSize(g, this.font, title, cx - Gfx.widthAtSize(this.font, title, 7.4f) / 2, cy + 24, 7.4f, EchoTheme.MUTED, false);
+		Gfx.textAtSize(g, this.font, sub, cx - Gfx.widthAtSize(this.font, sub, 6f) / 2, cy + 35, 6f, EchoTheme.DIM, false);
 	}
 
 	private void drawFooter(GuiGraphics g, int mx, int my, float dt, boolean hoverOk) {
