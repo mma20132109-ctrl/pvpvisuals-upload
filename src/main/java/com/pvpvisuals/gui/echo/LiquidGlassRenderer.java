@@ -116,7 +116,9 @@ public final class LiquidGlassRenderer {
     }
 
     private static int tint(int color, float amount) {
-        return (Math.round(255f * Math.max(0f, Math.min(1f, amount))) << 24) | (color & 0x00FFFFFF);
+        float sourceAlpha = ((color >>> 24) & 0xFF) / 255f;
+        float strength = Math.max(0f, Math.min(1f, amount * sourceAlpha));
+        return (Math.round(255f * strength) << 24) | (color & 0x00FFFFFF);
     }
 
     private static int withAlpha(int color, float factor) {
