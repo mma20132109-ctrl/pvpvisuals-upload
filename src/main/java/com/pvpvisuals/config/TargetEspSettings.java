@@ -1,0 +1,27 @@
+package com.pvpvisuals.config;
+
+/** Настройки Target ESP. Поля имеют безопасные значения для старых конфигов. */
+public final class TargetEspSettings {
+    /** Значение хранится как имя enum, чтобы старые/будущие конфиги переживали переименование отображаемых названий. */
+    public String mode = "GHOSTS";
+
+    public boolean showPlayers = true;
+    public boolean showMobs = true;
+    public float maxDistance = 64.0f;
+    public boolean throughWalls = false;
+
+    /** STATIC, HEALTH, DISTANCE или RAINBOW. */
+    public String colorMode = "HEALTH";
+    public int color = 0x65E6C4;
+    public int friendColor = 0x75B9FF;
+    public int invisibleColor = 0xB58AFF;
+    public boolean useInvisibleColor = true;
+
+    public float lineThickness = 1.6f;
+    public boolean fillBox = true;
+    public float fillAlpha = 0.10f;
+
+    public int ghostCount = 12;
+    public float animationSpeed = 1.0f;
+    public float fadeOutSeconds = 0.30f;
+}
