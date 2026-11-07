@@ -76,7 +76,7 @@ public final class LiquidGlassRenderer {
 
         GpuTextureView view = backdrop.getColorTextureView();
         TextureSetup textureSetup = new TextureSetup(view, null, null, backdropSampler, null, null);
-        graphicsState(graphics).addSimpleElement(new LiquidGlassBlurState(pose, textureSetup,
+        graphicsState(graphics).submitGuiElement(new LiquidGlassBlurState(pose, textureSetup,
                 x, y, width, height, radius,
                 tint(top, 0.18f), tint(top, 0.18f), tint(bottom, 0.18f), tint(bottom, 0.18f), bounds));
     }
@@ -96,7 +96,7 @@ public final class LiquidGlassRenderer {
                 radius, 0f, top, top, bottom, bottom, bounds));
 
         if (border > 0f && (borderColor >>> 24) != 0) {
-            state.addSimpleElement(new LiquidGlassShapeState(pose, x, y, width, height,
+            state.submitGuiElement(new LiquidGlassShapeState(pose, x, y, width, height,
                     radius, border, borderColor, borderColor, borderColor, borderColor, bounds));
         }
     }
