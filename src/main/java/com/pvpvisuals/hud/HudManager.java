@@ -26,6 +26,7 @@ import net.minecraft.world.entity.LivingEntity;
 public final class HudManager {
 	public static final TargetHudComponent TARGET = new TargetHudComponent();
 	public static final ArmorHudModule ARMOR = new ArmorHudModule();
+	public static final NotificationsHudModule NOTIFICATIONS = new NotificationsHudModule();
 	public static final ComboComponent COMBO = new ComboComponent();
 	public static final InventoryHudComponent INVENTORY = new InventoryHudComponent();
 	public static final WatermarkModule WATERMARK = new WatermarkModule();
@@ -33,7 +34,7 @@ public final class HudManager {
 	public static final ModuleListHudModule MODULE_LIST = new ModuleListHudModule();
 	public static final com.pvpvisuals.hud.binds.HudBindsModule HUD_BINDS = new com.pvpvisuals.hud.binds.HudBindsModule();
 	public static final List<AbstractHudModule> COMPONENTS = List.of(
-			WATERMARK, COORDINATES, MODULE_LIST, TARGET, ARMOR, COMBO, INVENTORY, HUD_BINDS);
+			WATERMARK, COORDINATES, MODULE_LIST, TARGET, ARMOR, NOTIFICATIONS, COMBO, INVENTORY, HUD_BINDS);
 
 	private static final TopBar ISLAND = new TopBar();
 
@@ -79,10 +80,6 @@ public final class HudManager {
 		// Островок сверху всегда виден; в меню (EchoScreen) он скрыт.
 		if (PvpConfig.get().showIsland && !(mc.screen instanceof EchoScreen)) {
 			ISLAND.render(g, mc.font, g.guiWidth());
-		}
-
-		if (!(mc.screen instanceof EchoScreen)) {
-			NotificationToast.render(g, mc.font, g.guiWidth(), g.guiHeight());
 		}
 
 		// В чате элементы рисует HudChatEditor (превью + перетаскивание), здесь не дублируем.
