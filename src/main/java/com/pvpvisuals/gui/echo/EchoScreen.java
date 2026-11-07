@@ -364,18 +364,48 @@ public class EchoScreen extends Screen {
 	private void drawSideSettings(GuiGraphics g, int mx, int my, float dt, boolean hoverOk, long now) {
 		layoutSideSettings();
 		int targetX = sideSettingsLeft ? wx - sideSettingsWidth() : wx + ww;
-		float t = Gfx.ease((now - sideSettingsNs) / 220_000_000f);
-		float shift = (1f - t) * sideSettingsWidth();
+		float t = Gfx.ease((now - sideSettingsNs) / 360_000_000f);
+		// Панель как будто вытягивается сквозь жидкую поверхность: сначала волна,
+		// затем стекло собирается в ровную форму и мягко фиксируется у края GUI.
+		float wave = (float) Math.sin(t * Math.PI);
+		float shift = (1f - t) * 24f;
 		float drawX = sideSettingsLeft ? targetX + shift : targetX - shift;
 		float oldAlpha = Gfx.alpha;
-		Gfx.alpha = oldAlpha * t;
+
+		// Круги расходятся от точки, где панель выходит из края основного окна.
+		float surfaceX = sideSettingsLeft ? wx : wx + ww;
+		float surfaceY = cy0 + ch0 * 0.5f;
+		if (t < 0.995f) {
+			float rippleAlpha = (1f - t) * 0.42f;
+			for (int i = 0; i < 3; i++) {
+				float radius = 7f + t * 17f + i * 7f;
+				int ripple = RoundedRender.scaleAlpha(EchoTheme.ACCENT_TEXT, rippleAlpha * (1f - i * 0.2f));
+				Gfx.ringCircle(g, surfaceX, surfaceY, radius, 0.8f, ripple);
+			}
+			// Тонкая бегущая рябь на поверхности — затухает по мере выхода панели.
+			for (int i = 0; i < 3; i++) {
+				float y = surfaceY - 13f + i * 13f + (float) Math.sin(t * 10f + i) * 2f;
+				Gfx.line(g, surfaceX - 7f, y, surfaceX + 7f, y + (float) Math.sin(t * 8f + i) * 1.5f,
+						0.8f, RoundedRender.scaleAlpha(EchoTheme.TEXT, rippleAlpha * 0.65f));
+			}
+		}
+
+		Gfx.alpha = oldAlpha * Math.min(1f, t * 1.25f);
 		g.pose().pushMatrix();
-		g.pose().translate(drawX - targetX, 0f);
+		g.pose().translate(drawX - targetX, -wave * 3f);
+		// Лёгкое «смачивание» формы: панель расширяется и успокаивается вместо
+		// обычного линейного выезда.
+		float sx = 0.94f + 0.06f * t + wave * 0.025f;
+		float sy = 0.985f + 0.015f * t;
+		float pivotX = sideSettingsLeft ? targetX + sideSettingsWidth() : targetX;
+		g.pose().translate(pivotX, surfaceY);
+		g.pose().scale(sx, sy);
+		g.pose().translate(-pivotX, -surfaceY);
 		Gfx.glow(g, targetX, cy0, sideSettingsWidth(), ch0, 10, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.14f), 5);
 		LiquidGlassRenderer.window(g, targetX, cy0, sideSettingsWidth(), ch0, 10);
 		Gfx.rrect(g, targetX + 1, cy0 + 1, sideSettingsWidth() - 2, 34, 9, 0x0AFFFFFF, 0x00FFFFFF, 0, 0f);
 		g.enableScissor(targetX, cy0, targetX + sideSettingsWidth(), cy0 + ch0);
-		settings.render(g, this.font, mx - Math.round(drawX - targetX), my, dt, hoverOk && t > 0.95f, settings.card().bindText);
+		settings.render(g, this.font, mx - Math.round(drawX - targetX), my, dt, hoverOk && t > 0.97f, settings.card().bindText);
 		g.disableScissor();
 		g.pose().popMatrix();
 		Gfx.alpha = oldAlpha;
