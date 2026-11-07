@@ -121,7 +121,7 @@ public final class TargetEspRenderer {
             long now = System.nanoTime();
 
             switch (mode) {
-                case GHOSTS -> { /* handled by ParticleTypes.SOUL in TargetEspModule */ }
+                case GHOSTS -> { /* handled by GhostEspRenderer before the geometry modes */ }
                 case CIRCLE -> drawCircle(cx, y0, cz, width, depth, now,
                         frame.health, settings, worldPerPixel, r, g, bl, alpha);
                 case SQUARE -> drawRotatingSquare(cx, cy, cz, width, depth, height, now,
