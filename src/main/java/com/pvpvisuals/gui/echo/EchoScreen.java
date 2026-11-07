@@ -163,7 +163,7 @@ public class EchoScreen extends Screen {
 		dragOffY = wy - (this.height - wh) / 2;
 
 		// поиск — справа в шапке
-		int sw = Mth.clamp(ww / 3, 90, 150);
+		int sw = Math.min(124, Math.max(90, ww - MARGIN * 2));
 		search.w = sw;
 		search.h = SEARCH_H;
 		search.x = wx + ww - MARGIN - sw;
