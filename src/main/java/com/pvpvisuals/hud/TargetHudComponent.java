@@ -81,11 +81,6 @@ public final class TargetHudComponent extends AbstractHudModule {
 		float abs = target.getAbsorptionAmount();
 		float dist = mc.player == null ? 0f : mc.player.distanceTo(target);
 		boolean hit = target.hurtTime > 0;
-		if (target != lastTarget) {
-			shownRatio = Mth.clamp(hp / max, 0f, 1f);
-			shownAbs = 0f;
-			lastTarget = target;
-		}
 		shownRatio += (Mth.clamp(hp / max, 0f, 1f) - shownRatio) * 0.15f;
 		shownAbs += (Mth.clamp(abs / max, 0f, 1f) - shownAbs) * 0.15f;
 		hurt += ((hit ? 1f : 0f) - hurt) * 0.25f;
@@ -121,14 +116,19 @@ public final class TargetHudComponent extends AbstractHudModule {
 		int rowW = right - tx;
 		String distText = PvpConfig.get().targetHudDistance && target != mc.player
 				? String.format(java.util.Locale.ROOT, "%.1fm", dist) : "";
-		int distW = distText.isEmpty() ? 0 : Gfx.width(font, distText) + 4;
+		int distW = distText.isEmpty() ? 0 : Gfx.widthAtSize(font, distText, 5.6f) + 4;
 		String shown = name;
-		while (shown.length() > 1 && Gfx.width(font, shown) > rowW - distW) {
+		while (shown.length() > 1 && Gfx.widthAtSize(font, shown + "…", 7.2f) > rowW - distW) {
 			shown = shown.substring(0, shown.length() - 1);
 		}
-		g.drawString(font, shown, tx, hy + 1, HudAlpha.mul(HudStyle.TEXT), false);
+		if (!shown.equals(name)) {
+			shown += "…";
+		}
+		Gfx.textAtSize(g, font, shown, tx, hy + 2f, 7.2f,
+				HudAlpha.mul(HudStyle.TEXT), false);
 		if (!distText.isEmpty()) {
-			g.drawString(font, distText, right - distW + 4, hy + 1, HudAlpha.mul(EchoTheme.DIM), false);
+			Gfx.textAtSize(g, font, distText, right - distW + 4, hy + 3.1f, 5.6f,
+					HudAlpha.mul(EchoTheme.DIM), false);
 		}
 
 		// полоса здоровья + значение
@@ -146,7 +146,8 @@ public final class TargetHudComponent extends AbstractHudModule {
 			Gfx.rrect(g, tx, barY, aw, barH, barH / 2f, HudAlpha.mul(0xD0F5C542), HudAlpha.mul(0xD0F5C542), 0, 0f);
 		}
 		HudIcons.heart(g, right - 21, barY + barH / 2f, 2.6f, HudAlpha.mul(0xFFFF5A6A));
-		g.drawString(font, String.format("%.1f", hp + abs), right - 15, barY - 2, HudAlpha.mul(HudStyle.TEXT), false);
+		Gfx.textAtSize(g, font, String.format(java.util.Locale.ROOT, "%.1f", hp + abs),
+				right - 15, barY - 2f, 5.8f, HudAlpha.mul(HudStyle.TEXT), false);
 
 		// предметы и броня
 		if (PvpConfig.get().targetHudItems) {
