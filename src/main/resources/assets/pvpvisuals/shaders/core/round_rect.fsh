@@ -25,17 +25,23 @@ float dither(vec2 co) {
 
 void main() {
     vec2 halfSize = rectSize * 0.5;
-    float radius = min(params.x, min(halfSize.x, halfSize.y));
+    float radius = clamp(params.x, 0.0, min(halfSize.x, halfSize.y));
     float distance = sdRoundBox(localPos - halfSize, halfSize, radius);
-    float aa = max(fwidth(distance), 1e-4);
-    float alpha = clamp(0.5 - distance / aa, 0.0, 1.0);
+    float aa = max(fwidth(distance), 0.75);
+    float outerMask = clamp(0.5 - distance / aa, 0.0, 1.0);
 
-    if (params.y > 0.0) {
-        alpha *= clamp(0.5 + (distance + params.y) / aa, 0.0, 1.0);
+    float borderWidth = max(params.y, 0.0);
+    float innerMask = 1.0;
+    if (borderWidth > 0.0) {
+        innerMask = clamp(0.5 - (distance + borderWidth) / aa, 0.0, 1.0);
     }
+    float fillMask = outerMask * innerMask;
 
     vec4 color = vertexColor;
-    color.a *= alpha;
+    float vertical = clamp(localPos.y / max(rectSize.y, 1.0), 0.0, 1.0);
+    float topLight = (1.0 - vertical) * 0.045;
+    color.rgb = clamp(color.rgb + vec3(topLight), 0.0, 1.0);
+    color.a *= fillMask;
     if (color.a <= 0.002) discard;
 
     color.rgb += dither(gl_FragCoord.xy) / 255.0;
