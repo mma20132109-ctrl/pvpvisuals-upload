@@ -424,9 +424,7 @@ public class EchoScreen extends Screen {
 		Gfx.alpha = oldAlpha * alpha;
 		Gfx.glow(g, x, y, w, h, radius,
 				RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 5f);
-		Gfx.rrect(g, x, y, w, h, radius,
-				EchoTheme.WIN_TOP, EchoTheme.WIN_BOTTOM,
-				EchoTheme.CARD_BORDER_HOT, 1f);
+		LiquidGlassRenderer.window(g, x, y, w, h, radius, alpha);
 
 		// Clip to the visible morph rectangle before applying the panel transform.
 		g.enableScissor(
