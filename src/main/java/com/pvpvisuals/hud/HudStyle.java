@@ -22,8 +22,7 @@ public final class HudStyle {
 		EchoTheme.sync();
 		float a = Math.max(0f, Math.min(1f, alpha));
 		com.pvpvisuals.gui.echo.LiquidGlassRenderer.surface(g, x, y, w, h, r,
-				withAlpha(EchoTheme.HUD_TOP, a), withAlpha(EchoTheme.HUD_BOTTOM, a),
-				withAlpha(EchoTheme.NEON_LINE, 0.34f * a));
+				withAlpha(EchoTheme.HUD_TOP, a), withAlpha(EchoTheme.NEON_LINE, 0.34f * a));
 		// Мягкий верхний блик сохраняет характерный Liquid Glass вид даже на тёмном фоне.
 		com.pvpvisuals.gui.echo.LiquidGlassRenderer.roundRect(g, x + 1f, y + 1f,
 				Math.max(0f, w - 2f), Math.min(12f, Math.max(0f, h - 2f)), Math.max(1f, r - 1f),
