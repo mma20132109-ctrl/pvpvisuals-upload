@@ -62,7 +62,7 @@ void main() {
     blurred += texture(Sampler0, refractedUv + vec2(0.0,  2.0 * px.y * radius)).rgb * 0.01;
     blurred += texture(Sampler0, refractedUv + vec2(0.0, -2.0 * px.y * radius)).rgb * 0.01;
 
-    float tintAmount = clamp(vertexColor.a * 3.0, 0.0, 0.42);
+    float tintAmount = clamp(vertexColor.a * 1.5, 0.0, 0.24);
     vec3 glass = mix(blurred, vertexColor.rgb, tintAmount);
 
     // Soft upper reflection and a restrained Fresnel rim.
