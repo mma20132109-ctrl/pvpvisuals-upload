@@ -477,7 +477,8 @@ public class EchoScreen extends Screen {
 		int slot = tabSlot();
 		boolean searching = !search.isEmpty();
 
-		Gfx.rrect(g, x, y, cw0, TABS_H, TABS_H / 2f, 0x0AFFFFFF, 0x0AFFFFFF, 0x0CFFFFFF, 0.8f);
+		Gfx.glass(g, x, y, cw0, TABS_H, TABS_H / 2f,
+				0x604B5870, 0x7A293448, 0x58FFFFFF);
 
 		float target = x + 2 + selected.ordinal() * slot;
 		if (indicator < 0f) {
