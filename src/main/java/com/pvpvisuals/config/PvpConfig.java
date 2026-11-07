@@ -119,6 +119,12 @@ public final class PvpConfig {
 
 	// ---------- логотип и Watermark ----------
 	public boolean watermark = true;
+	/** Дополнительные HUD-виджеты в стиле Svintus. */
+	public boolean coordinatesHud = true;
+	public boolean moduleListHud = true;
+	public boolean coordinatesDirection = true;
+	public boolean coordinatesNether = false;
+	public boolean moduleListGlow = true;
 	public LogoSettings logo = new LogoSettings();
 
 	// ---------- оформление меню ----------

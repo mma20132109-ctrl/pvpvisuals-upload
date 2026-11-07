@@ -56,6 +56,8 @@ public class EchoScreen extends Screen {
 	private final ScrollableGrid grid = new ScrollableGrid();
 	private final ConfigDialog dialog = new ConfigDialog();
 	private SettingsView settings;
+	private boolean sideSettingsLeft;
+	private long sideSettingsNs;
 
 	private Category selected = Category.VISUAL;
 	private String lastQuery;
@@ -226,8 +228,17 @@ public class EchoScreen extends Screen {
 
 	private void openSettings(ModuleCard card) {
 		settings = new SettingsView(card);
-		settings.layout(cx0, cy0, cw0, ch0);
-		tabNs = System.nanoTime();
+		sideSettingsLeft = card.x < wx + ww / 2;
+		sideSettingsNs = System.nanoTime();
+		layoutSideSettings();
+	}
+
+	private int sideSettingsWidth() { return 176; }
+
+	private void layoutSideSettings() {
+		if (settings == null) return;
+		int sx = sideSettingsLeft ? wx - sideSettingsWidth() : wx + ww;
+		settings.layout(sx, cy0, sideSettingsWidth(), ch0);
 	}
 
 	private void rebuildVisible(String q) {
@@ -336,25 +347,70 @@ public class EchoScreen extends Screen {
 		g.enableScissor(cx0, cy0, cx0 + cw0, cy0 + ch0);
 		g.pose().pushMatrix();
 		g.pose().translate(0f, (1f - tf) * 8f);
-		if (settings != null) {
-			settings.layout(cx0, cy0, cw0, ch0);
-			String bt = settings.card().bindText;
-			settings.render(g, this.font, mx, my, dt, hoverOk, bt);
+		grid.layout(cx0, cy0, cw0, ch0, visible, this.font);
+		if (grid.isEmpty()) {
+			drawEmpty(g);
 		} else {
-			grid.layout(cx0, cy0, cw0, ch0, visible, this.font);
-			if (grid.isEmpty()) {
-				drawEmpty(g);
-			} else {
-				grid.render(g, this.font, mx, my, dt, hoverOk);
-			}
+			grid.render(g, this.font, mx, my, dt, hoverOk);
 		}
 		g.disableScissor();
 		g.pose().popMatrix();
 		Gfx.alpha = prev;
 
+		if (settings != null) drawSideSettings(g, mx, my, dt, hoverOk, now);
 		drawFooter(g, mx, my, dt, hoverOk);
 	}
 
+	private void drawSideSettings(GuiGraphics g, int mx, int my, float dt, boolean hoverOk, long now) {
+		layoutSideSettings();
+		int panelWidth = sideSettingsWidth();
+		int targetX = sideSettingsLeft ? wx - panelWidth : wx + ww;
+		float raw = Mth.clamp((now - sideSettingsNs) / 620_000_000f, 0f, 1f);
+		float t = Gfx.ease(raw);
+		float pulse = (float) Math.sin(raw * Math.PI);
+		float surfaceX = sideSettingsLeft ? wx : wx + ww;
+		float surfaceY = cy0 + ch0 * 0.5f;
+		float oldAlpha = Gfx.alpha;
+
+		// The GUI edge is the fixed waterline: the panel grows out of it,
+		// rather than sliding in as a separate floating window.
+		float growth = Mth.clamp(t + pulse * 0.045f, 0.015f, 1.035f);
+		float visibleWidth = panelWidth * growth;
+		float drawX = sideSettingsLeft ? surfaceX - visibleWidth : surfaceX;
+
+		if (raw < 1f) {
+			float rippleFade = (1f - raw) * 0.72f;
+			Gfx.alpha = oldAlpha * Math.min(1f, raw * 2.5f + 0.08f);
+			for (int i = 0; i < 4; i++) {
+				float radius = 7f + raw * 32f + i * 9f;
+				int color = RoundedRender.scaleAlpha(EchoTheme.ACCENT_TEXT, rippleFade * (1f - i * 0.16f));
+				Gfx.ringCircle(g, surfaceX, surfaceY, radius, 1.1f, color);
+			}
+			// A wavering vertical seam follows the expanding panel edge.
+			for (int i = 0; i < 9; i++) {
+				float y = cy0 + 7f + i * ((ch0 - 14f) / 8f);
+				float wobble = (float) Math.sin(raw * 13f + i * 0.9f) * (1f - raw) * 5f;
+				float edge = sideSettingsLeft ? surfaceX - visibleWidth : surfaceX + visibleWidth;
+				int color = RoundedRender.scaleAlpha(EchoTheme.TEXT, rippleFade * (0.75f - i * 0.035f));
+				Gfx.line(g, edge - wobble, y - 3f, edge + wobble, y + 3f, 1.15f, color);
+			}
+		}
+
+		Gfx.alpha = oldAlpha * Mth.clamp(t * 1.15f, 0f, 1f);
+		g.pose().pushMatrix();
+		// Scale from the shared GUI border so the inner edge never detaches.
+		g.pose().translate(surfaceX, surfaceY);
+		g.pose().scale(growth, 0.985f + 0.015f * t + pulse * 0.025f);
+		g.pose().translate(-surfaceX, -surfaceY);
+		Gfx.glow(g, targetX, cy0, panelWidth, ch0, 10, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 6);
+		LiquidGlassRenderer.window(g, targetX, cy0, panelWidth, ch0, 10);
+		Gfx.rrect(g, targetX + 1, cy0 + 1, panelWidth - 2, 34, 9, 0x12FFFFFF, 0x00FFFFFF, 0, 0f);
+		g.enableScissor(targetX, cy0, targetX + panelWidth, cy0 + ch0);
+		settings.render(g, this.font, mx, my, dt, hoverOk && raw > 0.96f, settings.card().bindText);
+		g.disableScissor();
+		g.pose().popMatrix();
+		Gfx.alpha = oldAlpha;
+	}
 	private void drawHeader(GuiGraphics g, float dt) {
 		PvpConfig cfg = PvpConfig.get();
 		int lx = wx + MARGIN;
@@ -634,16 +690,10 @@ public class EchoScreen extends Screen {
 			}
 		}
 
-		if (settings != null) {
+		if (settings != null && settings.contains(mx, my)) {
 			SettingsView.Result r = settings.click(mx, my, btn);
-			switch (r) {
-				case BACK -> {
-					settings = null;
-					tabNs = System.nanoTime();
-				}
-				case CHANGED -> save();
-				default -> { }
-			}
+			if (r == SettingsView.Result.BACK) settings = null;
+			else if (r == SettingsView.Result.CHANGED) save();
 			return r != SettingsView.Result.NONE;
 		}
 
@@ -655,14 +705,12 @@ public class EchoScreen extends Screen {
 		ModuleDef def = card.def;
 		switch (hit.zone()) {
 			case BIND -> { if (btn == 1) KeybindManager.clear(def.name); else KeybindManager.startListening(def.name); }
-			case MORE -> card.expanded = !card.expanded;
-			case INLINE_SETTINGS -> {
-				SettingsView.Result result = card.inlineSettings.click(mx, my, btn);
-				if (result == SettingsView.Result.CHANGED) save();
-			}
-			case TOGGLE, BODY -> {
-				if (btn == 1) { if (card.hasSettings() || def.isGroup()) card.expanded = !card.expanded; }
-				else if (def.isGroup()) card.expanded = !card.expanded;
+			case MORE -> openSettings(card);
+			case INLINE_SETTINGS -> openSettings(card);
+			case TOGGLE -> { if (btn == 1 && (card.hasSettings() || def.isGroup())) openSettings(card); else if (btn == 0 && def.activate()) save(); }
+			case BODY -> {
+				if (btn == 1) { if (card.hasSettings() || def.isGroup()) openSettings(card); }
+				else if (def.isGroup()) openSettings(card);
 				else if (def.activate()) save();
 			}
 			default -> { }
@@ -718,12 +766,9 @@ public class EchoScreen extends Screen {
 		mouseX /= uiScale;
 		mouseY /= uiScale;
 		float px = (float) (-scrollY * 28);
-		if (settings != null) {
-			if (settings.contains(mouseX, mouseY)) {
-				settings.scrollBy(px);
-				return true;
-			}
-			return false;
+		if (settings != null && settings.contains(mouseX, mouseY)) {
+			settings.scrollBy(px);
+			return true;
 		}
 		if (grid.scrollInlineAt(mouseX, mouseY, px)) return true;
 		if (grid.scroll().contains(mouseX, mouseY)) {

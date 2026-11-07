@@ -54,6 +54,13 @@ public final class ModuleRegistry {
 						.child(HudModuleUi.layout(HudManager.COMBO, Category.UTILS)),
 				ModuleDef.toggle("Watermark", Category.UTILS, () -> c.watermark, v -> c.watermark = v)
 						.child(HudModuleUi.layout(HudManager.WATERMARK, Category.UTILS)),
+				ModuleDef.toggle("Coordinates", Category.UTILS, () -> c.coordinatesHud, v -> c.coordinatesHud = v)
+						.child(HudModuleUi.layout(HudManager.COORDINATES, Category.UTILS))
+						.child(ModuleDef.toggle("Direction", Category.UTILS, () -> c.coordinatesDirection, v -> c.coordinatesDirection = v))
+						.child(ModuleDef.toggle("Nether / Overworld", Category.UTILS, () -> c.coordinatesNether, v -> c.coordinatesNether = v)),
+				ModuleDef.toggle("Module List", Category.UTILS, () -> c.moduleListHud, v -> c.moduleListHud = v)
+						.child(HudModuleUi.layout(HudManager.MODULE_LIST, Category.UTILS))
+						.child(ModuleDef.toggle("Glow", Category.UTILS, () -> c.moduleListGlow, v -> c.moduleListGlow = v)),
 				InventoryHudModule.def(c),
 				com.pvpvisuals.hud.binds.HudBindsModule.def(c),
 
