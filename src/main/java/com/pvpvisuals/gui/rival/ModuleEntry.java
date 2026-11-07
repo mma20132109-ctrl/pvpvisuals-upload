@@ -2,6 +2,7 @@ package com.pvpvisuals.gui.rival;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -28,7 +29,7 @@ public final class ModuleEntry {
 	}
 
 	public boolean matches(String q) {
-		return q.isEmpty() || def.title().toLowerCase().contains(q);
+		return q.isEmpty() || def.title().toLowerCase(Locale.ROOT).contains(q.toLowerCase(Locale.ROOT));
 	}
 
 	public boolean subtreeMatches(String q) {
