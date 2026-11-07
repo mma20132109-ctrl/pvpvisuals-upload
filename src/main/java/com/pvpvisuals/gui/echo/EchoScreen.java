@@ -309,11 +309,9 @@ public class EchoScreen extends Screen {
 		boolean hoverOk = interactive;
 
 		// окно: акцентное свечение, градиентная заливка, лёгкая акцентная вуаль, блик сверху и тонкая рамка
-		Gfx.glow(g, wx, wy, ww, wh, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.35f), 8);
-		Gfx.rrect(g, wx, wy, ww, wh, R, EchoTheme.WIN_TOP, EchoTheme.WIN_BOTTOM, 0, 0f);
-		Gfx.rrect(g, wx, wy, ww, wh, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.07f), 0, 0, 0f);
-		Gfx.rrect(g, wx, wy, ww, 60, R, 0x0CFFFFFF, 0x00FFFFFF, 0, 0f);
-		Gfx.ring(g, wx, wy, ww, wh, R, 1, 0x2AFFFFFF);
+		Gfx.glow(g, wx, wy, ww, wh, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.20f), 6);
+		LiquidGlassRenderer.window(g, wx, wy, ww, wh, R);
+		Gfx.rrect(g, wx + 1, wy + 1, ww - 2, 60, R - 1, 0x0AFFFFFF, 0x00FFFFFF, 0, 0f);
 
 		drawHeader(g, dt);
 		drawTabs(g, mx, my, dt, hoverOk);
