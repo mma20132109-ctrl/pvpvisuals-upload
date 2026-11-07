@@ -51,6 +51,8 @@ public final class KeybindManager {
 	private static String listening;
 	/** Модули, включённые до Toggle All (чтобы вернуть их повторным нажатием). */
 	private static Set<String> snapshot;
+	/** Не показывать отдельное уведомление для каждого модуля при пакетном переключении. */
+	private static boolean batchingToggles;
 
 	private KeybindManager() { }
 
@@ -140,16 +142,23 @@ public final class KeybindManager {
 		}
 	}
 
+	/** Вызывается из ModuleDef после переключения реального игрового модуля. */
+	public static void notifyModuleToggle(String name, boolean enabled) {
+		if (batchingToggles) {
+			return;
+		}
+		BindSettings b = PvpConfig.get().binds;
+		if (b.showNotifications) {
+			NotificationToast.showToggle(name, enabled, b.durationMs);
+		}
+	}
+
 	private static void toggle(String name) {
 		// Определения пересобираются заново: лямбды старых могли держать устаревшие вложенные конфиги после импорта.
 		for (ModuleDef d : ModuleRegistry.toggleModules()) {
 			if (d.name.equals(name)) {
 				d.activate();
 				PvpConfig.get().save();
-				BindSettings bind = PvpConfig.get().binds;
-				if (bind.showNotifications) {
-					NotificationToast.showToggle(name, d.enabled(), bind.durationMs);
-				}
 				return;
 			}
 		}
@@ -157,39 +166,55 @@ public final class KeybindManager {
 
 	private static void toggleAll() {
 		List<ModuleDef> all = ModuleRegistry.toggleModules();
-		if (snapshot != null) {
-			for (ModuleDef d : all) {
-				if (snapshot.contains(d.name)) {
-					d.setEnabled(true);
-				}
-			}
-			snapshot = null;
-			notify("Modules restored", true);
-		} else {
-			Set<String> on = new HashSet<>();
-			for (ModuleDef d : all) {
-				if (d.enabled()) {
-					on.add(d.name);
-					d.setEnabled(false);
-				}
-			}
-			if (on.isEmpty()) {
+		String message;
+		boolean ok;
+		batchingToggles = true;
+		try {
+			if (snapshot != null) {
 				for (ModuleDef d : all) {
-					d.setEnabled(true);
+					if (snapshot.contains(d.name)) {
+						d.setEnabled(true);
+					}
 				}
-				notify("All modules: ON", true);
+				snapshot = null;
+				message = "Modules restored";
+				ok = true;
 			} else {
-				snapshot = on;
-				notify("All modules: OFF", false);
+				Set<String> on = new HashSet<>();
+				for (ModuleDef d : all) {
+					if (d.enabled()) {
+						on.add(d.name);
+						d.setEnabled(false);
+					}
+				}
+				if (on.isEmpty()) {
+					for (ModuleDef d : all) {
+						d.setEnabled(true);
+					}
+					message = "All modules: ON";
+					ok = true;
+				} else {
+					snapshot = on;
+					message = "All modules: OFF";
+					ok = false;
+				}
 			}
+		} finally {
+			batchingToggles = false;
 		}
 		PvpConfig.get().save();
+		notify(message, ok);
 	}
 
 	/** Экстренно выключает все модули. */
 	private static void panic() {
-		for (ModuleDef d : ModuleRegistry.toggleModules()) {
-			d.setEnabled(false);
+		batchingToggles = true;
+		try {
+			for (ModuleDef d : ModuleRegistry.toggleModules()) {
+				d.setEnabled(false);
+			}
+		} finally {
+			batchingToggles = false;
 		}
 		snapshot = null;
 		PvpConfig.get().save();
