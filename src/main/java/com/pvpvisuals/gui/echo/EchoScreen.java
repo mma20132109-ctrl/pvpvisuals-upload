@@ -403,7 +403,12 @@ public class EchoScreen extends Screen {
 			int textW = Gfx.widthAtSize(this.font, c.title, 6.2f);
 			int contentW = 9 + 4 + textW;
 			int cx = sx + (slot - contentW) / 2;
-			EchoIcons.category(g, c, cx, y + (TABS_H - 9) / 2, iconC);
+			g.pose().pushMatrix();
+			g.pose().translate(cx + 6f, y + TABS_H / 2f);
+			g.pose().scale(0.75f, 0.75f);
+			g.pose().translate(-cx - 6f, -(y + TABS_H / 2f));
+			EchoIcons.category(g, c, cx, y + 5, iconC);
+			g.pose().popMatrix();
 			Gfx.textAtSize(g, this.font, c.title, cx + 13, y + (TABS_H - 7) / 2, 6.2f, textC, false);
 		}
 	}
