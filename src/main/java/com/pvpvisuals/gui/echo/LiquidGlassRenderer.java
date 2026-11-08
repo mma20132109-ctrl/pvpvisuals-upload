@@ -20,8 +20,21 @@ import org.joml.Matrix3x2f;
 public final class LiquidGlassRenderer {
     private static TextureTarget backdrop;
     private static GpuSampler backdropSampler;
+    private static boolean capturePending;
 
     private LiquidGlassRenderer() { }
+
+    /** Schedule the copy for the actual GUI draw pass, after the backdrop has reached the GPU. */
+    public static void scheduleBackgroundCapture() {
+        capturePending = true;
+    }
+
+    /** Called by GuiRendererMixin between the background and glass render passes. */
+    public static void capturePendingBackground() {
+        if (!capturePending) return;
+        capturePending = false;
+        captureBackground();
+    }
 
     /** Copies the current scene into a texture before Echo submits its GUI elements. */
     public static void captureBackground() {
@@ -153,6 +166,7 @@ public final class LiquidGlassRenderer {
     }
 
     public static void close() {
+        capturePending = false;
         if (backdrop != null) {
             backdrop.destroyBuffers();
             backdrop = null;
