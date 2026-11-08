@@ -21,6 +21,7 @@ public class PvpVisualsClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		com.pvpvisuals.gui.mainmenu.PvpMainMenuScreen.register();
 		PvpConfig.load();
 		SvintusRenderEngine.initialize();
 		com.pvpvisuals.render.targetesp.TargetScanRenderTypes.initialize();
