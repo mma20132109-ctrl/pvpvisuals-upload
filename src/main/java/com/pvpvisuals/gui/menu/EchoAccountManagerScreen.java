@@ -4,6 +4,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
+import java.util.Optional;
+import java.util.UUID;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,11 +16,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.User;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+
+import com.pvpvisuals.mixin.MinecraftUserAccessor;
 
 /**
  * Локальный менеджер сохранённых офлайн-профилей.
@@ -28,6 +35,7 @@ public final class EchoAccountManagerScreen extends Screen {
     private static final Path FILE = FabricLoader.getInstance().getConfigDir().resolve("pvpvisuals-accounts.properties");
     private static final int MAX_PROFILES = 100;
     private static final int MAX_VISIBLE_PROFILES = 6;
+    private static User originalUser;
 
     private final Screen parent;
     private final List<String> accounts = new ArrayList<>();
@@ -42,6 +50,7 @@ public final class EchoAccountManagerScreen extends Screen {
     public EchoAccountManagerScreen(Screen parent) {
         super(Component.literal("PvPVisuals Accounts"));
         this.parent = parent;
+        if (originalUser == null) originalUser = Minecraft.getInstance().getUser();
         load();
     }
 
@@ -135,8 +144,21 @@ public final class EchoAccountManagerScreen extends Screen {
     }
 
     private void choosePreferred(String name) {
+        UUID offlineUuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
+        User offlineUser = new User(name, offlineUuid, "", Optional.empty(), Optional.empty());
+        ((MinecraftUserAccessor) (Object) Minecraft.getInstance()).pvpvisuals$setUser(offlineUser);
         preferred = name;
-        if (save()) setStatus(name + " is now the preferred saved profile", false);
+        if (save()) setStatus("Using " + name + " locally. Online-mode servers require Microsoft sign-in.", false);
+        init();
+    }
+
+    private void restoreOriginalUser() {
+        if (originalUser == null) {
+            setStatus("Original account is unavailable in this session", true);
+            return;
+        }
+        ((MinecraftUserAccessor) (Object) Minecraft.getInstance()).pvpvisuals$setUser(originalUser);
+        setStatus("Restored the original Minecraft account", false);
         init();
     }
 
@@ -186,8 +208,13 @@ public final class EchoAccountManagerScreen extends Screen {
             .bounds(left, pagerY, 54, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Next"), b -> changePage(1))
             .bounds(left + panelWidth - 54, pagerY, 54, 20).build());
+        int footerWidth = 100;
+        int footerGap = 12;
+        int footerLeft = this.width / 2 - (footerWidth * 2 + footerGap) / 2;
+        addRenderableWidget(Button.builder(Component.literal("Restore original"), b -> restoreOriginalUser())
+            .bounds(footerLeft, this.height - 42, footerWidth, 20).build());
         addRenderableWidget(Button.builder(Component.literal("Done"), b -> onClose())
-            .bounds(this.width / 2 - 50, this.height - 42, 100, 20).build());
+            .bounds(footerLeft + footerWidth + footerGap, this.height - 42, footerWidth, 20).build());
     }
 
     @Override
@@ -195,7 +222,7 @@ public final class EchoAccountManagerScreen extends Screen {
         renderBackground(graphics, mouseX, mouseY, delta);
         super.render(graphics, mouseX, mouseY, delta);
         graphics.drawCenteredString(this.font, "ACCOUNT MANAGER", this.width / 2, 30, 0xFFFFFFFF);
-        graphics.drawCenteredString(this.font, "Saved offline profiles", this.width / 2, 46, 0xFFB9A5E8);
+        graphics.drawCenteredString(this.font, "Offline profiles • offline-mode servers only", this.width / 2, 46, 0xFFB9A5E8);
         if (accounts.isEmpty()) {
             graphics.drawCenteredString(this.font, "No saved profiles yet", this.width / 2, Math.max(140, this.height / 2), 0xFF9990AA);
         } else {
@@ -204,7 +231,7 @@ public final class EchoAccountManagerScreen extends Screen {
                 pageIndicatorY, 0xFF9990AA);
         }
 
-        graphics.drawCenteredString(this.font, "Saved choice only — it does not change your Minecraft login.",
+        graphics.drawCenteredString(this.font, "Online-mode servers require a valid Microsoft-authenticated session.",
             this.width / 2, this.height - 75, 0xFF9990AA);
         if (!status.isEmpty()) {
             graphics.drawCenteredString(this.font, status, this.width / 2, this.height - 62,
