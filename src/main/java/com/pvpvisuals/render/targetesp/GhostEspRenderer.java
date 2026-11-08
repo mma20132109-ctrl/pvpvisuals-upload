@@ -32,13 +32,13 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Procedural three-wisp Target ESP inspired by ParticleFX Studio's Ghost Wisps effect.
- * It draws figure-eight spirit paths, tapered luminous ribbons and soft mote heads.
- * No vanilla particles, external textures or user-provided files are required.
+ * It draws three floating spirit heads with separate, fading glow motes along figure-eight paths.
+ * No flat ribbon geometry, vanilla particles, external textures or user-provided files are required.
  */
 public final class GhostEspRenderer {
     private static final Logger LOG = LoggerFactory.getLogger("pvpvisuals/target-esp/ghosts");
-    private static final int TRAIL_SEGMENTS = 30;
-    private static final int MAX_QUADS = 3 * TRAIL_SEGMENTS + 48 + 3;
+    private static final int MAX_TRAIL_MOTES = 20;
+    private static final int MAX_QUADS = 3 * MAX_TRAIL_MOTES + 3;
     /** POSITION (3 floats) + UV (2 floats) + COLOR (4 normalized bytes). */
     private static final int VERTEX_BYTES = 24;
     private static final int BUFFER_BYTES = MAX_QUADS * 4 * VERTEX_BYTES;
@@ -121,94 +121,44 @@ public final class GhostEspRenderer {
             double upZ = -forwardY * leftX;
 
             int accent = TargetEspRenderer.resolveColor(settings, frame);
-            int moteCount = Math.max(4, Math.min(48, settings.ghostCount));
+            int trailMotes = Math.max(6, Math.min(MAX_TRAIL_MOTES, settings.ghostCount));
             float speed = clamp(settings.animationSpeed, 0.1f, 4.0f);
             double time = System.nanoTime() / 1_000_000_000.0;
 
             DATA.clear();
             vertexCount = 0;
 
-            // Three independent spirit heads move on offset figure-eight paths.
+            // Three soft spirit heads drift independently; each leaves a dotted, fading aura.
             for (int wisp = 0; wisp < 3; wisp++) {
-                int color = blendColor(WISP_COLORS[wisp], accent, 0.18f);
+                int color = blendColor(WISP_COLORS[wisp], accent, 0.14f);
                 float red = ((color >> 16) & 255) / 255.0f;
                 float green = ((color >> 8) & 255) / 255.0f;
                 float blue = (color & 255) / 255.0f;
-                double headPhase = time * speed * (Math.PI * 2.0 / 3.0);
-                appendRibbon(wisp, headPhase, centerX, centerZ, minY, width, depth, height,
-                        frame.fade, red, green, blue, forwardX, forwardY, forwardZ);
+                double headPhase = time * speed * 0.82;
                 float[] head = samplePath(wisp, headPhase, centerX, centerZ, minY, width, depth, height);
-                appendMote(head[0], head[1], head[2], 0.115f, frame.fade * 0.98f,
-                        red, green, blue, leftX, leftZ, upX, upY, upZ);
-            }
 
-            // Small drifting motes add depth without turning the effect into round rings.
-            for (int i = 0; i < moteCount; i++) {
-                int wisp = i % 3;
-                double phase = time * speed * (Math.PI * 2.0 / 3.0)
-                        + i * 2.399963229728653;
-                double lag = 0.45 + (i % 5) * 0.13;
-                float[] p = samplePath(wisp, phase - lag, centerX, centerZ, minY, width, depth, height);
-                float size = 0.025f + (i % 4) * 0.008f;
-                float alpha = frame.fade * (0.22f + 0.12f * (float) Math.sin(time * 2.0 + i));
-                int color = blendColor(WISP_COLORS[wisp], accent, 0.18f);
-                appendMote(p[0], p[1], p[2], size, alpha,
-                        ((color >> 16) & 255) / 255.0f,
-                        ((color >> 8) & 255) / 255.0f,
-                        (color & 255) / 255.0f,
-                        leftX, leftZ, upX, upY, upZ);
+                // The larger head is a soft flame-like spirit, not a flat rectangle or a ring.
+                appendMote(head[0], head[1], head[2], 0.17f, frame.fade * 0.96f,
+                        red, green, blue, leftX, leftZ, upX, upY, upZ, true);
+
+                // Separate round motes dissolve behind the spirit instead of joining into a stripe.
+                for (int trail = 1; trail <= trailMotes; trail++) {
+                    float age = trail / (float) (trailMotes + 1);
+                    double lag = age * 0.88;
+                    float[] mote = samplePath(wisp, headPhase - lag,
+                            centerX, centerZ, minY, width, depth, height);
+                    float drift = (float) Math.sin(time * 1.8 + trail * 1.7 + wisp * 2.1) * 0.035f;
+                    float size = 0.028f + 0.045f * (1.0f - age);
+                    float alpha = frame.fade * (float) Math.pow(1.0f - age, 1.65) * 0.72f;
+                    appendMote(mote[0] + drift, mote[1] - drift * 0.45f, mote[2] - drift,
+                            size, alpha, red, green, blue, leftX, leftZ, upX, upY, upZ, false);
+                }
             }
 
             flush(frame.view, settings.throughWalls, target);
         } catch (Throwable error) {
             failed = true;
             LOG.error("Ghost Wisps renderer failed and was disabled until re-enabled", error);
-        }
-    }
-
-    private static void appendRibbon(int wisp, double headPhase,
-            float centerX, float centerZ, float minY, float width, float depth, float height,
-            float fade, float red, float green, float blue,
-            double viewX, double viewY, double viewZ) {
-        float[] previous = samplePath(wisp, headPhase, centerX, centerZ, minY,
-                width, depth, height);
-
-        for (int segment = 0; segment < TRAIL_SEGMENTS; segment++) {
-            float age0 = segment / (float) TRAIL_SEGMENTS;
-            float age1 = (segment + 1) / (float) TRAIL_SEGMENTS;
-            double tailPhase = headPhase - age1 * 1.65;
-            float[] next = samplePath(wisp, tailPhase, centerX, centerZ, minY,
-                    width, depth, height);
-
-            float dx = next[0] - previous[0];
-            float dy = next[1] - previous[1];
-            float dz = next[2] - previous[2];
-            float sideX = dy * (float) viewZ - dz * (float) viewY;
-            float sideY = dz * (float) viewX - dx * (float) viewZ;
-            float sideZ = dx * (float) viewY - dy * (float) viewX;
-            float sideLength = (float) Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
-            if (sideLength < 1.0e-5f) {
-                sideX = 1.0f;
-                sideY = 0.0f;
-                sideZ = 0.0f;
-                sideLength = 1.0f;
-            }
-            sideX /= sideLength;
-            sideY /= sideLength;
-            sideZ /= sideLength;
-
-            float halfWidth0 = 0.012f + 0.055f * (1.0f - age0);
-            float halfWidth1 = 0.012f + 0.055f * (1.0f - age1);
-            float alpha0 = fade * (float) Math.pow(1.0f - age0, 1.25) * 0.94f;
-            float alpha1 = fade * (float) Math.pow(1.0f - age1, 1.25) * 0.94f;
-
-            appendQuad(
-                    previous[0] - sideX * halfWidth0, previous[1] - sideY * halfWidth0, previous[2] - sideZ * halfWidth0,
-                    previous[0] + sideX * halfWidth0, previous[1] + sideY * halfWidth0, previous[2] + sideZ * halfWidth0,
-                    next[0] + sideX * halfWidth1, next[1] + sideY * halfWidth1, next[2] + sideZ * halfWidth1,
-                    next[0] - sideX * halfWidth1, next[1] - sideY * halfWidth1, next[2] - sideZ * halfWidth1,
-                    alpha0, alpha0, alpha1, alpha1, red, green, blue, 0.0f, 1.0f);
-            previous = next;
         }
     }
 
@@ -228,22 +178,25 @@ public final class GhostEspRenderer {
 
     private static void appendMote(float cx, float cy, float cz, float size, float alpha,
             float red, float green, float blue,
-            double leftX, double leftZ, double upX, double upY, double upZ) {
+            double leftX, double leftZ, double upX, double upY, double upZ, boolean spiritHead) {
         if (alpha <= 0.003f || DATA.remaining() < 4 * VERTEX_BYTES) {
             return;
         }
-        float half = size;
-        float lx = (float) (leftX * half);
-        float lz = (float) (leftZ * half);
-        float ux = (float) (upX * half);
-        float uy = (float) (upY * half);
-        float uz = (float) (upZ * half);
+        float halfWidth = size * (spiritHead ? 0.78f : 1.0f);
+        float halfHeight = size * (spiritHead ? 1.22f : 1.0f);
+        float lx = (float) (leftX * halfWidth);
+        float lz = (float) (leftZ * halfWidth);
+        float ux = (float) (upX * halfHeight);
+        float uy = (float) (upY * halfHeight);
+        float uz = (float) (upZ * halfHeight);
+        float uvBottom = spiritHead ? 4.0f : 2.0f;
+        float uvTop = spiritHead ? 5.0f : 3.0f;
         appendQuad(
                 cx - lx - ux, cy - uy, cz - lz - uz,
                 cx + lx - ux, cy - uy, cz + lz - uz,
                 cx + lx + ux, cy + uy, cz + lz + uz,
                 cx - lx + ux, cy + uy, cz - lz + uz,
-                alpha, alpha, alpha, alpha, red, green, blue, 2.0f, 3.0f);
+                alpha, alpha, alpha, alpha, red, green, blue, uvBottom, uvTop);
     }
 
     private static void appendQuad(
@@ -279,14 +232,14 @@ public final class GhostEspRenderer {
         DATA.flip();
         GpuDevice device = RenderSystem.getDevice();
         if (vertexBuffer == null) {
-            vertexBuffer = device.createBuffer(() -> "PvPVisuals Ghost Wisps ribbons",
+            vertexBuffer = device.createBuffer(() -> "PvPVisuals Ghost Wisps motes",
                     GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, BUFFER_BYTES);
         }
 
         CommandEncoder encoder = device.createCommandEncoder();
         encoder.writeToBuffer(vertexBuffer.slice(0, DATA.remaining()), DATA);
         var transforms = RenderSystem.getDynamicUniforms().writeTransform(view, WHITE, ZERO, IDENTITY);
-        try (RenderPass pass = encoder.createRenderPass(() -> "PvPVisuals Ghost Wisps",
+        try (RenderPass pass = encoder.createRenderPass(() -> "PvPVisuals Ghost Wisps motes",
                 target.getColorTextureView(), OptionalInt.empty(),
                 target.getDepthTextureView(), OptionalDouble.empty())) {
             pass.setPipeline(pipeline(throughWalls));
