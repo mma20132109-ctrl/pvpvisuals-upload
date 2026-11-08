@@ -68,7 +68,7 @@ public final class ModuleRegistry {
 									var mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode);
 									return mode == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS
 											|| mode == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2;
-								})
+								}))
 						.child(ModuleDef.slider("Wave Height", Category.VISUAL, 0.0, 1.0, 2, () -> c.targetEspSettings.ghostAmplitude, v -> c.targetEspSettings.ghostAmplitude = (float) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
 						.child(ModuleDef.slider("Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
