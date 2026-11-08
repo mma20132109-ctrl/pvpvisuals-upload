@@ -78,7 +78,7 @@ public final class TargetEspStyleRenderer {
                     .withFragmentShader(Identifier.fromNamespaceAndPath(NS, "core/target_esp_texture"))
                     .withSampler("Sampler0")
                     .withVertexFormat(DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS)
-                    .withBlend(BlendFunction.TRANSLUCENT)
+                    .withBlend(BlendFunction.LIGHTNING)
                     .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
                     .withDepthWrite(false).withCull(false).build();
         }
