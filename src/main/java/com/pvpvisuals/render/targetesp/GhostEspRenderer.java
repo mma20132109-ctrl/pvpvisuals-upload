@@ -31,25 +31,23 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 /**
- * Procedural Ghost ESP renderer for 1.21.11.
- *
- * The source PNGs stay in the project-root target_esp/ directory. build.gradle copies them
- * into assets/pvpvisuals/textures/target_esp/ in build resources and in the final mod JAR.
- *
- * This renderer draws camera-facing ghost silhouettes procedurally in the fragment shader.
- * It does not use Minecraft's vanilla particle engine and does not draw entity bounding boxes.
+ * Procedural three-wisp Target ESP inspired by ParticleFX Studio's Ghost Wisps effect.
+ * It draws figure-eight spirit paths, tapered luminous ribbons and soft mote heads.
+ * No vanilla particles, external textures or user-provided files are required.
  */
 public final class GhostEspRenderer {
     private static final Logger LOG = LoggerFactory.getLogger("pvpvisuals/target-esp/ghosts");
-    private static final int MAX_SPRITES = 48;
+    private static final int TRAIL_SEGMENTS = 30;
+    private static final int MAX_QUADS = 3 * TRAIL_SEGMENTS + 48 + 3;
     /** POSITION (3 floats) + UV (2 floats) + COLOR (4 normalized bytes). */
     private static final int VERTEX_BYTES = 24;
-    private static final int BUFFER_BYTES = MAX_SPRITES * 4 * VERTEX_BYTES;
+    private static final int BUFFER_BYTES = MAX_QUADS * 4 * VERTEX_BYTES;
     private static final ByteBuffer DATA = ByteBuffer.allocateDirect(BUFFER_BYTES).order(ByteOrder.nativeOrder());
 
     private static final Vector4f WHITE = new Vector4f(1f, 1f, 1f, 1f);
     private static final Vector3f ZERO = new Vector3f();
     private static final Matrix4f IDENTITY = new Matrix4f();
+    private static final int[] WISP_COLORS = {0x59F1DF, 0x72CFFF, 0xA995FF};
 
     private static final RenderPipeline[] PIPELINES = new RenderPipeline[2];
     private static GpuBuffer vertexBuffer;
@@ -113,8 +111,6 @@ public final class GhostEspRenderer {
             double yaw = Math.toRadians(mc.player.getViewYRot(partialTick));
             double pitch = Math.toRadians(mc.player.getViewXRot(partialTick));
             double cosPitch = Math.cos(pitch);
-
-            // Camera-facing basis keeps each little ghost upright relative to the player camera.
             double forwardX = -Math.sin(yaw) * cosPitch;
             double forwardY = -Math.sin(pitch);
             double forwardZ = Math.cos(yaw) * cosPitch;
@@ -124,86 +120,168 @@ public final class GhostEspRenderer {
             double upY = forwardZ * leftX - forwardX * leftZ;
             double upZ = -forwardY * leftX;
 
-            int rgb = TargetEspRenderer.resolveColor(settings, frame);
-            int red = (rgb >> 16) & 255;
-            int green = (rgb >> 8) & 255;
-            int blue = rgb & 255;
-            int count = Math.max(4, Math.min(MAX_SPRITES, settings.ghostCount));
+            int accent = TargetEspRenderer.resolveColor(settings, frame);
+            int moteCount = Math.max(4, Math.min(48, settings.ghostCount));
             float speed = clamp(settings.animationSpeed, 0.1f, 4.0f);
             double time = System.nanoTime() / 1_000_000_000.0;
 
             DATA.clear();
             vertexCount = 0;
-            appendSprites(minX, minY, minZ, width, depth, height, centerX, centerZ,
-                    count, speed, time, frame.fade, red, green, blue,
-                    leftX, leftZ, upX, upY, upZ);
+
+            // Three independent spirit heads move on offset figure-eight paths.
+            for (int wisp = 0; wisp < 3; wisp++) {
+                int color = blendColor(WISP_COLORS[wisp], accent, 0.18f);
+                float red = ((color >> 16) & 255) / 255.0f;
+                float green = ((color >> 8) & 255) / 255.0f;
+                float blue = (color & 255) / 255.0f;
+                double headPhase = time * speed * (Math.PI * 2.0 / 3.0)
+                        + wisp * (Math.PI * 2.0 / 3.0);
+                appendRibbon(wisp, headPhase, centerX, centerZ, minY, width, depth, height,
+                        frame.fade, red, green, blue, forwardX, forwardY, forwardZ);
+                float[] head = samplePath(wisp, headPhase, centerX, centerZ, minY, width, depth, height);
+                appendMote(head[0], head[1], head[2], 0.115f, frame.fade * 0.98f,
+                        red, green, blue, leftX, leftZ, upX, upY, upZ);
+            }
+
+            // Small drifting motes add depth without turning the effect into round rings.
+            for (int i = 0; i < moteCount; i++) {
+                int wisp = i % 3;
+                double phase = time * speed * (Math.PI * 2.0 / 3.0)
+                        + i * 2.399963229728653;
+                double lag = 0.45 + (i % 5) * 0.13;
+                float[] p = samplePath(wisp, phase - lag, centerX, centerZ, minY, width, depth, height);
+                float size = 0.025f + (i % 4) * 0.008f;
+                float alpha = frame.fade * (0.22f + 0.12f * (float) Math.sin(time * 2.0 + i));
+                int color = blendColor(WISP_COLORS[wisp], accent, 0.18f);
+                appendMote(p[0], p[1], p[2], size, alpha,
+                        ((color >> 16) & 255) / 255.0f,
+                        ((color >> 8) & 255) / 255.0f,
+                        (color & 255) / 255.0f,
+                        leftX, leftZ, upX, upY, upZ);
+            }
+
             flush(frame.view, settings.throughWalls, target);
         } catch (Throwable error) {
             failed = true;
-            LOG.error("Procedural Ghost ESP renderer failed and was disabled until re-enabled", error);
+            LOG.error("Ghost Wisps renderer failed and was disabled until re-enabled", error);
         }
     }
 
-    private static void appendSprites(float minX, float minY, float minZ,
-            float width, float depth, float height, float centerX, float centerZ,
-            int count, float speed, double time, float fade,
-            int red, int green, int blue,
-            double leftX, double leftZ, double upX, double upY, double upZ) {
-        for (int i = 0; i < count; i++) {
-            int orbit = i % 3;
-            double phase = time * speed * (orbit == 1 ? -0.82 : 1.0)
-                    + (Math.PI * 2.0 * i / count) + orbit * 1.7;
+    private static void appendRibbon(int wisp, double headPhase,
+            float centerX, float centerZ, float minY, float width, float depth, float height,
+            float fade, float red, float green, float blue,
+            double viewX, double viewY, double viewZ) {
+        float radiusX = Math.max(0.48f, width * 0.68f + 0.20f);
+        float radiusZ = Math.max(0.48f, depth * 0.68f + 0.20f);
+        float[] previous = samplePath(wisp, headPhase, centerX, centerZ, minY,
+                radiusX, radiusZ, height);
 
-            // Each sprite follows a loose rising path, then fades before returning to the bottom.
-            double lift = fract(time * speed * 0.16 + i * 0.6180339887498949);
-            float bob = (float) Math.sin(phase * 1.35 + i * 0.7) * 0.07f;
-            float y = minY + (float) (0.08 + lift * 0.82) * height + bob;
-            float radiusX = width * (0.38f + orbit * 0.10f) + 0.14f;
-            float radiusZ = depth * (0.38f + orbit * 0.10f) + 0.14f;
-            float x = centerX + (float) Math.cos(phase) * radiusX;
-            float z = centerZ + (float) Math.sin(phase) * radiusZ;
+        for (int segment = 0; segment < TRAIL_SEGMENTS; segment++) {
+            float age0 = segment / (float) TRAIL_SEGMENTS;
+            float age1 = (segment + 1) / (float) TRAIL_SEGMENTS;
+            double tailPhase = headPhase - age1 * 1.65;
+            float[] next = samplePath(wisp, tailPhase, centerX, centerZ, minY,
+                    radiusX, radiusZ, height);
 
-            float pulse = 0.88f + 0.12f * (float) Math.sin(time * speed * 2.0 + i);
-            float size = (0.40f + orbit * 0.07f) * pulse;
-            float alpha = fade * (0.35f + 0.55f * (float) Math.sin(Math.PI * lift));
-            alpha *= 0.82f + 0.18f * pulse;
+            float dx = next[0] - previous[0];
+            float dy = next[1] - previous[1];
+            float dz = next[2] - previous[2];
+            float sideX = dy * (float) viewZ - dz * (float) viewY;
+            float sideY = dz * (float) viewX - dx * (float) viewZ;
+            float sideZ = dx * (float) viewY - dy * (float) viewX;
+            float sideLength = (float) Math.sqrt(sideX * sideX + sideY * sideY + sideZ * sideZ);
+            if (sideLength < 1.0e-5f) {
+                sideX = 1.0f;
+                sideY = 0.0f;
+                sideZ = 0.0f;
+                sideLength = 1.0f;
+            }
+            sideX /= sideLength;
+            sideY /= sideLength;
+            sideZ /= sideLength;
 
-            // Keep the ghost silhouettes mostly upright; only a gentle floating tilt.
-            float rotation = (float) Math.sin(phase * 0.65 + i) * 0.16f;
-            drawBillboard(x, y, z, size, rotation, alpha, red, green, blue,
-                    leftX, leftZ, upX, upY, upZ);
+            float halfWidth0 = 0.012f + 0.055f * (1.0f - age0);
+            float halfWidth1 = 0.012f + 0.055f * (1.0f - age1);
+            float alpha0 = fade * (float) Math.pow(1.0f - age0, 1.25) * 0.94f;
+            float alpha1 = fade * (float) Math.pow(1.0f - age1, 1.25) * 0.94f;
+
+            appendQuad(
+                    previous[0] - sideX * halfWidth0, previous[1] - sideY * halfWidth0, previous[2] - sideZ * halfWidth0,
+                    previous[0] + sideX * halfWidth0, previous[1] + sideY * halfWidth0, previous[2] + sideZ * halfWidth0,
+                    next[0] + sideX * halfWidth1, next[1] + sideY * halfWidth1, next[2] + sideZ * halfWidth1,
+                    next[0] - sideX * halfWidth1, next[1] - sideY * halfWidth1, next[2] - sideZ * halfWidth1,
+                    age0, alpha0, age0, alpha0, age1, alpha1, age1, alpha1, red, green, blue);
+            previous = next;
         }
     }
 
-    private static void drawBillboard(float cx, float cy, float cz, float size, float rotation, float alpha,
-            int red, int green, int blue,
+    private static float[] samplePath(int wisp, double phase,
+            float centerX, float centerZ, float minY,
+            float width, float depth, float height) {
+        double offset = wisp * (Math.PI * 2.0 / 3.0);
+        double a = phase + offset;
+        float radiusX = Math.max(0.48f, width * 0.68f + 0.20f);
+        float radiusZ = Math.max(0.48f, depth * 0.68f + 0.20f);
+        float x = centerX + (float) Math.sin(a) * radiusX;
+        float z = centerZ + (float) (Math.sin(a) * Math.cos(a) * 2.0) * radiusZ;
+        float vertical = 0.18f + 0.68f * (0.5f + 0.5f * (float) Math.sin(a * 1.15 + offset));
+        float y = minY + vertical * height;
+        return new float[] {x, y, z};
+    }
+
+    private static void appendMote(float cx, float cy, float cz, float size, float alpha,
+            float red, float green, float blue,
             double leftX, double leftZ, double upX, double upY, double upZ) {
-        if (alpha <= 0.002f || DATA.remaining() < 4 * VERTEX_BYTES) {
+        if (alpha <= 0.003f || DATA.remaining() < 4 * VERTEX_BYTES) {
             return;
         }
+        float half = size;
+        float lx = (float) (leftX * half);
+        float lz = (float) (leftZ * half);
+        float ux = (float) (upX * half);
+        float uy = (float) (upY * half);
+        float uz = (float) (upZ * half);
+        appendQuad(
+                cx - lx - ux, cy - uy, cz - lz - uz,
+                cx + lx - ux, cy - uy, cz + lz - uz,
+                cx + lx + ux, cy + uy, cz + lz + uz,
+                cx - lx + ux, cy + uy, cz - lz + uz,
+                0.0f, alpha, 1.0f, alpha, 1.0f, alpha, 0.0f, alpha,
+                red, green, blue, 2.0f, 3.0f);
+    }
 
-        float c = (float) Math.cos(rotation);
-        float s = (float) Math.sin(rotation);
-        float half = size * 0.5f;
-        float[][] corners = {
-            {-half, -half, 0f, 1f},
-            { half, -half, 1f, 1f},
-            { half,  half, 1f, 0f},
-            {-half,  half, 0f, 0f}
-        };
+    private static void appendQuad(
+            float x0, float y0, float z0, float x1, float y1, float z1,
+            float x2, float y2, float z2, float x3, float y3, float z3,
+            float v0, float a0, float v1, float a1, float v2, float a2, float v3, float a3,
+            float red, float green, float blue) {
+        appendQuad(x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3,
+                v0,a0,v1,a1,v2,a2,v3,a3,red,green,blue,0.0f,1.0f);
+    }
 
-        int a = Math.max(0, Math.min(255, Math.round(alpha * 255f)));
-        for (float[] corner : corners) {
-            float px = corner[0] * c - corner[1] * s;
-            float py = corner[0] * s + corner[1] * c;
-            float x = cx + (float) (leftX * px + upX * py);
-            float y = cy + (float) (upY * py);
-            float z = cz + (float) (leftZ * px + upZ * py);
-            DATA.putFloat(x).putFloat(y).putFloat(z);
-            DATA.putFloat(corner[2]).putFloat(corner[3]);
-            DATA.put((byte) red).put((byte) green).put((byte) blue).put((byte) a);
-            vertexCount++;
+    private static void appendQuad(
+            float x0, float y0, float z0, float x1, float y1, float z1,
+            float x2, float y2, float z2, float x3, float y3, float z3,
+            float v0, float a0, float v1, float a1, float v2, float a2, float v3, float a3,
+            float red, float green, float blue, float uvBottom, float uvTop) {
+        if (DATA.remaining() < 4 * VERTEX_BYTES) {
+            return;
         }
+        putVertex(x0,y0,z0,0.0f,uvBottom,red,green,blue,a0);
+        putVertex(x1,y1,z1,1.0f,uvBottom,red,green,blue,a1);
+        putVertex(x2,y2,z2,1.0f,uvTop,red,green,blue,a2);
+        putVertex(x3,y3,z3,0.0f,uvTop,red,green,blue,a3);
+        vertexCount += 4;
+    }
+
+    private static void putVertex(float x, float y, float z, float u, float v,
+            float red, float green, float blue, float alpha) {
+        DATA.putFloat(x).putFloat(y).putFloat(z);
+        DATA.putFloat(u).putFloat(v);
+        DATA.put((byte) Math.round(clamp(red, 0.0f, 1.0f) * 255.0f));
+        DATA.put((byte) Math.round(clamp(green, 0.0f, 1.0f) * 255.0f));
+        DATA.put((byte) Math.round(clamp(blue, 0.0f, 1.0f) * 255.0f));
+        DATA.put((byte) Math.round(clamp(alpha, 0.0f, 1.0f) * 255.0f));
     }
 
     private static void flush(Matrix4f view, boolean throughWalls, RenderTarget target) {
@@ -214,14 +292,14 @@ public final class GhostEspRenderer {
         DATA.flip();
         GpuDevice device = RenderSystem.getDevice();
         if (vertexBuffer == null) {
-            vertexBuffer = device.createBuffer(() -> "PvPVisuals textured Ghost ESP",
+            vertexBuffer = device.createBuffer(() -> "PvPVisuals Ghost Wisps ribbons",
                     GpuBuffer.USAGE_VERTEX | GpuBuffer.USAGE_COPY_DST, BUFFER_BYTES);
         }
 
         CommandEncoder encoder = device.createCommandEncoder();
         encoder.writeToBuffer(vertexBuffer.slice(0, DATA.remaining()), DATA);
         var transforms = RenderSystem.getDynamicUniforms().writeTransform(view, WHITE, ZERO, IDENTITY);
-        try (RenderPass pass = encoder.createRenderPass(() -> "PvPVisuals textured Ghost ESP",
+        try (RenderPass pass = encoder.createRenderPass(() -> "PvPVisuals Ghost Wisps",
                 target.getColorTextureView(), OptionalInt.empty(),
                 target.getDepthTextureView(), OptionalDouble.empty())) {
             pass.setPipeline(pipeline(throughWalls));
@@ -232,8 +310,12 @@ public final class GhostEspRenderer {
         }
     }
 
-    private static double fract(double value) {
-        return value - Math.floor(value);
+    private static int blendColor(int base, int accent, float amount) {
+        float inv = 1.0f - amount;
+        int r = Math.round(((base >> 16) & 255) * inv + ((accent >> 16) & 255) * amount);
+        int g = Math.round(((base >> 8) & 255) * inv + ((accent >> 8) & 255) * amount);
+        int b = Math.round((base & 255) * inv + (accent & 255) * amount);
+        return (r << 16) | (g << 8) | b;
     }
 
     private static float clamp(float value, float min, float max) {
