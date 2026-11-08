@@ -32,17 +32,17 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.Identifier;
 
 /**
- * Clean Aura ESP: two restrained elliptical energy bands around the selected target.
- * Geometry is camera-relative and uses the same stable position/color pipeline as HitBox.
+ * Volumetric Aura made from three animated energy spirals.
+ * Each strand climbs around the complete target instead of drawing flat horizontal rings.
  */
 public final class AuraEspRenderer {
     private static final Logger LOG = LoggerFactory.getLogger("pvpvisuals/target-esp/aura");
     private static final String NS = "pvpvisuals";
-    private static final int SEGMENTS = 96;
-    private static final int RINGS = 2;
-    private static final int PASSES_PER_RING = 2;
+    private static final int HELIX_SEGMENTS = 180;
+    private static final int STRANDS = 3;
+    private static final int PASSES = 2; // soft glow + crisp core
     private static final int VERTEX_BYTES = 16;
-    private static final int BUFFER_BYTES = SEGMENTS * RINGS * PASSES_PER_RING * 6 * VERTEX_BYTES;
+    private static final int BUFFER_BYTES = HELIX_SEGMENTS * STRANDS * PASSES * 6 * VERTEX_BYTES;
     private static final double TAU = Math.PI * 2.0;
 
     private static final ByteBuffer DATA = ByteBuffer.allocateDirect(BUFFER_BYTES).order(ByteOrder.nativeOrder());
@@ -99,37 +99,41 @@ public final class AuraEspRenderer {
 
             float fov = (float) Math.toRadians(mc.options.fov().get());
             float worldPerPixel = (float) (2.0 * Math.tan(fov / 2.0) / target.height);
-            float[] b = frame.bounds;
-            float x0 = b[0], y0 = b[1], z0 = b[2];
-            float x1 = b[3], y1 = b[4], z1 = b[5];
+            float[] bounds = frame.bounds;
+            float x0 = bounds[0], y0 = bounds[1], z0 = bounds[2];
+            float x1 = bounds[3], y1 = bounds[4], z1 = bounds[5];
             float width = Math.max(0.1f, x1 - x0);
-            float depth = Math.max(0.1f, z1 - z0);
             float height = Math.max(0.1f, y1 - y0);
-            float cx = (x0 + x1) * 0.5f;
-            float cz = (z0 + z1) * 0.5f;
+            float depth = Math.max(0.1f, z1 - z0);
+            float centerX = (x0 + x1) * 0.5f;
+            float centerZ = (z0 + z1) * 0.5f;
 
             float size = clamp(settings.auraSize, 0.65f, 1.8f);
             float thickness = clamp(settings.lineThickness, 0.7f, 3.0f);
             float speed = clamp(settings.animationSpeed, 0.1f, 3.0f);
             float fade = clamp01(frame.fade);
-            int baseColor = resolveColor(settings, frame);
+            int color = resolveColor(settings, frame);
             double time = System.nanoTime() / 1_000_000_000.0 * speed;
+
+            float radiusX = Math.max(0.46f, width * 0.5f + 0.20f) * size;
+            float radiusZ = Math.max(0.46f, depth * 0.5f + 0.20f) * size;
+            float bottom = y0 + Math.max(0.04f, height * 0.025f);
+            float top = y1 - Math.max(0.04f, height * 0.025f);
 
             DATA.clear();
             vertexCount = 0;
 
-            float radiusX = Math.max(0.42f, width * 0.5f + 0.13f) * size;
-            float radiusZ = Math.max(0.42f, depth * 0.5f + 0.13f) * size;
+            // Three intertwined strands wrap from feet to head. No flat rings are drawn.
+            drawHelix(centerX, centerZ, bottom, top, radiusX, radiusZ,
+                    0.0, time, 2.25f, color, fade, thickness, worldPerPixel, settings.auraGlow);
 
-            // Lower band hugs the feet; upper band is smaller and sits around the torso.
-            drawRing(cx, y0 + Math.max(0.075f, height * 0.035f), cz,
-                    radiusX, radiusZ, time, 1.0f, 0.035f,
-                    baseColor, fade, thickness, worldPerPixel, settings.auraGlow);
+            drawHelix(centerX, centerZ, bottom, top, radiusX * 0.94f, radiusZ * 0.94f,
+                    TAU / 3.0, -time * 0.78, 2.48f, brighten(color, 0.16f),
+                    fade * 0.88f, thickness * 0.86f, worldPerPixel, settings.auraGlow);
 
-            drawRing(cx, y0 + height * 0.52f, cz,
-                    radiusX * 0.82f, radiusZ * 0.82f, -time * 0.72, 2.0f, 0.022f,
-                    brighten(baseColor, 0.16f), fade * 0.72f, thickness * 0.88f,
-                    worldPerPixel, settings.auraGlow);
+            drawHelix(centerX, centerZ, bottom, top, radiusX * 1.06f, radiusZ * 1.06f,
+                    TAU * 2.0 / 3.0, time * 0.62, 2.12f, brighten(color, 0.30f),
+                    fade * 0.76f, thickness * 0.72f, worldPerPixel, settings.auraGlow);
 
             flush(frame.view, settings.throughWalls, target);
         } catch (Throwable error) {
@@ -138,35 +142,41 @@ public final class AuraEspRenderer {
         }
     }
 
-    private static void drawRing(float cx, float centerY, float cz,
-            float radiusX, float radiusZ, double time, float waveFrequency, float waveHeight,
+    private static void drawHelix(float centerX, float centerZ, float bottom, float top,
+            float radiusX, float radiusZ, double phase, double time, float turns,
             int rgb, float fade, float thickness, float worldPerPixel, boolean glow) {
         float previousX = 0f, previousY = 0f, previousZ = 0f;
-        int r = (rgb >> 16) & 255;
-        int g = (rgb >> 8) & 255;
-        int b = rgb & 255;
+        int baseR = (rgb >> 16) & 255;
+        int baseG = (rgb >> 8) & 255;
+        int baseB = rgb & 255;
 
-        for (int i = 0; i <= SEGMENTS; i++) {
-            double angle = TAU * i / SEGMENTS;
-            float wave = (float) Math.sin(angle * waveFrequency + time * 1.35) * waveHeight;
-            float x = cx + (float) Math.cos(angle + time * 0.10) * radiusX;
-            float y = centerY + wave;
-            float z = cz + (float) Math.sin(angle + time * 0.10) * radiusZ;
+        for (int i = 0; i <= HELIX_SEGMENTS; i++) {
+            float progress = i / (float) HELIX_SEGMENTS;
+            double angle = phase + time + progress * TAU * turns;
+            float breathing = 1.0f + (float) Math.sin(time * 1.35 + phase + progress * TAU * 1.4) * 0.035f;
+            float x = centerX + (float) Math.cos(angle) * radiusX * breathing;
+            float z = centerZ + (float) Math.sin(angle) * radiusZ * breathing;
+            float verticalWave = (float) Math.sin(angle * 0.55 + time * 0.8) * (top - bottom) * 0.012f;
+            float y = bottom + (top - bottom) * progress + verticalWave;
 
             if (i > 0) {
-                float progress = 0.5f + 0.5f * (float) Math.sin(angle * 1.5 + time * 0.8);
-                int cr = mix(r, 255, 0.10f + progress * 0.13f);
-                int cg = mix(g, 255, 0.10f + progress * 0.13f);
-                int cb = mix(b, 255, 0.10f + progress * 0.13f);
+                float highlight = 0.5f + 0.5f * (float) Math.sin(progress * TAU * 2.0 - time * 1.7 + phase);
+                float lift = 0.08f + highlight * 0.24f;
+                int r = mix(baseR, 255, lift);
+                int g = mix(baseG, 255, lift);
+                int b = mix(baseB, 255, lift);
 
+                // Fade the very ends so each strand melts into the aura rather than stopping abruptly.
+                float edgeFade = Math.min(1.0f, Math.min(progress * 9.0f, (1.0f - progress) * 9.0f));
+                int alpha = clampByte(Math.round(255f * fade * edgeFade));
                 if (glow) {
                     segment(previousX, previousY, previousZ, x, y, z,
-                            thickness * 4.4f, worldPerPixel, cr, cg, cb,
-                            clampByte(Math.round(255f * fade * 0.15f)));
+                            thickness * 4.8f, worldPerPixel, r, g, b,
+                            clampByte(Math.round(alpha * 0.14f)));
                 }
                 segment(previousX, previousY, previousZ, x, y, z,
-                        thickness, worldPerPixel, cr, cg, cb,
-                        clampByte(Math.round(255f * fade * 0.94f)));
+                        thickness, worldPerPixel, r, g, b,
+                        clampByte(Math.round(alpha * 0.92f)));
             }
 
             previousX = x;
@@ -199,7 +209,7 @@ public final class AuraEspRenderer {
         }
     }
 
-    /** Camera-facing ribbon with a stable width in screen pixels. */
+    /** Camera-facing ribbon with a constant screen-space width. */
     private static void segment(float x1, float y1, float z1, float x2, float y2, float z2,
             float pixels, float worldPerPixel, int r, int g, int b, int alpha) {
         if (alpha <= 0 || DATA.remaining() < 6 * VERTEX_BYTES) {
