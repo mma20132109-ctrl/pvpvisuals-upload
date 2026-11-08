@@ -144,6 +144,7 @@ public final class PvpMainMenuScreen extends Screen {
         accountsTransition = spring(accountsTransition, transitionTarget, Math.min(1f, dt / 16f) * 0.22f);
         menuEntrance = Math.min(1f, menuEntrance + dt / 520f);
         drawBackdrop(graphics, now);
+        graphics.nextStratum();
         LiquidGlassRenderer.scheduleBackgroundCapture();
         graphics.blurBeforeThisStratum();
 
@@ -589,6 +590,7 @@ public final class PvpMainMenuScreen extends Screen {
     void renderWorldSelectBackground(GuiGraphics graphics, int mouseX, int mouseY) {
         updateParallax(mouseX, mouseY, 16f);
         drawBackdrop(graphics, System.nanoTime());
+        graphics.nextStratum();
         LiquidGlassRenderer.scheduleBackgroundCapture();
         graphics.blurBeforeThisStratum();
         Gfx.glass(graphics, width * 0.13f, 18f, width * 0.74f,
