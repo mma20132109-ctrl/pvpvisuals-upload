@@ -80,6 +80,22 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 }
             }
             if (foundList == null) {
+                // SelectWorldScreen stores its WorldSelectionList as a direct field
+                // in current Minecraft versions, not necessarily inside children().
+                for (Class<?> type = getClass(); type != null && foundList == null; type = type.getSuperclass()) {
+                    for (Field field : type.getDeclaredFields()) {
+                        if (!WorldSelectionList.class.isAssignableFrom(field.getType())) continue;
+                        field.setAccessible(true);
+                        Object value = field.get(this);
+                        if (value instanceof WorldSelectionList found) {
+                            foundList = found;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (foundList == null) {
+                // Compatibility fallback for versions that keep renderables in a list.
                 for (Class<?> type = getClass(); type != null && foundList == null; type = type.getSuperclass()) {
                     for (Field field : type.getDeclaredFields()) {
                         if (!List.class.isAssignableFrom(field.getType())) continue;
