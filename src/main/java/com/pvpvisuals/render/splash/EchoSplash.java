@@ -148,25 +148,62 @@ public final class EchoSplash {
 	// ---------- фон ----------
 
 	public static void drawBackground(GuiGraphics g, int w, int h, float t, String mode) {
-		int top = 0xFF000000;
-		int bottom = "DARK".equalsIgnoreCase(mode) ? top : EchoTheme.shift(0xFF1A0B2E);
+		boolean dark = "DARK".equalsIgnoreCase(mode);
+		boolean animated = "SHADER".equalsIgnoreCase(mode);
+		int top = dark ? 0xFF07090F : 0xFF080A14;
+		int bottom = dark ? 0xFF090B12 : 0xFF100B20;
 		Gfx.rrect(g, 0, 0, w, h, 0, top, bottom, 0, 0f);
-		if ("DARK".equalsIgnoreCase(mode)) {
+		if (dark) {
 			return;
 		}
-		// мягкое свечение снизу, медленно «дышит»
-		float breathe = 0.75f + 0.25f * (float) Math.sin(t * 0.9f);
-		int glow = EchoTheme.shift(0xFF5B2BC8);
-		Gfx.glow(g, w * 0.25f, h * 1.02f, w * 0.5f, h * 0.04f, h * 0.02f, glow, h * 0.55f * breathe);
-		if ("SHADER".equalsIgnoreCase(mode)) {
-			// анимированный фон: три больших пятна света плывут по Лиссажу
-			for (int i = 0; i < 3; i++) {
-				float px = w * (0.5f + 0.38f * (float) Math.sin(t * (0.21f + 0.07f * i) + i * 2.1f));
-				float py = h * (0.5f + 0.32f * (float) Math.cos(t * (0.17f + 0.05f * i) + i * 1.3f));
-				int col = EchoTheme.shift(i == 1 ? 0xFF7C3AED : 0xFF4A1FA0);
-				float r = h * (0.10f + 0.03f * i);
-				Gfx.glow(g, px - r, py - r, r * 2f, r * 2f, r, col, h * 0.35f);
+
+		// Layered, slow-moving color fields create depth without invoking Minecraft's global blur pass.
+		float breathe = 0.78f + 0.22f * (float) Math.sin(t * 0.34f);
+		int primary = EchoTheme.accent();
+		int secondary = EchoTheme.accent2();
+		int violet = 0xFF6541C8;
+		Gfx.glow(g, -w * 0.14f, h * 0.12f, w * 0.62f, h * 0.34f, h * 0.12f,
+				withAlpha(primary, 0.16f * breathe), 28f);
+		Gfx.glow(g, w * 0.57f, h * 0.18f, w * 0.62f, h * 0.38f, h * 0.15f,
+				withAlpha(secondary, 0.13f), 30f);
+		Gfx.glow(g, w * 0.18f, h * 0.76f, w * 0.66f, h * 0.18f, h * 0.08f,
+				withAlpha(violet, 0.18f * breathe), 24f);
+
+		if (!animated) {
+			return;
+		}
+
+		// Four independent nebula lights drift on long, non-repeating-looking paths.
+		for (int i = 0; i < 4; i++) {
+			float phase = i * 1.71f;
+			float px = w * (0.5f + 0.39f * (float) Math.sin(t * (0.075f + i * 0.013f) + phase));
+			float py = h * (0.48f + 0.34f * (float) Math.cos(t * (0.061f + i * 0.009f) + phase * 1.23f));
+			float radius = h * (0.075f + 0.018f * (i % 3));
+			int col = (i % 2 == 0) ? primary : secondary;
+			Gfx.glow(g, px - radius, py - radius, radius * 2f, radius * 2f, radius,
+					withAlpha(col, 0.12f + 0.035f * (i % 2)), 22f);
+		}
+
+		// Deterministic fine stars with subtle independent twinkle; no random allocation per frame.
+		for (int i = 0; i < 34; i++) {
+			float sx = ((i * 0.6180339f) % 1f) * w;
+			float sy = ((i * 0.7548776f + 0.13f) % 1f) * h;
+			float twinkle = 0.35f + 0.65f * (0.5f + 0.5f * (float) Math.sin(t * (0.7f + (i % 5) * 0.19f) + i * 2.3f));
+			float size = (i % 9 == 0) ? 1.35f : 0.65f + (i % 3) * 0.18f;
+			int star = withAlpha(0xFFE4E9FF, twinkle * (i % 9 == 0 ? 0.72f : 0.36f));
+			Gfx.circle(g, sx, sy, size, star);
+			if (i % 9 == 0) {
+				Gfx.line(g, sx - 3f, sy, sx + 3f, sy, 0.7f, withAlpha(secondary, twinkle * 0.35f));
+				Gfx.line(g, sx, sy - 3f, sx, sy + 3f, 0.7f, withAlpha(secondary, twinkle * 0.35f));
 			}
+		}
+
+		// Soft diagonal light streaks are deliberately faint, so the center stays readable.
+		for (int i = 0; i < 3; i++) {
+			float drift = (float) Math.sin(t * 0.11f + i * 1.9f) * 22f;
+			float x = w * (0.18f + i * 0.30f) + drift;
+			Gfx.line(g, x, h * 0.04f, x + w * 0.16f, h * 0.96f, 0.8f,
+					withAlpha(i == 1 ? secondary : primary, 0.055f));
 		}
 	}
 
