@@ -2,7 +2,6 @@ package com.pvpvisuals.gui.mainmenu;
 
 import com.pvpvisuals.gui.echo.Gfx;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
@@ -14,8 +13,6 @@ import net.minecraft.world.level.storage.LevelSummary;
 import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,32 +149,28 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     }
 
     /**
-     * Remove vanilla world-list and search controls from the render pass.
-     * Keep the list in the event hierarchy for vanilla world operations.
+     * Keep the vanilla list in the render pass while making it invisible.
+     *
+     * IMPORTANT: WorldSelectionList polls its asynchronous LevelSummary future
+     * from renderWidget(). Removing it from Screen.renderables prevents that
+     * polling forever, so the custom carousel only ever sees an empty list.
      */
-    @SuppressWarnings("unchecked")
-    private void hideVanillaWorldList() throws ReflectiveOperationException {
-        List<Renderable> renderables = null;
-        for (Class<?> type = getClass(); type != null && renderables == null; type = type.getSuperclass()) {
-            for (Field field : type.getDeclaredFields()) {
-                if (!List.class.isAssignableFrom(field.getType())) continue;
-                String signature = field.getGenericType().getTypeName();
-                if (!signature.contains(Renderable.class.getSimpleName())) continue;
-                field.setAccessible(true);
-                Object value = field.get(this);
-                if (value instanceof List<?> list && list.contains(worldList)) {
-                    renderables = (List<Renderable>) list;
-                    break;
-                }
+    private void hideVanillaWorldList() {
+        // Do not remove WorldSelectionList from renderables and do not set it
+        // invisible: it must continue rendering internally to finish loading.
+        worldList.setAlpha(0f);
+
+        // Search is not responsible for loading. It can be fully disabled.
+        for (var child : children()) {
+            if (child instanceof EditBox editBox) {
+                editBox.setVisible(false);
+                editBox.setAlpha(0f);
+            } else if (child instanceof AbstractWidget widget
+                    && widget.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("search")) {
+                widget.setVisible(false);
+                widget.setAlpha(0f);
             }
         }
-
-        if (renderables != null) {
-            renderables.remove(worldList);
-            renderables.removeIf(renderable -> renderable instanceof EditBox
-                    || renderable.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("search"));
-        }
-        worldList.setAlpha(0f);
     }
 
     private void refreshWorldEntries() {
