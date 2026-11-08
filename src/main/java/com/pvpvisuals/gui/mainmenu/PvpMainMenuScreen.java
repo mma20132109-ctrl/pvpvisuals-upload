@@ -78,6 +78,7 @@ public final class PvpMainMenuScreen extends Screen {
     private boolean accountsPage;
     private boolean accountInputFocused = true;
     private String accountInput = "";
+    private int accountCarouselIndex;
     private long lastFrameNs;
 
     public PvpMainMenuScreen() {
@@ -221,30 +222,90 @@ public final class PvpMainMenuScreen extends Screen {
         }
 
         float t = now / 1_000_000_000f;
-        g.fill(0, 0, width, height, 0xFF080B16);
+        int[][] palettes = {
+                {0xFF080B16, 0x183A5CC7, 0x162A4DAA, 0x123D2D91},
+                {0xFF06131A, 0x1834B69B, 0x15268BA9, 0x103DDFB5},
+                {0xFF090817, 0x1F8C6CF0, 0x1C3D72D8, 0x15451A8D},
+                {0xFF061614, 0x1B10C890, 0x19409FCE, 0x1334D8BC},
+                {0xFF100817, 0x1FF02C9C, 0x1B13B9EE, 0x174E28AF},
+                {0xFF160B18, 0x1FEF793D, 0x1ACB3E54, 0x175F247C},
+                {0xFF070A10, 0x24394B68, 0x1D18283F, 0x163B4863},
+                {0xFF080B16, alpha(EchoTheme.ACCENT_A, 0.14f), alpha(EchoTheme.ACCENT_B, 0.10f), 0x143A3F73}
+        };
+        int[] palette = palettes[Math.min(7, Math.max(0, backdropIndex))];
+        g.fill(0, 0, width, height, palette[0]);
         float drift = (float) Math.sin(t * 0.12f) * 10f;
         float cx = width * 0.52f + parallaxX * 16f + drift;
         float cy = height * 0.40f + parallaxY * 12f;
-        int[] glows = {0x182D4F9D, 0x143A2F75, 0x12244773, 0x0E7D3B91};
-        float[] radii = {Math.max(width, height) * 0.47f, Math.max(width, height) * 0.34f,
-                Math.max(width, height) * 0.24f, Math.max(width, height) * 0.16f};
-        for (int i = 0; i < glows.length; i++) {
-            float r = radii[i];
-            Gfx.circle(g, cx - i * 24f, cy + i * 13f, r, glows[i]);
+        float maxRadius = Math.max(width, height);
+        for (int i = 0; i < 5; i++) {
+            float radius = maxRadius * (0.46f - i * 0.065f);
+            float ox = (float) Math.sin(t * (0.07f + i * 0.01f) + i) * (12f + i * 5f);
+            float oy = (float) Math.cos(t * (0.09f + i * 0.01f) + i * 0.7f) * (8f + i * 4f);
+            Gfx.circle(g, cx + ox, cy + oy, radius, palette[1 + i % 3]);
         }
-        // Fixed deterministic star field with a slow parallax shift.
-        for (int i = 0; i < 74; i++) {
+
+        // The source offers animated shader families. These GPU-free equivalents preserve
+        // their individual visual identities while remaining compatible with our renderer.
+        if (backdropIndex == 3) {
+            for (int band = 0; band < 5; band++) {
+                float y = height * (0.31f + band * 0.075f);
+                float[] curve = new float[26];
+                for (int p = 0; p < 13; p++) {
+                    float x = width * p / 12f;
+                    float wave = (float) Math.sin(p * 0.45f + t * 0.32f + band * 0.8f);
+                    curve[p * 2] = x;
+                    curve[p * 2 + 1] = y + wave * (12f + band * 2f) + parallaxY * (band + 1);
+                }
+                Gfx.polyline(g, 1.2f + band * 0.3f, alpha(palette[2], 0.85f - band * 0.12f), curve);
+            }
+        } else if (backdropIndex == 4) {
+            int grid = alpha(0xFF33D8F2, 0.14f);
+            for (int i = 0; i <= 18; i++) {
+                float x = width * i / 18f + parallaxX * 2f;
+                Gfx.line(g, x, height * 0.32f, width / 2f + (x - width / 2f) * 1.55f,
+                        height, 0.7f, grid);
+            }
+            for (int i = 0; i < 10; i++) {
+                float f = i / 9f;
+                float y = height * (0.36f + f * f * 0.64f);
+                Gfx.line(g, 0f, y, width, y, 0.7f, grid);
+            }
+        } else if (backdropIndex == 5) {
+            float sun = Math.min(width, height) * 0.18f;
+            float sunX = width * 0.72f - parallaxX * 9f;
+            float sunY = height * 0.43f - parallaxY * 6f;
+            for (int i = 5; i >= 0; i--) {
+                float r = sun * (1f + i * 0.21f);
+                Gfx.circle(g, sunX, sunY, r, alpha(palette[2], 0.18f - i * 0.02f));
+            }
+            for (int i = 0; i < 6; i++) {
+                float y = sunY + sun * (0.24f + i * 0.12f);
+                Gfx.line(g, sunX - sun * 0.9f, y, sunX + sun * 0.9f, y,
+                        1.4f + i * 0.15f, alpha(0xFF160B18, 0.68f));
+            }
+        } else if (backdropIndex == 6) {
+            for (int i = 0; i < 8; i++) {
+                float inset = 20f + i * 22f;
+                Gfx.rrect(g, inset, inset, width - inset * 2f, height - inset * 2f,
+                        24f + i * 3f, 0x00000000, 0x00000000,
+                        alpha(palette[2], 0.12f - i * 0.01f), 0.7f);
+            }
+        }
+
+        // Stable star field; density and brightness vary slightly by shader preset.
+        int stars = backdropIndex == 6 ? 38 : 74;
+        for (int i = 0; i < stars; i++) {
             int seed = i * 1103515245 + 12345;
             float x = Math.floorMod(seed, 10007) / 10007f * width;
             float y = Math.floorMod(seed >>> 8, 10009) / 10009f * height;
             float pulse = 0.55f + 0.45f * (float) Math.sin(t * 0.55f + i * 1.7f);
-            int alpha = Math.round((12f + (i % 5) * 5f) * pulse);
-            int color = (alpha << 24) | (0xAFC5E8 + (i % 3) * 0x050407);
+            int starAlpha = Math.round((10f + (i % 5) * 4f) * pulse);
+            int color = (starAlpha << 24) | (0xAFC5E8 + (i % 3) * 0x050407);
             float size = i % 13 == 0 ? 1.35f : 0.8f;
-            g.fill(Math.round(x + parallaxX * (i % 4 + 1) * 0.7f),
-                    Math.round(y + parallaxY * (i % 3 + 1) * 0.5f),
-                    Math.round(x + parallaxX * (i % 4 + 1) * 0.7f) + Math.max(1, Math.round(size)),
-                    Math.round(y + parallaxY * (i % 3 + 1) * 0.5f) + Math.max(1, Math.round(size)), color);
+            int px = Math.round(x + parallaxX * (i % 4 + 1) * 0.7f);
+            int py = Math.round(y + parallaxY * (i % 3 + 1) * 0.5f);
+            g.fill(px, py, px + Math.max(1, Math.round(size)), py + Math.max(1, Math.round(size)), color);
         }
         g.fill(0, 0, width, height, 0x18000000);
     }
@@ -357,75 +418,123 @@ public final class PvpMainMenuScreen extends Screen {
 
     private void drawAccountsPage(GuiGraphics g, int mouseX, int mouseY, float dt) {
         float w = Math.min(402f, width - 36f);
-        float h = Math.min(250f, height - 24f);
+        float h = Math.min(270f, height - 24f);
         float x = (width - w) / 2f;
         float y = (height - h) / 2f - 8f;
         Gfx.glass(g, x, y, w, h, 12f, 0x85202634, 0x7610141D, 0x37FFFFFF);
-        Gfx.textAtSize(g, font, "Аккаунты", x + 18f, y + 15f, 15f, 0xFFF0F2FA, false);
-        Gfx.textAtSize(g, font, "Оффлайн-профили Minecraft", x + 18f, y + 39f,
+        Gfx.textAtSize(g, font, "Аккаунты", x + 18f, y + 13f, 15f, 0xFFF0F2FA, false);
+        Gfx.textAtSize(g, font, "Управление игровыми профилями", x + 18f, y + 36f,
                 7.2f, 0xFFAEB5C8, false);
 
+        java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
+        if (profiles.isEmpty()) {
+            accountCarouselIndex = 0;
+        } else {
+            accountCarouselIndex = Math.max(0, Math.min(profiles.size() - 1, accountCarouselIndex));
+            float centerX = x + w / 2f;
+            float centerY = y + 113f;
+            java.util.List<Integer> order = new java.util.ArrayList<>();
+            for (int i = 0; i < profiles.size(); i++) {
+                if (Math.abs(i - accountCarouselIndex) <= 2) order.add(i);
+            }
+            order.sort((left, right) -> Float.compare(
+                    Math.abs(right - accountCarouselIndex), Math.abs(left - accountCarouselIndex)));
+            for (int index : order) {
+                PvpAccountManager.Profile profile = profiles.get(index);
+                float distance = index - accountCarouselIndex;
+                float abs = Math.abs(distance);
+                float scale = Math.max(0.68f, 1f - 0.16f * abs);
+                float cardW = 94f * scale;
+                float cardH = 124f * scale;
+                float spacing = abs <= 1f ? abs * 78f : 78f + (abs - 1f) * 52f;
+                float cardX = centerX + Math.signum(distance) * spacing - cardW / 2f;
+                float cardY = centerY - cardH / 2f + abs * 4f;
+                float fade = abs <= 1.5f ? 1f : Math.max(0.38f, 1f - (abs - 1.5f) * 0.35f);
+                boolean active = PvpAccountManager.isActive(profile);
+                Gfx.alpha = fade;
+                Gfx.glow(g, cardX, cardY, cardW, cardH, 9f,
+                        alpha(EchoTheme.NEON, active ? 0.20f : 0.08f), 4f);
+                Gfx.glass(g, cardX, cardY, cardW, cardH, 9f,
+                        active ? 0xA5384057 : 0x87232B39, 0x74101620,
+                        active ? 0x668C9EFF : 0x35FFFFFF);
+                Gfx.circle(g, cardX + cardW / 2f, cardY + 31f, 19f,
+                        active ? 0x4C8C9EFF : 0x403F526E);
+                Gfx.circle(g, cardX + cardW / 2f, cardY + 25f, 8f,
+                        active ? 0xFFE2E8FF : 0xFFB8C1D5);
+                Gfx.rrect(g, cardX + cardW / 2f - 13f, cardY + 34f, 26f, 16f,
+                        8f, active ? 0xFFE2E8FF : 0xFFB8C1D5,
+                        active ? 0xFFD1D9F1 : 0xFFA5B0C8, 0, 0f);
+                String initial = profile.name.isEmpty() ? "?" : profile.name.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
+                float initialW = Gfx.widthAtSize(font, initial, 9f);
+                Gfx.textAtSize(g, font, initial, cardX + (cardW - initialW) / 2f,
+                        cardY + 22f, 9f, 0xFF263047, false);
+                String name = Gfx.trimAtSize(font, profile.name, Math.round(cardW - 12f), 6.5f);
+                float nameW = Gfx.widthAtSize(font, name, 6.5f);
+                Gfx.textAtSize(g, font, name, cardX + (cardW - nameW) / 2f,
+                        cardY + 61f, 6.5f, 0xFFF0F2FA, false);
+                String type = active ? "ВЫБРАН" : "OFFLINE";
+                float typeW = Gfx.widthAtSize(font, type, 4.8f);
+                Gfx.textAtSize(g, font, type, cardX + (cardW - typeW) / 2f,
+                        cardY + 75f, 4.8f, active ? EchoTheme.ACCENT_TEXT : 0xFF9CA5B8, false);
+                if (index == accountCarouselIndex) {
+                    Gfx.glass(g, cardX + 9f, cardY + cardH - 24f, cardW - 18f, 17f, 5f,
+                            0x74475270, 0x50202A3A, 0x408C9EFF);
+                    String select = active ? "Текущий" : "Выбрать";
+                    float sw = Gfx.widthAtSize(font, select, 5.5f);
+                    Gfx.textAtSize(g, font, select,
+                            cardX + (cardW - sw) / 2f, cardY + cardH - 18f,
+                            5.5f, 0xFFE8EEFF, false);
+                }
+                Gfx.alpha = 1f;
+            }
+            if (profiles.size() > 1) {
+                String counter = (accountCarouselIndex + 1) + " / " + profiles.size();
+                float cw = Gfx.widthAtSize(font, counter, 5.4f);
+                Gfx.textAtSize(g, font, counter, centerX - cw / 2f, y + 183f,
+                        5.4f, 0xFF8D97AC, false);
+                Gfx.textAtSize(g, font, "‹", centerX - 72f, y + 100f, 15f, 0xFFBFC8DB, false);
+                Gfx.textAtSize(g, font, "›", centerX + 64f, y + 100f, 15f, 0xFFBFC8DB, false);
+            }
+            boolean active = PvpAccountManager.isActive(profiles.get(accountCarouselIndex));
+            float actionY = y + 193f;
+            float actionW = 76f;
+            float selectX = x + w / 2f - actionW - 4f;
+            float deleteX = x + w / 2f + 4f;
+            Gfx.glass(g, selectX, actionY, actionW, 22f, 6f,
+                    active ? 0x66343C50 : 0x8C344A6D, 0x53151B27, 0x558C9EFF);
+            Gfx.textAtSize(g, font, active ? "Выбран" : "Выбрать",
+                    selectX + (active ? 22f : 21f), actionY + 7f, 5.8f,
+                    active ? EchoTheme.ACCENT_TEXT : 0xFFE8EAF5, false);
+            Gfx.glass(g, deleteX, actionY, actionW, 22f, 6f, 0x633B2730, 0x40151B27, 0x42D86C78);
+            Gfx.textAtSize(g, font, "Удалить", deleteX + 21f, actionY + 7f,
+                    5.8f, 0xFFFFB6BA, false);
+        }
+
+        float inputY = y + h - 38f;
         float inputX = x + 14f;
-        float inputY = y + 56f;
-        float inputW = w - 118f;
-        Gfx.glass(g, inputX, inputY, inputW, 28f, 7f,
+        float inputW = w - 162f;
+        Gfx.glass(g, inputX, inputY, inputW, 26f, 7f,
                 accountInputFocused ? 0xAA303B51 : 0x63242B39, 0x53151B27,
                 accountInputFocused ? 0x668C9EFF : 0x32FFFFFF);
         String shownInput = accountInput.isEmpty() ? "Введите ник (3–16 символов)" : accountInput;
-        Gfx.textAtSize(g, font, shownInput, inputX + 9f, inputY + 9f, 6.3f,
+        Gfx.textAtSize(g, font, shownInput, inputX + 8f, inputY + 8f, 6.1f,
                 accountInput.isEmpty() ? 0xFF858DA1 : 0xFFF0F2FA, false);
         if (accountInputFocused && System.currentTimeMillis() % 1000L < 500L) {
-            float caretX = inputX + 9f + Gfx.widthAtSize(font, accountInput, 6.3f) + 1f;
-            g.fill(Math.round(caretX), Math.round(inputY + 8f), Math.round(caretX + 1f),
-                    Math.round(inputY + 20f), 0xFFB8C4FF);
+            float caretX = inputX + 8f + Gfx.widthAtSize(font, accountInput, 6.1f) + 1f;
+            g.fill(Math.round(caretX), Math.round(inputY + 7f), Math.round(caretX + 1f),
+                    Math.round(inputY + 19f), 0xFFB8C4FF);
         }
-
-        float addX = x + w - 96f;
-        boolean addHover = Gfx.hit(mouseX, mouseY, Math.round(addX), Math.round(inputY), 82, 28);
-        Gfx.glass(g, addX, inputY, 82f, 28f, 7f,
+        float addX = x + w - 138f;
+        boolean addHover = Gfx.hit(mouseX, mouseY, Math.round(addX), Math.round(inputY), 60, 26);
+        Gfx.glass(g, addX, inputY, 60f, 26f, 7f,
                 addHover ? 0xAA39445A : 0x63242B39, 0x53151B27, 0x32FFFFFF);
-        Gfx.textAtSize(g, font, "Добавить", addX + 20f, inputY + 9f, 6.5f, 0xFFE8EAF5, false);
-
-        java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
-        float rowY = y + 94f;
-        int visible = Math.min(4, profiles.size());
-        for (int i = 0; i < visible; i++) {
-            PvpAccountManager.Profile profile = profiles.get(i);
-            boolean active = PvpAccountManager.isActive(profile);
-            Gfx.glass(g, x + 14f, rowY, w - 28f, 29f, 7f,
-                    active ? 0x6C34405A : 0x492B3342, 0x36131822,
-                    active ? 0x558C9EFF : 0x24FFFFFF);
-            Gfx.circle(g, x + 28f, rowY + 14.5f, 4.2f, active ? EchoTheme.ACCENT_TEXT : 0xFF8790A4);
-            Gfx.textAtSize(g, font, profile.name, x + 40f, rowY + 9f, 7f,
-                    0xFFF0F2FA, false);
-            Gfx.textAtSize(g, font, active ? "Текущий профиль" : "Оффлайн-профиль",
-                    x + 40f, rowY + 19f, 5.4f, 0xFF929BAD, false);
-            float selectX = x + w - 104f;
-            float deleteX = x + w - 51f;
-            boolean selectHover = Gfx.hit(mouseX, mouseY, Math.round(selectX), Math.round(rowY + 4f), 44, 21);
-            Gfx.glass(g, selectX, rowY + 4f, 44f, 21f, 5f,
-                    active ? 0x66343C50 : (selectHover ? 0xAA39445A : 0x53242B39),
-                    0x40151B27, 0x28FFFFFF);
-            Gfx.textAtSize(g, font, active ? "Активен" : "Выбрать",
-                    selectX + (active ? 8f : 9f), rowY + 11f, 5.4f,
-                    active ? EchoTheme.ACCENT_TEXT : 0xFFE8EAF5, false);
-            boolean deleteHover = Gfx.hit(mouseX, mouseY, Math.round(deleteX), Math.round(rowY + 4f), 30, 21);
-            Gfx.glass(g, deleteX, rowY + 4f, 30f, 21f, 5f,
-                    deleteHover ? 0x88984B55 : 0x533B2730, 0x40151B27, 0x28FFFFFF);
-            Gfx.textAtSize(g, font, "×", deleteX + 11f, rowY + 8f, 10f, 0xFFFFA5AA, false);
-            rowY += 33f;
-        }
-        if (profiles.isEmpty()) {
-            Gfx.textAtSize(g, font, "Список пуст. Добавь оффлайн-профиль выше.",
-                    x + 18f, y + 105f, 6.2f, 0xFF9CA4B7, false);
-        } else if (profiles.size() > visible) {
-            Gfx.textAtSize(g, font, "+" + (profiles.size() - visible) + " ещё",
-                    x + 18f, y + h - 31f, 5.6f, 0xFF858DA1, false);
-        }
-        Gfx.textAtSize(g, font, "Оффлайн-профили подходят для одиночной игры и серверов без online-mode.",
-                x + 18f, y + h - 18f, 5.4f, 0xFF858DA1, false);
-        float backX = x + w - 62f;
-        Gfx.textAtSize(g, font, "Назад  ‹", backX, y + h - 18f, 5.8f, 0xFFD6DCEC, false);
+        Gfx.textAtSize(g, font, "Добавить", addX + 11f, inputY + 8f, 5.8f, 0xFFE8EAF5, false);
+        float randomX = x + w - 72f;
+        Gfx.glass(g, randomX, inputY, 26f, 26f, 7f, 0x63242B39, 0x53151B27, 0x32FFFFFF);
+        Gfx.textAtSize(g, font, "↻", randomX + 8f, inputY + 7f, 10f, 0xFFE8EAF5, false);
+        float clearX = x + w - 40f;
+        Gfx.glass(g, clearX, inputY, 26f, 26f, 7f, 0x533B2730, 0x40151B27, 0x28FFFFFF);
+        Gfx.textAtSize(g, font, "×", clearX + 8f, inputY + 6f, 11f, 0xFFFFB6BA, false);
     }
 
     private void activateDock(int index) {
@@ -433,7 +542,7 @@ public final class PvpMainMenuScreen extends Screen {
         switch (index) {
             case 0 -> minecraft.setScreen(new SelectWorldScreen(this));
             case 1 -> minecraft.setScreen(new JoinMultiplayerScreen(this));
-            case 2 -> { accountsPage = !accountsPage; accountInputFocused = accountsPage; accountInput = ""; }
+            case 2 -> { accountsPage = !accountsPage; accountInputFocused = accountsPage; accountInput = ""; accountCarouselIndex = PvpAccountManager.activeIndex(); }
             case 3 -> minecraft.setScreen(new EchoScreen());
             case 4 -> minecraft.setScreen(new OptionsScreen(this, minecraft.options));
             case 5 -> minecraft.stop();
@@ -449,46 +558,84 @@ public final class PvpMainMenuScreen extends Screen {
 
         if (accountsPage) {
             float w = Math.min(402f, width - 36f);
-            float h = Math.min(250f, height - 24f);
+            float h = Math.min(270f, height - 24f);
             float x = (width - w) / 2f;
             float y = (height - h) / 2f - 8f;
             float inputX = x + 14f;
-            float inputY = y + 56f;
-            float inputW = w - 118f;
-            if (Gfx.hit(mx, my, Math.round(inputX), Math.round(inputY), Math.round(inputW), 28)) {
+            float inputY = y + h - 38f;
+            float inputW = w - 162f;
+            if (Gfx.hit(mx, my, Math.round(inputX), Math.round(inputY), Math.round(inputW), 26)) {
                 accountInputFocused = true;
                 return true;
             }
-            float addX = x + w - 96f;
-            if (Gfx.hit(mx, my, Math.round(addX), Math.round(inputY), 82, 28)) {
-                PvpAccountManager.addOffline(accountInput);
+            float addX = x + w - 138f;
+            if (Gfx.hit(mx, my, Math.round(addX), Math.round(inputY), 60, 26)) {
+                if (PvpAccountManager.addOffline(accountInput)) {
+                    accountCarouselIndex = PvpAccountManager.profiles().size() - 1;
+                }
                 accountInput = "";
                 accountInputFocused = true;
                 return true;
             }
-            java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
-            float rowY = y + 94f;
-            int visible = Math.min(4, profiles.size());
-            for (int i = 0; i < visible; i++) {
-                float selectX = x + w - 104f;
-                float deleteX = x + w - 51f;
-                if (Gfx.hit(mx, my, Math.round(selectX), Math.round(rowY + 4f), 44, 21)) {
-                    PvpAccountManager.select(i);
-                    accountInputFocused = false;
-                    return true;
-                }
-                if (Gfx.hit(mx, my, Math.round(deleteX), Math.round(rowY + 4f), 30, 21)) {
-                    PvpAccountManager.remove(i);
-                    accountInputFocused = false;
-                    return true;
-                }
-                rowY += 33f;
-            }
-            float backX = x + w - 70f;
-            if (Gfx.hit(mx, my, Math.round(backX), Math.round(y + h - 26f), 64, 22)) {
-                accountsPage = false;
-                accountInputFocused = false;
+            float randomX = x + w - 72f;
+            if (Gfx.hit(mx, my, Math.round(randomX), Math.round(inputY), 26, 26)) {
+                String[] parts = {"Void","Nova","Echo","Frost","Ember","Lunar","Cyber","Neon","Shadow","Prism","Riot","Drift","Pulse","Zen","Flux"};
+                java.util.concurrent.ThreadLocalRandom random = java.util.concurrent.ThreadLocalRandom.current();
+                accountInput = parts[random.nextInt(parts.length)] + parts[random.nextInt(parts.length)].toLowerCase(java.util.Locale.ROOT)
+                        + random.nextInt(10, 100);
+                accountInputFocused = true;
                 return true;
+            }
+            float clearX = x + w - 40f;
+            if (Gfx.hit(mx, my, Math.round(clearX), Math.round(inputY), 26, 26)) {
+                accountInput = "";
+                accountInputFocused = true;
+                return true;
+            }
+
+            java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
+            if (!profiles.isEmpty()) {
+                float centerX = x + w / 2f;
+                float centerY = y + 113f;
+                for (int i = 0; i < profiles.size(); i++) {
+                    float distance = i - accountCarouselIndex;
+                    float abs = Math.abs(distance);
+                    if (abs > 2f) continue;
+                    float scale = Math.max(0.68f, 1f - 0.16f * abs);
+                    float cardW = 94f * scale;
+                    float cardH = 124f * scale;
+                    float spacing = abs <= 1f ? abs * 78f : 78f + (abs - 1f) * 52f;
+                    float cardX = centerX + Math.signum(distance) * spacing - cardW / 2f;
+                    float cardY = centerY - cardH / 2f + abs * 4f;
+                    if (Gfx.hit(mx, my, Math.round(cardX), Math.round(cardY),
+                            Math.round(cardW), Math.round(cardH))) {
+                        accountCarouselIndex = i;
+                        accountInputFocused = false;
+                        return true;
+                    }
+                }
+                float actionY = y + 193f;
+                float selectX = centerX - 80f;
+                float deleteX = centerX + 4f;
+                if (Gfx.hit(mx, my, Math.round(selectX), Math.round(actionY), 76, 22)) {
+                    PvpAccountManager.select(accountCarouselIndex);
+                    accountInputFocused = false;
+                    return true;
+                }
+                if (Gfx.hit(mx, my, Math.round(deleteX), Math.round(actionY), 76, 22)) {
+                    PvpAccountManager.remove(accountCarouselIndex);
+                    accountCarouselIndex = Math.max(0, PvpAccountManager.profiles().size() - 1 == -1 ? 0 : Math.min(PvpAccountManager.profiles().size() - 1, accountCarouselIndex));
+                    accountInputFocused = false;
+                    return true;
+                }
+                if (Gfx.hit(mx, my, Math.round(centerX - 82f), Math.round(y + 88f), 24, 32)) {
+                    accountCarouselIndex = Math.max(0, accountCarouselIndex - 1);
+                    return true;
+                }
+                if (Gfx.hit(mx, my, Math.round(centerX + 58f), Math.round(y + 88f), 24, 32)) {
+                    accountCarouselIndex = Math.min(profiles.size() - 1, accountCarouselIndex + 1);
+                    return true;
+                }
             }
             accountInputFocused = false;
             return true;
@@ -523,6 +670,22 @@ public final class PvpMainMenuScreen extends Screen {
             return true;
         }
         return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (accountsPage) {
+            int count = PvpAccountManager.profiles().size();
+            if (count > 0 && Gfx.hit(mouseX, mouseY,
+                    Math.round((width - Math.min(402f, width - 36f)) / 2f),
+                    Math.round((height - Math.min(270f, height - 24f)) / 2f - 8f),
+                    Math.round(Math.min(402f, width - 36f)), Math.round(Math.min(270f, height - 24f)))) {
+                accountCarouselIndex = Math.max(0, Math.min(count - 1,
+                        accountCarouselIndex + (scrollY < 0 ? 1 : -1)));
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 
     @Override

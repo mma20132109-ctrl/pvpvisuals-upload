@@ -49,6 +49,14 @@ public final class PvpAccountManager {
         }
     }
 
+    public static synchronized int activeIndex() {
+        String active = Minecraft.getInstance().getUser().getProfileId().toString();
+        for (int i = 0; i < PROFILES.size(); i++) {
+            if (active.equals(PROFILES.get(i).uuid)) return i;
+        }
+        return 0;
+    }
+
     public static synchronized List<Profile> profiles() {
         return List.copyOf(PROFILES);
     }
