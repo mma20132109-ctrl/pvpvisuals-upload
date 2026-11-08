@@ -166,8 +166,12 @@ public final class TargetEspStyleRenderer {
         float c=(float)Math.cos(angle), sn=(float)Math.sin(angle);
         Vector3f right=new Vector3f(cameraRight).mul(c).add(new Vector3f(cameraUp).mul(sn));
         Vector3f up=new Vector3f(cameraUp).mul(c).sub(new Vector3f(cameraRight).mul(sn));
-        int color=resolveColor(s,frame,0.35f), alpha=clampByte(Math.round(255*fade));
-        billboard(cx,y0+Math.min(0.85f,height*0.62f),cz,0.75f*size,right,up,color,alpha);
+        int alpha=clampByte(Math.round(255*fade));
+        billboardGradient(cx,y0+0.8f,cz,0.75f*size,right,up,
+                resolveColor(s,frame,0.25f),
+                resolveColor(s,frame,0.0f),
+                resolveColor(s,frame,0.50f),
+                resolveColor(s,frame,0.75f),alpha);
     }
 
     /** Krug is a travelling, vertical ribbon (two sinusoidal edges), not a flat ground circle. */
@@ -213,6 +217,18 @@ public final class TargetEspStyleRenderer {
         texVertex(x+rx-ux,y+ry-uy,z+rz-uz,1,1,rgb,alpha);
         texVertex(x+rx+ux,y+ry+uy,z+rz+uz,1,0,rgb,alpha);
         texVertex(x-rx+ux,y-ry+uy,z-rz+uz,0,0,rgb,alpha);
+    }
+
+    /** Four independently tinted corners, matching the original capture reticle. */
+    private static void billboardGradient(float x,float y,float z,float half,Vector3f right,Vector3f up,
+            int topLeft,int topRight,int bottomRight,int bottomLeft,int alpha) {
+        if(alpha<=0 || TEX_DATA.remaining()<4*TEX_VERTEX_BYTES) return;
+        float rx=right.x*half,ry=right.y*half,rz=right.z*half;
+        float ux=up.x*half,uy=up.y*half,uz=up.z*half;
+        texVertex(x-rx+ux,y-ry+uy,z-rz+uz,0f,1f,topLeft,alpha);
+        texVertex(x+rx+ux,y+ry+uy,z+rz+uz,1f,1f,topRight,alpha);
+        texVertex(x+rx-ux,y+ry-uy,z+rz-uz,1f,0f,bottomRight,alpha);
+        texVertex(x-rx-ux,y-ry-uy,z-rz-uz,0f,0f,bottomLeft,alpha);
     }
 
     private static void texVertex(float x,float y,float z,float u,float v,int rgb,int alpha) {
