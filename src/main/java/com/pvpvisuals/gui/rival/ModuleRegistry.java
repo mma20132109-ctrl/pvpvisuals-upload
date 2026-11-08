@@ -35,18 +35,26 @@ public final class ModuleRegistry {
 					c.targetEsp = v;
 					if (v) com.pvpvisuals.render.targetesp.TargetEspRenderer.reset();
 				})
+						.child(ModuleDef.choice("Style", Category.VISUAL,
+								() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode).title,
+								List.of("Ghosts", "Circle", "Square"),
+								v -> c.targetEspSettings.mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(v).name()))
 						.child(ModuleDef.toggle("Players", Category.VISUAL, () -> c.targetEspSettings.showPlayers, v -> c.targetEspSettings.showPlayers = v))
 						.child(ModuleDef.toggle("Mobs", Category.VISUAL, () -> c.targetEspSettings.showMobs, v -> c.targetEspSettings.showMobs = v))
 						.child(ModuleDef.slider("Max Distance", Category.VISUAL, 8, 128, 0, () -> c.targetEspSettings.maxDistance, v -> c.targetEspSettings.maxDistance = (float) v))
-						.child(ModuleDef.toggle("Through Walls", Category.VISUAL, () -> c.targetEspSettings.throughWalls, v -> c.targetEspSettings.throughWalls = v))
 						.child(ModuleDef.choice("Color Mode", Category.VISUAL,
 								() -> targetEspColorTitle(c.targetEspSettings.colorMode),
 								List.of("Health", "Static", "Distance", "Rainbow"),
 								v -> c.targetEspSettings.colorMode = v.toUpperCase(java.util.Locale.ROOT)))
-						.child(ModuleDef.slider("Aura Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
-						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 3.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
-						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 3.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
+						.child(ModuleDef.slider("Ghost Count", Category.VISUAL, 4, 48, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
+						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 4.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
+						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 4.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
 						.child(ModuleDef.toggle("Glow", Category.VISUAL, () -> c.targetEspSettings.auraGlow, v -> c.targetEspSettings.auraGlow = v))
+						.child(ModuleDef.slider("Color R", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 16) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0x00FFFF) | ((int) v << 16)))
+						.child(ModuleDef.slider("Color G", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 8) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFF00FF) | ((int) v << 8)))
+						.child(ModuleDef.slider("Color B", Category.VISUAL, 0, 255, 0, () -> c.targetEspSettings.color & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFFFF00) | (int) v))
 						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0))),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),

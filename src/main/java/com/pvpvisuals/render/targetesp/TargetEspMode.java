@@ -1,8 +1,10 @@
 package com.pvpvisuals.render.targetesp;
 
-/** Единственный актуальный стиль Target ESP. */
+/** Target ESP styles matching the three effects shown in the original TargetESP mod. */
 public enum TargetEspMode {
-    AURA("Aura");
+    GHOSTS("Ghosts"),
+    CIRCLE("Circle"),
+    SQUARE("Square");
 
     public final String title;
 
@@ -10,8 +12,15 @@ public enum TargetEspMode {
         this.title = title;
     }
 
-    /** Старые сохранённые значения (Ghosts/Circle/Square/3D Box) переходят на Aura. */
+    /** Old Aura/3D Box values fall back to Ghosts without breaking saved profiles. */
     public static TargetEspMode byName(String value) {
-        return AURA;
+        if (value != null) {
+            for (TargetEspMode mode : values()) {
+                if (mode.name().equalsIgnoreCase(value) || mode.title.equalsIgnoreCase(value)) {
+                    return mode;
+                }
+            }
+        }
+        return GHOSTS;
     }
 }

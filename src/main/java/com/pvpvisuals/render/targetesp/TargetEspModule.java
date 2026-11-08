@@ -75,11 +75,12 @@ public final class TargetEspModule {
 
         Entity hit = mc.hitResult instanceof EntityHitResult result ? result.getEntity() : null;
         if (hit instanceof LivingEntity target && target != mc.player && target.isAlive()
+                && !target.isInvisible()
                 && isAllowed(target, settings)
                 && target.distanceToSqr(mc.player) <= (double) settings.maxDistance * settings.maxDistance) {
             AABB box = interpolatedBox(target, mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
             Frustum frustum = context.frustum();
-            if (settings.throughWalls || frustum == null || frustum.isVisible(box)) {
+            if (frustum == null || frustum.isVisible(box)) {
                 LAST_BOUNDS[0] = box.minX;
                 LAST_BOUNDS[1] = box.minY;
                 LAST_BOUNDS[2] = box.minZ;
@@ -92,7 +93,7 @@ public final class TargetEspModule {
                 health = Mth.clamp(target.getHealth() / maxHealth, 0.0f, 1.0f);
                 distance = (float) Math.sqrt(target.distanceToSqr(mc.player));
                 allied = target.isAlliedTo(mc.player);
-                invisible = target.isInvisible();
+                invisible = false;
                 fade = Math.min(1.0f, fade + dt * 6.0f);
             } else {
                 fadeOut(dt, settings);
