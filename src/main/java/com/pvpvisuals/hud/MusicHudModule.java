@@ -306,6 +306,17 @@ public final class MusicHudModule extends AbstractHudModule {
 		sungWidth += (targetWidth - sungWidth) * 0.9f;
 		float lift = (1f - eased) * 2.5f;
 		float textAlpha = eased * lyricsRoom;
+
+		// Prefer real per-word timestamps from LRCLIB Lyricsfile when the entry has them.
+		// Ordinary LRC has only line timestamps, so it falls through to the estimated sweep below.
+		SyncedLyrics.Line timedLine = SyncedLyrics.current(track.key, positionMs);
+		SyncedLyrics.WordTiming wordTiming = SyncedLyrics.wordTiming(track.key, positionMs);
+		if (wordTiming != null && timedLine != null
+				&& String.join(" ", layout.lines()).equals(timedLine.text().trim())) {
+			drawWordTimedLyrics(g, font, layout, wordTiming, x, y, lift, textAlpha);
+			return;
+		}
+
 		float consumed = 0f;
 		for (int row = 0; row < layout.lines().size(); row++) {
 			String line = layout.lines().get(row);
@@ -334,6 +345,46 @@ public final class MusicHudModule extends AbstractHudModule {
 					HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), textAlpha * within), false);
 			}
 			consumed += lineWidth;
+		}
+	}
+
+	/** Paints completed, currently spoken, and upcoming words using their own LRCLIB timestamps. */
+	private void drawWordTimedLyrics(GuiGraphics g, Font font, LyricLayout layout,
+			SyncedLyrics.WordTiming timing, float x, float y, float lift, float alpha) {
+		int charOffset = 0;
+		int activeColor = RoundedRender.lerp(HudStyle.TEXT, HudStyle.ACCENT, timing.progress());
+		for (int row = 0; row < layout.lines().size(); row++) {
+			String line = layout.lines().get(row);
+			int rowEnd = charOffset + line.length();
+			float rowY = y + row * LYRIC_ROW + lift;
+
+			if (timing.startChar() >= rowEnd) {
+				// This entire row precedes the word currently being sung.
+				Gfx.textAtSize(g, font, line, x, rowY, layout.size(),
+						HudStyle.opacity(HudAlpha.mul(HudStyle.ACCENT), alpha), false);
+			} else if (timing.endChar() <= charOffset) {
+				// This row follows the currently sung word.
+				Gfx.textAtSize(g, font, line, x, rowY, layout.size(),
+						HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), alpha * 0.35f), false);
+			} else {
+				int localStart = Math.max(0, Math.min(line.length(), timing.startChar() - charOffset));
+				int localEnd = Math.max(localStart, Math.min(line.length(), timing.endChar() - charOffset));
+				String done = line.substring(0, localStart);
+				String active = line.substring(localStart, localEnd);
+				String upcoming = line.substring(localEnd);
+				float doneWidth = Gfx.widthAtSize(font, done, layout.size());
+				float activeWidth = Gfx.widthAtSize(font, active, layout.size());
+
+				Gfx.textAtSize(g, font, done, x, rowY, layout.size(),
+						HudStyle.opacity(HudAlpha.mul(HudStyle.ACCENT), alpha), false);
+				Gfx.textAtSize(g, font, active, x + doneWidth, rowY, layout.size(),
+						HudStyle.opacity(HudAlpha.mul(activeColor), alpha), false);
+				Gfx.textAtSize(g, font, upcoming, x + doneWidth + activeWidth, rowY, layout.size(),
+						HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), alpha * 0.35f), false);
+			}
+
+			// Lyric wrapping joins rows with one space; keep offsets aligned with Lyricsfile word text.
+			charOffset = rowEnd + (row + 1 < layout.lines().size() ? 1 : 0);
 		}
 	}
 
