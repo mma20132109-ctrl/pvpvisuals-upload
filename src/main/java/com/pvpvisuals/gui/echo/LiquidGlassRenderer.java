@@ -30,10 +30,11 @@ public final class LiquidGlassRenderer {
     }
 
     /** Called by GuiRendererMixin between the background and glass render passes. */
-    public static void capturePendingBackground() {
-        if (!capturePending) return;
+    public static boolean capturePendingBackground() {
+        if (!capturePending) return false;
         capturePending = false;
         captureBackground();
+        return true;
     }
 
     /** Copies the current scene into a texture before Echo submits its GUI elements. */
