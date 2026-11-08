@@ -769,6 +769,8 @@ public final class PvpMainMenuScreen extends Screen {
         menuText(g, font, "×", clearX + 8f, inputY + 6f, 11f, 0xFFFFB6BA, false);
     }
 
+    void setWorldSelectPage(boolean active) { worldSelectPage = active; }
+
     void activateDock(int index) {
         Minecraft minecraft = Minecraft.getInstance();
         if (index != 0) worldSelectPage = false;
