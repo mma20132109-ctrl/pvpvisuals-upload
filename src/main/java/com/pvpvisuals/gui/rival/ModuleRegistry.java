@@ -53,6 +53,8 @@ public final class ModuleRegistry {
 								.visibleWhen(() -> "PRESET".equalsIgnoreCase(c.targetEspSettings.colorMode)))
 						.child(ModuleDef.slider("Ghost Particles", Category.VISUAL, 12, 96, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+		.child(ModuleDef.slider("Ghost Orbit Radius", Category.VISUAL, 0.5, 2.5, 2, () -> c.targetEspSettings.ghostOrbitRadius, v -> c.targetEspSettings.ghostOrbitRadius = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
 						.child(ModuleDef.slider("Ghost Trail Length", Category.VISUAL, 4, 28, 0, () -> c.targetEspSettings.ghostLength, v -> c.targetEspSettings.ghostLength = (int) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
 						.child(ModuleDef.slider("Ghost Layers", Category.VISUAL, 1, 3, 0, () -> c.targetEspSettings.ghostLayers, v -> c.targetEspSettings.ghostLayers = (int) v)
