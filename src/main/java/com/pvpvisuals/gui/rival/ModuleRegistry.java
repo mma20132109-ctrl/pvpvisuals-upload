@@ -47,7 +47,7 @@ public final class ModuleRegistry {
 								List.of("Health", "Static", "Distance", "Rainbow", "Preset"),
 								v -> c.targetEspSettings.colorMode = v.toUpperCase(java.util.Locale.ROOT)))
 						.child(ModuleDef.choice("Color Preset", Category.VISUAL,
-								() -> c.targetEspSettings.colorPreset,
+								() -> targetEspColorPresetTitle(c.targetEspSettings.colorPreset),
 								List.of("Cyan", "Pink", "Purple", "Green", "Orange", "Red", "Blue", "Yellow"),
 								v -> c.targetEspSettings.colorPreset = v.toUpperCase(java.util.Locale.ROOT))
 								.visibleWhen(() -> "PRESET".equalsIgnoreCase(c.targetEspSettings.colorMode)))
@@ -192,6 +192,19 @@ public final class ModuleRegistry {
 					c.hud.clear();
 					c.save();
 				}));
+	}
+
+	private static String targetEspColorPresetTitle(String value) {
+		return switch (value == null ? "CYAN" : value.toUpperCase(java.util.Locale.ROOT)) {
+			case "PINK" -> "Pink";
+			case "PURPLE" -> "Purple";
+			case "GREEN" -> "Green";
+			case "ORANGE" -> "Orange";
+			case "RED" -> "Red";
+			case "BLUE" -> "Blue";
+			case "YELLOW" -> "Yellow";
+			default -> "Cyan";
+		};
 	}
 
 	private static String targetEspColorTitle(String value) {
