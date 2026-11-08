@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.pvpvisuals.PvpVisualsClient;
 import com.pvpvisuals.config.PvpConfig;
+import com.pvpvisuals.gui.echo.EchoScreen;
 import com.pvpvisuals.gui.echo.EchoTheme;
 import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.render.splash.EchoSplash;
@@ -38,6 +39,10 @@ public class EchoMainMenuScreen extends TitleScreen {
 	private EchoButton btnExit;
 	private EchoButton btnLang;
 	private EchoButton btnVisuals;
+	private EchoButton btnSettings;
+	private float profileX;
+	private float profileY;
+	private float profileW;
 	private EchoButton pressed;
 	private EchoButton pending;
 	private long pendingAt;
@@ -67,8 +72,10 @@ public class EchoMainMenuScreen extends TitleScreen {
 				() -> mc.setScreen(new JoinMultiplayerScreen(this))));
 		main.add(new EchoButton("Accounts", EchoButton.Icon.ACCOUNTS,
 				() -> mc.setScreen(new EchoAccountManagerScreen(this))));
-		main.add(new EchoButton("Settings", EchoButton.Icon.SETTINGS,
-				() -> mc.setScreen(new OptionsScreen(this, mc.options))));
+		main.add(new EchoButton("Mods", EchoButton.Icon.MODS,
+				() -> mc.setScreen(new EchoScreen())));
+		btnSettings = new EchoButton("Settings", EchoButton.Icon.SETTINGS,
+				() -> mc.setScreen(new OptionsScreen(this, mc.options)));
 		btnExit = new EchoButton("Exit", EchoButton.Icon.EXIT, mc::stop);
 		btnLang = new EchoButton("Language", EchoButton.Icon.GLOBE,
 				() -> mc.setScreen(new LanguageSelectScreen(this, mc.options, mc.getLanguageManager())));
@@ -99,10 +106,13 @@ public class EchoMainMenuScreen extends TitleScreen {
 		}
 
 		int utility = 26;
+		int utilityGap = 7;
 		int utilityY = this.height - utility - 12;
+		int right = this.width - 12;
 		btnVisuals.setBounds(12, utilityY, utility, utility);
-		btnLang.setBounds(this.width - utility * 2 - 18, utilityY, utility, utility);
-		btnExit.setBounds(this.width - utility - 12, utilityY, utility, utility);
+		btnExit.setBounds(right - utility, utilityY, utility, utility);
+		btnSettings.setBounds(right - utility * 2 - utilityGap, utilityY, utility, utility);
+		btnLang.setBounds(right - utility * 3 - utilityGap * 2, utilityY, utility, utility);
 	}
 
 	@Override
@@ -184,9 +194,9 @@ public class EchoMainMenuScreen extends TitleScreen {
 		String playerLabel = mc.getUser().getAccessToken().isBlank() ? "OFFLINE PROFILE" : "PLAYER";
 		int nameWidth = this.font.width(playerName);
 		int labelWidth = this.font.width(playerLabel);
-		float profileW = Math.max(112f, nameWidth + labelWidth + 38f);
-		float profileX = this.width - profileW - 14f;
-		float profileY = 14f;
+		profileW = Math.max(112f, nameWidth + labelWidth + 50f);
+		profileX = this.width - profileW - 14f;
+		profileY = 14f;
 		float profileAlpha = Gfx.ease(el / 550f);
 		Gfx.alpha = profileAlpha;
 		Gfx.glass(g, profileX, profileY, profileW, 34f, 10f,
@@ -194,6 +204,8 @@ public class EchoMainMenuScreen extends TitleScreen {
 		Gfx.circle(g, profileX + 17f, profileY + 17f, 5f, EchoTheme.accent());
 		Gfx.text(g, this.font, playerLabel, Math.round(profileX + 29f), Math.round(profileY + 6f), EchoTheme.accent());
 		Gfx.text(g, this.font, playerName, Math.round(profileX + 29f), Math.round(profileY + 18f), 0xFFFFFFFF);
+		Gfx.text(g, this.font, "›", Math.round(profileX + profileW - 15f),
+				Math.round(profileY + 12f), 0xFFB9BAC8);
 		Gfx.alpha = 1f;
 
 		// Frosted-glass dock backing, matching the source menu's bottom navigation.
@@ -221,9 +233,11 @@ public class EchoMainMenuScreen extends TitleScreen {
 		update(btnExit, mx, my, dt, pc);
 		update(btnLang, mx, my, dt, pc);
 		update(btnVisuals, mx, my, dt, pc);
+		update(btnSettings, mx, my, dt, pc);
 		btnExit.render(g, this.font, pc, 0f);
 		btnLang.render(g, this.font, pc, 0f);
 		btnVisuals.render(g, this.font, pc, 0f);
+		btnSettings.render(g, this.font, pc, 0f);
 
 		if (backgroundToastUntil > now) {
 			float remaining = (backgroundToastUntil - now) / 1000f;
@@ -293,12 +307,19 @@ public class EchoMainMenuScreen extends TitleScreen {
 		List<EchoButton> l = new ArrayList<>(main);
 		l.add(btnLang);
 		l.add(btnVisuals);
+		l.add(btnSettings);
 		l.add(btnExit);
 		return l;
 	}
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (event.button() == 0 && pending == null
+				&& event.x() >= profileX && event.x() <= profileX + profileW
+				&& event.y() >= profileY && event.y() <= profileY + 34f) {
+			Minecraft.getInstance().setScreen(new EchoAccountManagerScreen(this));
+			return true;
+		}
 		if (event.button() == 0 && pending == null) {
 			for (EchoButton b : all()) {
 				if (b != null && b.contains(event.x(), event.y())) {

@@ -11,7 +11,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * Wide buttons carry an icon and label; compact utility buttons reveal a label on hover.
  */
 public final class EchoButton {
-    public enum Icon { NONE, SINGLEPLAYER, MULTIPLAYER, ACCOUNTS, SETTINGS, EXIT, GLOBE, VISUALS }
+    public enum Icon { NONE, SINGLEPLAYER, MULTIPLAYER, ACCOUNTS, MODS, SETTINGS, EXIT, GLOBE, VISUALS }
 
     public int x, y, w, h;
     public final String label;
@@ -173,6 +173,18 @@ public final class EchoButton {
             case ACCOUNTS -> {
                 Gfx.ringCircle(g, cx, cy - r * 0.28f, r * 0.34f, 1.2f, color);
                 drawArc(g, cx, cy + r * 0.08f, r * 0.72f, 1.4f, 20f, 160f, color);
+            }
+            case MODS -> {
+                float cell = r * 0.42f;
+                float gap = r * 0.16f;
+                for (int row = -1; row <= 1; row++) {
+                    for (int column = -1; column <= 1; column++) {
+                        if (row == 0 && column == 0) continue;
+                        Gfx.rrect(g, cx + column * (cell + gap) - cell / 2f,
+                                cy + row * (cell + gap) - cell / 2f,
+                                cell, cell, 1.1f, color, color, 0, 0f);
+                    }
+                }
             }
             case SETTINGS -> {
                 Gfx.ringCircle(g, cx, cy, r * 0.42f, 1.5f, color);
