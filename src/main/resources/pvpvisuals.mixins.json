@@ -13,6 +13,7 @@
     "GameRendererBobMixin",
     "OptionInstanceAccessor",
     "GuiGraphicsAccessor",
+    "LiquidGlassCaptureMixin",
     "TargetScanEntityRenderStateMixin",
     "TargetScanLivingEntityRendererMixin",
     "TargetScanHumanoidArmorLayerMixin",
