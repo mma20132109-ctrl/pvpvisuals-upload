@@ -32,13 +32,14 @@ import net.minecraft.resources.Identifier;
 
 /**
  * Procedural three-wisp Target ESP inspired by ParticleFX Studio's Ghost Wisps effect.
- * It draws three floating spirit heads with separate, fading glow motes along figure-eight paths.
- * No flat ribbon geometry, vanilla particles, external textures or user-provided files are required.
+ * It draws three floating spirit heads with curved, dotted spectral tails and drifting motes.
+ * Ghost sprites rotate with their flight direction. No flat ribbons or external textures are used.
  */
 public final class GhostEspRenderer {
     private static final Logger LOG = LoggerFactory.getLogger("pvpvisuals/target-esp/ghosts");
     private static final int MAX_TRAIL_MOTES = 20;
-    private static final int MAX_QUADS = 3 * MAX_TRAIL_MOTES + 3;
+    private static final int SPARKS_PER_WISP = 4;
+    private static final int MAX_QUADS = 3 + 3 * MAX_TRAIL_MOTES + 3 * SPARKS_PER_WISP;
     /** POSITION (3 floats) + UV (2 floats) + COLOR (4 normalized bytes). */
     private static final int VERTEX_BYTES = 24;
     private static final int BUFFER_BYTES = MAX_QUADS * 4 * VERTEX_BYTES;
@@ -128,30 +129,46 @@ public final class GhostEspRenderer {
             DATA.clear();
             vertexCount = 0;
 
-            // Three soft spirit heads drift independently; each leaves a dotted, fading aura.
+            // Three separate spirits: each head leads its own curved chain of smaller wisps.
             for (int wisp = 0; wisp < 3; wisp++) {
-                int color = blendColor(WISP_COLORS[wisp], accent, 0.14f);
+                int color = blendColor(WISP_COLORS[wisp], accent, 0.12f);
                 float red = ((color >> 16) & 255) / 255.0f;
                 float green = ((color >> 8) & 255) / 255.0f;
                 float blue = (color & 255) / 255.0f;
                 double headPhase = time * speed * 0.82;
+                float headRotation = pathRotation(wisp, headPhase, centerX, centerZ,
+                        minY, width, depth, height, leftX, leftZ, upX, upY, upZ);
                 float[] head = samplePath(wisp, headPhase, centerX, centerZ, minY, width, depth, height);
 
-                // The larger head is a soft flame-like spirit, not a flat rectangle or a ring.
-                appendMote(head[0], head[1], head[2], 0.17f, frame.fade * 0.96f,
-                        red, green, blue, leftX, leftZ, upX, upY, upZ, true);
+                // Large, distinct ghost at the front of the flight path.
+                appendMote(head[0], head[1], head[2], 0.205f, frame.fade * 0.98f,
+                        red, green, blue, leftX, leftZ, upX, upY, upZ, true, headRotation);
 
-                // Separate round motes dissolve behind the spirit instead of joining into a stripe.
+                // Smaller ghost-shaped wisps follow the same curved path, shrinking and fading.
                 for (int trail = 1; trail <= trailMotes; trail++) {
                     float age = trail / (float) (trailMotes + 1);
-                    double lag = age * 0.88;
-                    float[] mote = samplePath(wisp, headPhase - lag,
+                    double lag = age * 1.05;
+                    double trailPhase = headPhase - lag;
+                    float[] mote = samplePath(wisp, trailPhase,
                             centerX, centerZ, minY, width, depth, height);
-                    float drift = (float) Math.sin(time * 1.8 + trail * 1.7 + wisp * 2.1) * 0.035f;
-                    float size = 0.028f + 0.045f * (1.0f - age);
-                    float alpha = frame.fade * (float) Math.pow(1.0f - age, 1.65) * 0.72f;
-                    appendMote(mote[0] + drift, mote[1] - drift * 0.45f, mote[2] - drift,
-                            size, alpha, red, green, blue, leftX, leftZ, upX, upY, upZ, false);
+                    float rotation = pathRotation(wisp, trailPhase, centerX, centerZ,
+                            minY, width, depth, height, leftX, leftZ, upX, upY, upZ);
+                    float drift = (float) Math.sin(time * 1.8 + trail * 1.7 + wisp * 2.1) * 0.025f;
+                    float size = 0.088f * (1.0f - age * 0.48f);
+                    float alpha = frame.fade * (float) Math.pow(1.0f - age, 1.45) * 0.64f;
+                    appendMote(mote[0] + drift, mote[1] - drift * 0.35f, mote[2] - drift,
+                            size, alpha, red, green, blue, leftX, leftZ, upX, upY, upZ, true, rotation);
+                }
+
+                // A few independent sparks float away from each spirit instead of forming bands.
+                for (int spark = 0; spark < SPARKS_PER_WISP; spark++) {
+                    double sparkPhase = headPhase - (0.28 + spark * 0.19);
+                    float[] p = samplePath(wisp, sparkPhase, centerX, centerZ, minY, width, depth, height);
+                    float sway = (float) Math.sin(time * 2.1 + spark * 2.4 + wisp) * (0.07f + spark * 0.012f);
+                    float alpha = frame.fade * (0.30f - spark * 0.045f);
+                    appendMote(p[0] + sway, p[1] + sway * 0.45f, p[2] - sway,
+                            0.018f + spark * 0.003f, alpha,
+                            red, green, blue, leftX, leftZ, upX, upY, upZ, false, 0.0f);
                 }
             }
 
@@ -176,26 +193,56 @@ public final class GhostEspRenderer {
         return new float[] {x, y, z};
     }
 
+    private static float pathRotation(int wisp, double phase,
+            float centerX, float centerZ, float minY,
+            float width, float depth, float height,
+            double leftX, double leftZ, double upX, double upY, double upZ) {
+        float[] before = samplePath(wisp, phase - 0.025, centerX, centerZ, minY, width, depth, height);
+        float[] after = samplePath(wisp, phase + 0.025, centerX, centerZ, minY, width, depth, height);
+        float dx = after[0] - before[0];
+        float dy = after[1] - before[1];
+        float dz = after[2] - before[2];
+        float screenRight = (float) (dx * leftX + dz * leftZ);
+        float screenUp = (float) (dx * upX + dy * upY + dz * upZ);
+        if (screenRight * screenRight + screenUp * screenUp < 1.0e-7f) {
+            return 0.0f;
+        }
+        return (float) Math.atan2(-screenRight, screenUp);
+    }
+
     private static void appendMote(float cx, float cy, float cz, float size, float alpha,
             float red, float green, float blue,
-            double leftX, double leftZ, double upX, double upY, double upZ, boolean spiritHead) {
+            double leftX, double leftZ, double upX, double upY, double upZ,
+            boolean spiritHead, float rotation) {
         if (alpha <= 0.003f || DATA.remaining() < 4 * VERTEX_BYTES) {
             return;
         }
+
+        // Rotate the sprite plane so its head faces the direction of travel and its tail trails behind.
+        float cos = (float) Math.cos(rotation);
+        float sin = (float) Math.sin(rotation);
+        float rightX = (float) leftX * cos + (float) upX * sin;
+        float rightY = (float) upY * sin;
+        float rightZ = (float) leftZ * cos + (float) upZ * sin;
+        float rotatedUpX = -(float) leftX * sin + (float) upX * cos;
+        float rotatedUpY = (float) upY * cos;
+        float rotatedUpZ = -(float) leftZ * sin + (float) upZ * cos;
+
         float halfWidth = size * (spiritHead ? 0.78f : 1.0f);
-        float halfHeight = size * (spiritHead ? 1.22f : 1.0f);
-        float lx = (float) (leftX * halfWidth);
-        float lz = (float) (leftZ * halfWidth);
-        float ux = (float) (upX * halfHeight);
-        float uy = (float) (upY * halfHeight);
-        float uz = (float) (upZ * halfHeight);
+        float halfHeight = size * (spiritHead ? 1.28f : 1.0f);
+        float lx = rightX * halfWidth;
+        float ly = rightY * halfWidth;
+        float lz = rightZ * halfWidth;
+        float ux = rotatedUpX * halfHeight;
+        float uy = rotatedUpY * halfHeight;
+        float uz = rotatedUpZ * halfHeight;
         float uvBottom = spiritHead ? 4.0f : 2.0f;
         float uvTop = spiritHead ? 5.0f : 3.0f;
         appendQuad(
-                cx - lx - ux, cy - uy, cz - lz - uz,
-                cx + lx - ux, cy - uy, cz + lz - uz,
-                cx + lx + ux, cy + uy, cz + lz + uz,
-                cx - lx + ux, cy + uy, cz - lz + uz,
+                cx - lx - ux, cy - ly - uy, cz - lz - uz,
+                cx + lx - ux, cy + ly - uy, cz + lz - uz,
+                cx + lx + ux, cy + ly + uy, cz + lz + uz,
+                cx - lx + ux, cy - ly + uy, cz - lz + uz,
                 alpha, alpha, alpha, alpha, red, green, blue, uvBottom, uvTop);
     }
 
