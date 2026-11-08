@@ -169,28 +169,35 @@ public final class TargetEspStyleRenderer {
     /** Krug is a travelling, vertical ribbon (two sinusoidal edges), not a flat ground circle. */
     private static void drawKrug(float cx,float cz,float y0,float height,float width,float depth,
             TargetEspSettings s,Frame frame,double time,float fade,float size,float worldPerPixel) {
-        float rx=Math.max(0.28f,width*0.80f)*size, rz=Math.max(0.28f,depth*0.80f)*size;
-        float phase=(float)(time*1.7), bandScale=clamp(s.lineThickness,0.6f,4f)/1.6f;
-        int baseAlpha=clampByte(Math.round(170*fade));
-        float prevX=cx+rx, prevZ=cz;
-        float prevLow=y0+(float)Math.abs(Math.sin(phase-0.45f))*height;
-        float prevHigh=y0+(float)Math.abs(Math.sin(phase))*height;
+        // Original TargetESP draws a TRIANGLE_STRIP between two concentric loops.
+        // The two heights pulse together; they do not oscillate around the azimuth.
+        float radius=Math.max(0.15f,width*0.80f);
+        float phase=(float)(time*1.7);
+        float upperY=y0+(float)Math.abs(Math.sin(phase))*height;
+        float lowerY=y0+(float)Math.abs(Math.sin(phase-0.45f))*height;
+        int edgeAlpha=clampByte(Math.round(170.0f*fade));
+        int transparentAlpha=0;
+
+        float previousX=cx+radius;
+        float previousZ=cz;
+        int previousColor=resolveColor(s,frame,0.0f);
         for(int i=1;i<=SEGMENTS;i++) {
-            double a=TAU*i/SEGMENTS;
-            float x=cx+(float)Math.cos(a)*rx, z=cz+(float)Math.sin(a)*rz;
-            float low=y0+(float)Math.abs(Math.sin(phase+a-0.45f))*height;
-            float high=y0+(float)Math.abs(Math.sin(phase+a))*height;
-            float mid=(low+high)*0.5f, half=Math.max(0.025f,Math.abs(high-low)*0.5f*bandScale);
-            low=mid-half; high=mid+half;
-            float pmid=(prevLow+prevHigh)*0.5f, phalf=Math.max(0.025f,Math.abs(prevHigh-prevLow)*0.5f*bandScale);
-            float pLow=pmid-phalf,pHigh=pmid+phalf;
-            int ca=resolveColor(s,frame,(i-1)/(float)SEGMENTS), cb=resolveColor(s,frame,i/(float)SEGMENTS);
-            int topAlpha=clampByte(Math.round(baseAlpha*0.06f));
-            triangle(prevX,pLow,prevZ,ca,baseAlpha,x,low,z,cb,baseAlpha,x,high,z,cb,topAlpha);
-            triangle(prevX,pLow,prevZ,ca,baseAlpha,x,high,z,cb,topAlpha,prevX,pHigh,prevZ,ca,topAlpha);
-            if(s.auraGlow) segment(prevX,pLow,prevZ,x,low,z,s.lineThickness*2.5f,worldPerPixel,cb,
-                    clampByte(Math.round(baseAlpha*0.12f)));
-            prevX=x;prevZ=z;prevLow=low;prevHigh=high;
+            double angle=TAU*i/SEGMENTS;
+            float x=cx+(float)Math.cos(angle)*radius;
+            float z=cz+(float)Math.sin(angle)*radius;
+            int color=resolveColor(s,frame,i/(float)SEGMENTS);
+
+            // Top ring has alpha 170*fade, lower ring fades to fully transparent.
+            triangle(previousX,upperY,previousZ,previousColor,edgeAlpha,
+                    x,upperY,z,color,edgeAlpha,
+                    x,lowerY,z,color,transparentAlpha);
+            triangle(previousX,upperY,previousZ,previousColor,edgeAlpha,
+                    x,lowerY,z,color,transparentAlpha,
+                    previousX,lowerY,previousZ,previousColor,transparentAlpha);
+
+            previousX=x;
+            previousZ=z;
+            previousColor=color;
         }
     }
 
