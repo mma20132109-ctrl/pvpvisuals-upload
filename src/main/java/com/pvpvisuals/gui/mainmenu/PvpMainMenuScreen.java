@@ -88,6 +88,7 @@ public final class PvpMainMenuScreen extends Screen {
     private float parallaxX;
     private float parallaxY;
     private boolean accountsPage;
+    private boolean worldSelectPage;
     private boolean accountInputFocused = true;
     private String accountInput = "";
     private int accountCarouselIndex;
@@ -526,7 +527,7 @@ public final class PvpMainMenuScreen extends Screen {
         float x = dockX + padX;
         float y = dockY + (dockH - btnH) / 2f;
         for (int i = 0; i < 4; i++) {
-            boolean active = i == 2 && accountsPage;
+            boolean active = (i == 0 && worldSelectPage) || (i == 2 && accountsPage);
             boolean over = Gfx.hit(mouseX, mouseY, Math.round(x), Math.round(y), Math.round(btnW), Math.round(btnH));
             dockHover[i] += ((over ? 1f : 0f) - dockHover[i]) * Math.min(1f, dt / 70f);
             float h = dockHover[i];
@@ -557,6 +558,48 @@ public final class PvpMainMenuScreen extends Screen {
             drawDockIcon(g, i, x + actionW / 2f, y + 14f - h, 1f + h * 0.12f, lerp(base, hover, h));
             x += actionW + gap;
         }
+    }
+
+    boolean handleDockClick(double mx, double my) {
+        float dockW = 271f;
+        float dockX = (width - dockW) / 2f;
+        float dockY = height - 58f;
+        float dockItemX = dockX + 7f;
+        for (int i = 0; i < 4; i++) {
+            if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 46, 28)) {
+                activateDock(i);
+                return true;
+            }
+            dockItemX += 48f;
+        }
+        dockItemX += 11f;
+        if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 26, 28)) {
+            activateDock(4);
+            return true;
+        }
+        dockItemX += 28f;
+        if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 26, 28)) {
+            activateDock(5);
+            return true;
+        }
+        return false;
+    }
+
+    void renderWorldSelectBackground(GuiGraphics graphics, int mouseX, int mouseY) {
+        updateParallax(mouseX, mouseY, 16f);
+        drawBackdrop(graphics, System.nanoTime());
+        LiquidGlassRenderer.captureBackground();
+        Gfx.glass(graphics, width * 0.13f, 18f, width * 0.74f,
+                Math.max(120f, height - 92f), 14f,
+                0x401C202B, 0x3010141D, 0x20FFFFFF);
+    }
+
+    void renderWorldSelectDock(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        Gfx.alpha = 1f;
+        drawUserBadge(graphics);
+        drawSidebar(graphics, mouseX, mouseY, 16f, System.nanoTime());
+        drawDock(graphics, mouseX, mouseY, 16f);
+        Gfx.alpha = 1f;
     }
 
     private PlayerSkinWidget skinWidget(PvpAccountManager.Profile profile) {
@@ -725,10 +768,16 @@ public final class PvpMainMenuScreen extends Screen {
         menuText(g, font, "×", clearX + 8f, inputY + 6f, 11f, 0xFFFFB6BA, false);
     }
 
-    private void activateDock(int index) {
+    void activateDock(int index) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (index != 0) worldSelectPage = false;
         switch (index) {
-            case 0 -> minecraft.setScreen(new SelectWorldScreen(this));
+            case 0 -> {
+                if (!worldSelectPage) {
+                    worldSelectPage = true;
+                    minecraft.setScreen(new PvpWorldSelectScreen(this));
+                }
+            }
             case 1 -> minecraft.setScreen(new JoinMultiplayerScreen(this));
             case 2 -> { accountsPage = !accountsPage; accountInputFocused = accountsPage; accountInput = ""; accountCarouselIndex = PvpAccountManager.activeIndex(); accountCarouselPosition = accountCarouselIndex; }
             case 3 -> minecraft.setScreen(new EchoScreen());
@@ -744,28 +793,7 @@ public final class PvpMainMenuScreen extends Screen {
         double mx = event.x();
         double my = event.y();
 
-        // Keep the bottom dock interactive while the accounts overlay is open.
-        float dockW = 271f;
-        float dockX = (width - dockW) / 2f;
-        float dockY = height - 58f;
-        float dockItemX = dockX + 7f;
-        for (int i = 0; i < 4; i++) {
-            if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 46, 28)) {
-                activateDock(i);
-                return true;
-            }
-            dockItemX += 48f;
-        }
-        dockItemX += 11f;
-        if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 26, 28)) {
-            activateDock(4);
-            return true;
-        }
-        dockItemX += 28f;
-        if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 26, 28)) {
-            activateDock(5);
-            return true;
-        }
+        if (handleDockClick(mx, my)) return true;
 
         if (accountsPage) {
             float w = Math.min(402f, width - 36f);
