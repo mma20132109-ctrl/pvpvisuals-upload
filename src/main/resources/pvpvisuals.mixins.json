@@ -22,7 +22,11 @@
 		"ItemInHandRendererMixin",
 		"GameRendererBobMixin",
 		"OptionInstanceAccessor",
-		"GuiGraphicsAccessor"
+		"GuiGraphicsAccessor",
+		"TargetScanEntityRenderStateMixin",
+		"TargetScanLivingEntityRendererMixin",
+		"TargetScanHumanoidArmorLayerMixin",
+		"TargetScanEquipmentLayerRendererAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1
