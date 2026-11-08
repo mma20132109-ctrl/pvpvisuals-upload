@@ -90,6 +90,36 @@ public final class PvpMainMenuScreen extends Screen {
     private float accountCarouselPosition;
     private long lastFrameNs;
 
+    // Use Minecraft's crisp vanilla font in this screen instead of the thin Inter face.
+    // A modest size boost keeps the compact Zenith layout readable without clipping labels.
+    private static final float MENU_TEXT_BOOST = 1.25f;
+
+    private static int menuWidth(net.minecraft.client.gui.Font font, String value, float size) {
+        return Math.round(font.width(Component.literal(value)) * (size / 7.4f) * MENU_TEXT_BOOST);
+    }
+
+    private static String menuTrim(net.minecraft.client.gui.Font font, String value, int maxWidth, float size) {
+        if (menuWidth(font, value, size) <= maxWidth) return value;
+        String trimmed = value;
+        while (trimmed.length() > 1 && menuWidth(font, trimmed + "…", size) > maxWidth) {
+            trimmed = trimmed.substring(0, trimmed.length() - 1);
+        }
+        return trimmed + "…";
+    }
+
+    private static void menuText(GuiGraphics graphics, net.minecraft.client.gui.Font font, String value,
+                                 float x, float y, float size, int color, boolean shadow) {
+        float scale = (size / 7.4f) * MENU_TEXT_BOOST;
+        graphics.pose().pushMatrix();
+        try {
+            graphics.pose().translate(x, y);
+            graphics.pose().scale(scale, scale);
+            graphics.drawString(font, Component.literal(value), 0, 0, color, shadow);
+        } finally {
+            graphics.pose().popMatrix();
+        }
+    }
+
     public PvpMainMenuScreen() {
         super(Component.literal("Zenith"));
     }
@@ -324,26 +354,26 @@ public final class PvpMainMenuScreen extends Screen {
         String subtitle = "Welcome back";
         float titleSize = 40f;
         float subtitleSize = 13f;
-        float titleWidth = Gfx.widthAtSize(font, title, titleSize);
-        float subtitleWidth = Gfx.widthAtSize(font, subtitle, subtitleSize);
+        float titleWidth = menuWidth(font, title, titleSize);
+        float subtitleWidth = menuWidth(font, subtitle, subtitleSize);
         float titleY = height * 0.35f;
-        Gfx.textAtSize(g, font, title, (width - titleWidth) / 2f, titleY,
+        menuText(g, font, title, (width - titleWidth) / 2f, titleY,
                 titleSize, 0xFFF3F5FF, false);
-        Gfx.textAtSize(g, font, subtitle, (width - subtitleWidth) / 2f,
+        menuText(g, font, subtitle, (width - subtitleWidth) / 2f,
                 titleY + 39f, subtitleSize, 0xBFC1C9DC, false);
     }
 
     private void drawUserBadge(GuiGraphics g) {
         String username = Minecraft.getInstance().getUser().getName();
         if (username == null || username.isBlank()) username = "Zenith User";
-        int textWidth = Gfx.widthAtSize(font, username, 7.2f);
+        int textWidth = menuWidth(font, username, 7.2f);
         float w = Math.max(72f, textWidth + 34f);
         float x = width - w - 16f;
         float y = 16f;
         Gfx.glass(g, x, y, w, 28f, 10f, GLASS_TOP, GLASS_BOTTOM, GLASS_BORDER);
         Gfx.circle(g, x + 15f, y + 10f, 3f, 0xFFE1E7F7);
         Gfx.rrect(g, x + 9.5f, y + 14f, 11f, 7f, 4f, 0xFFE1E7F7, 0xFFB8C4E2, 0, 0f);
-        Gfx.textAtSize(g, font, username, x + 26f, y + 9f, 7.2f, 0xFFE6E9F5, false);
+        menuText(g, font, username, x + 26f, y + 9f, 7.2f, 0xFFE6E9F5, false);
     }
 
     private void drawSidebar(GuiGraphics g, int mouseX, int mouseY, float dt, long now) {
@@ -367,12 +397,12 @@ public final class PvpMainMenuScreen extends Screen {
         if (backdropToastAt != 0L && elapsed >= 0L && elapsed < 2400L) {
             float alpha = elapsed > 1800L ? 1f - (elapsed - 1800L) / 600f : 1f;
             String label = "Фон: " + BACKDROP_NAMES[backdropIndex];
-            float w = Gfx.widthAtSize(font, label, 7f) + 20f;
+            float w = menuWidth(font, label, 7f) + 20f;
             float tx = x + 36f;
             float ty = y + 5f;
             Gfx.alpha = alpha;
             Gfx.glass(g, tx, ty, w, 22f, 6f, GLASS_TOP, GLASS_BOTTOM, GLASS_BORDER);
-            Gfx.textAtSize(g, font, label, tx + 9f, ty + 7f, 7f, 0xFFF0F2FA, false);
+            menuText(g, font, label, tx + 9f, ty + 7f, 7f, 0xFFF0F2FA, false);
             Gfx.alpha = 1f;
         }
     }
@@ -471,8 +501,8 @@ public final class PvpMainMenuScreen extends Screen {
             }
             int iconColor = active ? EchoTheme.ACCENT_TEXT : lerp(0xC3BFC5D8, 0xFFFFFFFF, h);
             drawDockIcon(g, i, x + btnW / 2f, y + 10f - h, 1f + h * 0.12f, iconColor);
-            float lw = Gfx.widthAtSize(font, MAIN_LABELS[i], 6.5f);
-            Gfx.textAtSize(g, font, MAIN_LABELS[i], x + (btnW - lw) / 2f, y + 18f,
+            float lw = menuWidth(font, MAIN_LABELS[i], 6.5f);
+            menuText(g, font, MAIN_LABELS[i], x + (btnW - lw) / 2f, y + 18f,
                     6.5f, active ? 0xFFFFFFFF : lerp(0xB7B9C0D0, 0xFFF1F2FA, h), false);
             x += btnW + gap;
         }
@@ -542,8 +572,8 @@ public final class PvpMainMenuScreen extends Screen {
         float x = (width - w) / 2f;
         float y = (height - h) / 2f - 8f;
         Gfx.glass(g, x, y, w, h, 12f, 0x85202634, 0x7610141D, 0x37FFFFFF);
-        Gfx.textAtSize(g, font, "Аккаунты", x + 18f, y + 13f, 15f, 0xFFF0F2FA, false);
-        Gfx.textAtSize(g, font, "Управление игровыми профилями", x + 18f, y + 36f,
+        menuText(g, font, "Аккаунты", x + 18f, y + 13f, 15f, 0xFFF0F2FA, false);
+        menuText(g, font, "Управление игровыми профилями", x + 18f, y + 36f,
                 7.2f, 0xFFAEB5C8, false);
 
         java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
@@ -588,20 +618,20 @@ public final class PvpMainMenuScreen extends Screen {
                 skin.setPosition(Math.round(cardX + (cardW - 58f) / 2f), Math.round(cardY + 3f));
                 skin.setAlpha(fade);
                 skin.render(g, mouseX, mouseY, Math.min(1f, dt / 50f));
-                String name = Gfx.trimAtSize(font, profile.name, Math.round(cardW - 12f), 6.5f);
-                float nameW = Gfx.widthAtSize(font, name, 6.5f);
-                Gfx.textAtSize(g, font, name, cardX + (cardW - nameW) / 2f,
+                String name = menuTrim(font, profile.name, Math.round(cardW - 12f), 6.5f);
+                float nameW = menuWidth(font, name, 6.5f);
+                menuText(g, font, name, cardX + (cardW - nameW) / 2f,
                         cardY + 76f, 6.5f, 0xFFF0F2FA, false);
                 String type = active ? "ВЫБРАН" : ("MICROSOFT".equals(profile.type) ? "MICROSOFT" : "OFFLINE");
-                float typeW = Gfx.widthAtSize(font, type, 4.8f);
-                Gfx.textAtSize(g, font, type, cardX + (cardW - typeW) / 2f,
+                float typeW = menuWidth(font, type, 4.8f);
+                menuText(g, font, type, cardX + (cardW - typeW) / 2f,
                         cardY + 88f, 4.8f, active ? EchoTheme.ACCENT_TEXT : 0xFF9CA5B8, false);
                 if (index == accountCarouselIndex) {
                     Gfx.glass(g, cardX + 9f, cardY + cardH - 24f, cardW - 18f, 17f, 5f,
                             0x74475270, 0x50202A3A, 0x408C9EFF);
                     String select = active ? "Текущий" : "Выбрать";
-                    float sw = Gfx.widthAtSize(font, select, 5.5f);
-                    Gfx.textAtSize(g, font, select,
+                    float sw = menuWidth(font, select, 5.5f);
+                    menuText(g, font, select,
                             cardX + (cardW - sw) / 2f, cardY + cardH - 18f,
                             5.5f, 0xFFE8EEFF, false);
                 }
@@ -609,11 +639,11 @@ public final class PvpMainMenuScreen extends Screen {
             }
             if (profiles.size() > 1) {
                 String counter = (accountCarouselIndex + 1) + " / " + profiles.size();
-                float cw = Gfx.widthAtSize(font, counter, 5.4f);
-                Gfx.textAtSize(g, font, counter, centerX - cw / 2f, y + 183f,
+                float cw = menuWidth(font, counter, 5.4f);
+                menuText(g, font, counter, centerX - cw / 2f, y + 183f,
                         5.4f, 0xFF8D97AC, false);
-                Gfx.textAtSize(g, font, "‹", centerX - 72f, y + 100f, 15f, 0xFFBFC8DB, false);
-                Gfx.textAtSize(g, font, "›", centerX + 64f, y + 100f, 15f, 0xFFBFC8DB, false);
+                menuText(g, font, "‹", centerX - 72f, y + 100f, 15f, 0xFFBFC8DB, false);
+                menuText(g, font, "›", centerX + 64f, y + 100f, 15f, 0xFFBFC8DB, false);
             }
             boolean active = PvpAccountManager.isActive(profiles.get(accountCarouselIndex));
             float actionY = y + 193f;
@@ -622,11 +652,11 @@ public final class PvpMainMenuScreen extends Screen {
             float deleteX = x + w / 2f + 4f;
             Gfx.glass(g, selectX, actionY, actionW, 22f, 6f,
                     active ? 0x66343C50 : 0x8C344A6D, 0x53151B27, 0x558C9EFF);
-            Gfx.textAtSize(g, font, active ? "Выбран" : "Выбрать",
+            menuText(g, font, active ? "Выбран" : "Выбрать",
                     selectX + (active ? 22f : 21f), actionY + 7f, 5.8f,
                     active ? EchoTheme.ACCENT_TEXT : 0xFFE8EAF5, false);
             Gfx.glass(g, deleteX, actionY, actionW, 22f, 6f, 0x633B2730, 0x40151B27, 0x42D86C78);
-            Gfx.textAtSize(g, font, "Удалить", deleteX + 21f, actionY + 7f,
+            menuText(g, font, "Удалить", deleteX + 21f, actionY + 7f,
                     5.8f, 0xFFFFB6BA, false);
         }
 
@@ -637,10 +667,10 @@ public final class PvpMainMenuScreen extends Screen {
                 accountInputFocused ? 0xAA303B51 : 0x63242B39, 0x53151B27,
                 accountInputFocused ? 0x668C9EFF : 0x32FFFFFF);
         String shownInput = accountInput.isEmpty() ? "Введите ник (3–16 символов)" : accountInput;
-        Gfx.textAtSize(g, font, shownInput, inputX + 8f, inputY + 8f, 6.1f,
+        menuText(g, font, shownInput, inputX + 8f, inputY + 8f, 6.1f,
                 accountInput.isEmpty() ? 0xFF858DA1 : 0xFFF0F2FA, false);
         if (accountInputFocused && System.currentTimeMillis() % 1000L < 500L) {
-            float caretX = inputX + 8f + Gfx.widthAtSize(font, accountInput, 6.1f) + 1f;
+            float caretX = inputX + 8f + menuWidth(font, accountInput, 6.1f) + 1f;
             g.fill(Math.round(caretX), Math.round(inputY + 7f), Math.round(caretX + 1f),
                     Math.round(inputY + 19f), 0xFFB8C4FF);
         }
@@ -648,13 +678,13 @@ public final class PvpMainMenuScreen extends Screen {
         boolean addHover = Gfx.hit(mouseX, mouseY, Math.round(addX), Math.round(inputY), 60, 26);
         Gfx.glass(g, addX, inputY, 60f, 26f, 7f,
                 addHover ? 0xAA39445A : 0x63242B39, 0x53151B27, 0x32FFFFFF);
-        Gfx.textAtSize(g, font, "Добавить", addX + 11f, inputY + 8f, 5.8f, 0xFFE8EAF5, false);
+        menuText(g, font, "Добавить", addX + 11f, inputY + 8f, 5.8f, 0xFFE8EAF5, false);
         float randomX = x + w - 72f;
         Gfx.glass(g, randomX, inputY, 26f, 26f, 7f, 0x63242B39, 0x53151B27, 0x32FFFFFF);
-        Gfx.textAtSize(g, font, "↻", randomX + 8f, inputY + 7f, 10f, 0xFFE8EAF5, false);
+        menuText(g, font, "↻", randomX + 8f, inputY + 7f, 10f, 0xFFE8EAF5, false);
         float clearX = x + w - 40f;
         Gfx.glass(g, clearX, inputY, 26f, 26f, 7f, 0x533B2730, 0x40151B27, 0x28FFFFFF);
-        Gfx.textAtSize(g, font, "×", clearX + 8f, inputY + 6f, 11f, 0xFFFFB6BA, false);
+        menuText(g, font, "×", clearX + 8f, inputY + 6f, 11f, 0xFFFFB6BA, false);
     }
 
     private void activateDock(int index) {
