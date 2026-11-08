@@ -31,96 +31,44 @@ public final class ModuleRegistry {
 				ChinaHatModule.def(c),
 				com.pvpvisuals.render.blockoverlay.BlockOverlayModule.def(c),
 				com.pvpvisuals.render.hitbox.HitBoxModule.def(c),
-				ModuleDef.toggle("Target ESP", Category.VISUAL, () -> c.targetEsp, v -> {
-					c.targetEsp = v;
-					if (v) com.pvpvisuals.render.targetesp.TargetEspRenderer.reset();
-				})
-						.child(ModuleDef.choice("Style", Category.VISUAL,
-								() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode).title,
-								List.of("Ghosts", "Ghosts 2", "Kvadrat", "Krug", "Scan Line"),
-								v -> c.targetEspSettings.mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(v).name()))
+				ModuleDef.toggle("Target ESP", Category.VISUAL, () -> c.targetEsp, v -> c.targetEsp = v)
 						.child(ModuleDef.slider("Scan Saturation (%)", Category.VISUAL, 0, 200, 0,
 								() -> c.targetEspSettings.scanSaturation * 100.0,
-								v -> c.targetEspSettings.scanSaturation = (float) (v / 100.0))
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanSaturation = (float) (v / 100.0)))
 						.child(ModuleDef.slider("Scan Speed", Category.VISUAL, 0.25, 3.0, 2,
 								() -> c.targetEspSettings.scanSpeed,
-								v -> c.targetEspSettings.scanSpeed = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanSpeed = (float) v))
 						.child(ModuleDef.toggle("Two-color Flow", Category.VISUAL,
 								() -> c.targetEspSettings.scanColorFlow,
-								v -> c.targetEspSettings.scanColorFlow = v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanColorFlow = v))
 						.child(ModuleDef.slider("Scan Glow (%)", Category.VISUAL, 25, 200, 0,
 								() -> c.targetEspSettings.scanGlow * 100.0,
-								v -> c.targetEspSettings.scanGlow = (float) (v / 100.0))
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanGlow = (float) (v / 100.0)))
 						.child(ModuleDef.slider("Scan Color R", Category.VISUAL, 0, 255, 0,
 								() -> (c.targetEspSettings.scanColor >> 16) & 255,
-								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0x00FFFF) | ((int) v << 16))
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0x00FFFF) | ((int) v << 16)))
 						.child(ModuleDef.slider("Scan Color G", Category.VISUAL, 0, 255, 0,
 								() -> (c.targetEspSettings.scanColor >> 8) & 255,
-								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0xFF00FF) | ((int) v << 8))
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0xFF00FF) | ((int) v << 8)))
 						.child(ModuleDef.slider("Scan Color B", Category.VISUAL, 0, 255, 0,
 								() -> c.targetEspSettings.scanColor & 255,
-								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0xFFFF00) | (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN))
+								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0xFFFF00) | (int) v))
 						.child(ModuleDef.slider("Second Color R", Category.VISUAL, 0, 255, 0,
 								() -> (c.targetEspSettings.scanSecondColor >> 16) & 255,
 								v -> c.targetEspSettings.scanSecondColor = (c.targetEspSettings.scanSecondColor & 0x00FFFF) | ((int) v << 16))
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN && c.targetEspSettings.scanColorFlow))
+								.visibleWhen(() -> c.targetEspSettings.scanColorFlow))
 						.child(ModuleDef.slider("Second Color G", Category.VISUAL, 0, 255, 0,
 								() -> (c.targetEspSettings.scanSecondColor >> 8) & 255,
 								v -> c.targetEspSettings.scanSecondColor = (c.targetEspSettings.scanSecondColor & 0xFF00FF) | ((int) v << 8))
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN && c.targetEspSettings.scanColorFlow))
+								.visibleWhen(() -> c.targetEspSettings.scanColorFlow))
 						.child(ModuleDef.slider("Second Color B", Category.VISUAL, 0, 255, 0,
 								() -> c.targetEspSettings.scanSecondColor & 255,
 								v -> c.targetEspSettings.scanSecondColor = (c.targetEspSettings.scanSecondColor & 0xFFFF00) | (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.SCAN && c.targetEspSettings.scanColorFlow))
+								.visibleWhen(() -> c.targetEspSettings.scanColorFlow))
 						.child(ModuleDef.toggle("Players", Category.VISUAL, () -> c.targetEspSettings.showPlayers, v -> c.targetEspSettings.showPlayers = v))
 						.child(ModuleDef.toggle("Mobs", Category.VISUAL, () -> c.targetEspSettings.showMobs, v -> c.targetEspSettings.showMobs = v))
 						.child(ModuleDef.slider("Max Distance", Category.VISUAL, 8, 128, 0, () -> c.targetEspSettings.maxDistance, v -> c.targetEspSettings.maxDistance = (float) v))
-						.child(ModuleDef.choice("Color Mode", Category.VISUAL,
-								() -> targetEspColorTitle(c.targetEspSettings.colorMode),
-								List.of("Health", "Static", "Distance", "Rainbow", "Preset"),
-								v -> c.targetEspSettings.colorMode = v.toUpperCase(java.util.Locale.ROOT)))
-						.child(ModuleDef.choice("Color Preset", Category.VISUAL,
-								() -> targetEspColorPresetTitle(c.targetEspSettings.colorPreset),
-								List.of("Cyan", "Pink", "Purple", "Green", "Orange", "Red", "Blue", "Yellow"),
-								v -> c.targetEspSettings.colorPreset = v.toUpperCase(java.util.Locale.ROOT))
-								.visibleWhen(() -> "PRESET".equalsIgnoreCase(c.targetEspSettings.colorMode)))
-						.child(ModuleDef.slider("Ghost Particles", Category.VISUAL, 12, 96, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
-		.child(ModuleDef.slider("Ghost Orbit Radius", Category.VISUAL, 0.5, 2.5, 2, () -> c.targetEspSettings.ghostOrbitRadius, v -> c.targetEspSettings.ghostOrbitRadius = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
-						.child(ModuleDef.slider("Ghost Trail Length", Category.VISUAL, 4, 28, 0, () -> c.targetEspSettings.ghostLength, v -> c.targetEspSettings.ghostLength = (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
-						.child(ModuleDef.slider("Ghost Layers", Category.VISUAL, 1, 3, 0, () -> c.targetEspSettings.ghostLayers, v -> c.targetEspSettings.ghostLayers = (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
-						.child(ModuleDef.slider("Orbit Radius", Category.VISUAL, 0.25, 1.5, 2, () -> c.targetEspSettings.ghostRadius, v -> c.targetEspSettings.ghostRadius = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
-						.child(ModuleDef.slider("Particle Size", Category.VISUAL, 0.05, 0.4, 2, () -> c.targetEspSettings.ghostSize, v -> c.targetEspSettings.ghostSize = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
-						.child(ModuleDef.slider("Ghost Speed", Category.VISUAL, 0.25, 4.0, 2, () -> c.targetEspSettings.ghostSpeed, v -> c.targetEspSettings.ghostSpeed = (float) v)
-								.visibleWhen(() -> {
-									var mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode);
-									return mode == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS
-											|| mode == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2;
-								}))
-						.child(ModuleDef.slider("Wave Height", Category.VISUAL, 0.0, 1.0, 2, () -> c.targetEspSettings.ghostAmplitude, v -> c.targetEspSettings.ghostAmplitude = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
-						.child(ModuleDef.slider("Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
-						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 4.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
-						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 4.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
-						.child(ModuleDef.toggle("Glow", Category.VISUAL, () -> c.targetEspSettings.auraGlow, v -> c.targetEspSettings.auraGlow = v))
-						.child(ModuleDef.slider("Color R", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 16) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0x00FFFF) | ((int) v << 16)))
-						.child(ModuleDef.slider("Color G", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 8) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFF00FF) | ((int) v << 8)))
-						.child(ModuleDef.slider("Color B", Category.VISUAL, 0, 255, 0, () -> c.targetEspSettings.color & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFFFF00) | (int) v))
-						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0)))
-						.child(ModuleDef.slider("Ring Radius", Category.VISUAL, 0.25, 1.25, 2, () -> c.targetEspSettings.ringRadius, v -> c.targetEspSettings.ringRadius = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.KRUG)),
+						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0))),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
 				com.pvpvisuals.render.radial.RadialMenuModule.def(c),
