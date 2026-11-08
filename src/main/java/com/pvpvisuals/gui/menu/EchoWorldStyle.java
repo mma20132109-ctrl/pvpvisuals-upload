@@ -17,6 +17,7 @@ import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.ProgressScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
@@ -75,6 +76,59 @@ public final class EchoWorldStyle {
 		return isStyled(Minecraft.getInstance().screen);
 	}
 
+	/** Short section name used by the shared Zenith-style chrome on every menu sub-screen. */
+	private static String sectionLabel(Object screen) {
+		if (screen instanceof EchoAccountManagerScreen) return "ACCOUNTS";
+		if (screen instanceof SelectWorldScreen) return "SINGLEPLAYER";
+		if (screen instanceof JoinMultiplayerScreen) return "MULTIPLAYER";
+		if (screen instanceof CreateWorldScreen) return "CREATE WORLD";
+		if (screen instanceof EditWorldScreen) return "EDIT WORLD";
+		if (screen instanceof OptionsScreen || screen instanceof OptionsSubScreen) return "SETTINGS";
+		if (screen instanceof LanguageSelectScreen) return "LANGUAGE";
+		if (screen instanceof PackSelectionScreen) return "RESOURCE PACKS";
+		if (screen instanceof GenericMessageScreen || screen instanceof ProgressScreen
+				|| screen instanceof LevelLoadingScreen) return "PLEASE WAIT";
+		return "MENU";
+	}
+
+	/**
+	 * Shared top chrome for all routes opened from Echo's main dock. It is deliberately
+	 * drawn without a blur pass: sub-screens can be opened in a frame in which the main
+	 * menu has already used Minecraft's one-per-frame blur pipeline.
+	 */
+	public static void renderChrome(GuiGraphics g, Object screen) {
+		if (!isStyled(screen)) return;
+		float previous = Gfx.alpha;
+		try {
+			EchoTheme.sync();
+			Gfx.alpha = 1f;
+			float w = g.guiWidth();
+			float leftX = 12f;
+			float topY = 10f;
+			Gfx.rrect(g, leftX, topY, 116f, 26f, 8f,
+					0xC91B202B, 0xB80C111A, 0x55FFFFFF, 0.8f);
+			Gfx.circle(g, leftX + 13f, topY + 13f, 3.6f, EchoTheme.accent());
+			Gfx.text(g, Minecraft.getInstance().font, "PVP VISUALS",
+					Math.round(leftX + 23f), Math.round(topY + 9f), 0xFFE8EAF2);
+
+			String section = sectionLabel(screen);
+			float sectionW = Gfx.width(Minecraft.getInstance().font, section) + 22f;
+			float sectionX = Math.max(leftX + 124f, w - sectionW - 12f);
+			Gfx.rrect(g, sectionX, topY, sectionW, 26f, 8f,
+					0xB91A1E29, 0xA90C1019, 0x44FFFFFF, 0.7f);
+			Gfx.rrect(g, sectionX + 8f, topY + 8f, 2f, 10f, 1f,
+					EchoTheme.accent(), EchoTheme.accent2(), 0, 0f);
+			Gfx.text(g, Minecraft.getInstance().font, section,
+					Math.round(sectionX + 15f), Math.round(topY + 9f), 0xFFD5D8E3);
+
+			// A faint separator gives every submenu the same visual frame.
+			Gfx.rrect(g, 12f, topY + 32f, Math.max(1f, w - 24f), 1f, 0.5f,
+					0x28FFFFFF, 0x00FFFFFF, 0, 0f);
+		} finally {
+			Gfx.alpha = previous;
+		}
+	}
+
 	public static void background(GuiGraphics g) {
 		float prev = Gfx.alpha;
 		try {
@@ -123,17 +177,17 @@ public final class EchoWorldStyle {
 			float hw = 8f;
 			float hx = x + v * (bw - hw);
 
-			int border = EchoButton.lerp(EchoTheme.shift(0xFF6D3FD0), EchoTheme.shift(0xFFC9A6FF), e);
+			int border = EchoButton.lerp(EchoTheme.accent(), EchoTheme.accent2(), e);
 			if (e > 0.02f) {
-				Gfx.glow(g, x, y, bw, bh, r, EchoTheme.shift(0xFF8B3DFF), 3f * e);
+				Gfx.glow(g, x, y, bw, bh, r, EchoTheme.accent(), 3f * e);
 			}
 			// дорожка
-			Gfx.rrect(g, x, y, bw, bh, r, EchoTheme.shift(0xFF150C28), EchoTheme.shift(0xFF0B0616), border, 1f);
+			Gfx.rrect(g, x, y, bw, bh, r, 0xFF111522, 0xFF0A0E17, border, 1f);
 			// заливка до центра ручки
 			float fw = Math.max(0f, hx + hw / 2f - x - 2f);
 			if (fw > 2f) {
-				Gfx.rrect(g, x + 1f, y + 1f, fw, bh - 2f, Math.max(1f, r - 1f), EchoTheme.shift(0xFF7A35F0),
-						EchoTheme.shift(0xFF4C1FA8), 0x00000000, 0f);
+				Gfx.rrect(g, x + 1f, y + 1f, fw, bh - 2f, Math.max(1f, r - 1f), EchoTheme.accent(),
+						EchoTheme.accent2(), 0x00000000, 0f);
 			}
 			// ручка
 			int hTop = w.active ? EchoButton.lerp(0xFFD9C2FF, 0xFFFFFFFF, e) : 0xFF6F6488;
@@ -166,7 +220,7 @@ public final class EchoWorldStyle {
 				Gfx.glow(g, x, y, bw, bh, r, EchoTheme.shift(0xFF8B3DFF), 3f);
 			}
 			int border = focus ? EchoTheme.shift(0xFFC9A6FF) : EchoTheme.shift(0xFF4A2C8F);
-			Gfx.rrect(g, x, y, bw, bh, r, EchoTheme.shift(0xFF0E0820), EchoTheme.shift(0xFF080412), border, 1f);
+			Gfx.rrect(g, x, y, bw, bh, r, 0xFF111520, 0xFF0A0D15, border, 1f);
 		} finally {
 			Gfx.alpha = prev;
 		}
@@ -316,6 +370,6 @@ public final class EchoWorldStyle {
 
 	/** Цвет рамки выбранного элемента списка: фиолетовый вместо белого/серого. */
 	public static int selectionColor() {
-		return EchoTheme.shift(0xFF9B5CFF);
+		return EchoTheme.accent();
 	}
 }
