@@ -23,16 +23,18 @@ public final class TargetEspSettings {
     public float auraSize = 1.0f;
     public boolean fillBox = true;
     public float fillAlpha = 0.10f;
-    @Deprecated public int ghostCount = 12;
+    @Deprecated public int ghostCount = 60;
 
     /** Original Ghosts orbit controls. */
     public int ghostLength = 14;
     public int ghostLayers = 3;
     public float ghostFactor = 8.0f;
     public float ghostShaking = 1.8f;
-    public float ghostAmplitude = 3.0f;
+    public float ghostAmplitude = 0.55f;
     public float ghostSize = 0.20f;
     public float ghostRadius = 0.75f;
+    /** Original Ring/Krug radius. */
+    public float ringRadius = 0.50f;
     public float ghostSpeed = 2.0f;
     public boolean enableAlphaAnimation = false;
     public int alphaAnimationMs = 350;
