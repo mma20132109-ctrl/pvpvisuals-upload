@@ -34,7 +34,6 @@ import net.minecraft.util.Util;
  */
 public final class EchoWorldStyle {
 	private static final Map<AbstractWidget, float[]> STATE = new WeakHashMap<>(); // {hover, lastMs}
-	private static final Map<Object, float[]> ROW_STATE = new WeakHashMap<>();
 
 	private EchoWorldStyle() { }
 
@@ -160,40 +159,6 @@ public final class EchoWorldStyle {
 
 
 	/** Frosted card surface behind a world/server/language/resource-pack row. No blur pass is used here. */
-	public static void listEntry(GuiGraphics g, AbstractSelectionList.Entry<?> entry, int mouseX, int mouseY,
-			boolean selected) {
-		long now = Util.getMillis();
-		float[] state = ROW_STATE.computeIfAbsent(entry, key -> new float[] {0f, now});
-		float dt = Math.min(0.1f, Math.max(0f, (now - state[1]) / 1000f));
-		state[1] = now;
-		float x = entry.getX() + 2f;
-		float y = entry.getY() + 1f;
-		float width = Math.max(1f, entry.getWidth() - 4f);
-		float height = Math.max(1f, entry.getHeight() - 2f);
-		boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
-		state[0] += ((hovered ? 1f : 0f) - state[0]) * (1f - (float) Math.exp(-dt * 13f));
-		float h = Gfx.ease(state[0]);
-		int fillTop = selected ? alpha(EchoTheme.accent(), 0.24f) : alpha(0xFF252B37, 0.44f + h * 0.14f);
-		int fillBottom = selected ? alpha(EchoTheme.accent2(), 0.16f) : alpha(0xFF10151F, 0.42f + h * 0.12f);
-		int border = selected ? alpha(EchoTheme.accent(), 0.9f) : alpha(0xFFFFFFFF, 0.035f + h * 0.12f);
-		float previous = Gfx.alpha;
-		try {
-			Gfx.alpha = previous;
-			Gfx.rrect(g, x, y, width, height, 8f, fillTop, fillBottom, border, selected ? 1f : 0.65f);
-			if (selected) {
-				Gfx.glow(g, x, y + 5f, 2.2f, Math.max(8f, height - 10f), 1f, EchoTheme.accent(), 2.2f);
-				Gfx.rrect(g, x + 1.5f, y + 7f, 2f, Math.max(6f, height - 14f), 1f,
-						EchoTheme.accent(), EchoTheme.accent2(), 0, 0f);
-			} else if (h > 0.04f) {
-				Gfx.rrect(g, x + 6f, y + height - 2f, Math.max(1f, width - 12f), 1f, 0.5f,
-						alpha(EchoTheme.accent(), 0.25f * h), alpha(EchoTheme.accent2(), 0.20f * h), 0, 0f);
-			}
-		} finally {
-			Gfx.alpha = previous;
-		}
-	}
-
-	/** Custom check control that keeps Checkbox's original click/change behavior. */
 	public static void checkbox(GuiGraphics g, Checkbox widget) {
 		float previous = Gfx.alpha;
 		try {
