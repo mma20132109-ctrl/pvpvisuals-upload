@@ -3,7 +3,6 @@ package com.pvpvisuals.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.config.TargetEspSettings;
-import com.pvpvisuals.render.targetesp.TargetEspMode;
 import com.pvpvisuals.render.targetesp.TargetEspModule;
 import com.pvpvisuals.render.targetesp.TargetScanRenderState;
 import com.pvpvisuals.render.targetesp.TargetScanRenderer;
@@ -37,9 +36,7 @@ public abstract class TargetScanLivingEntityRendererMixin<
             at = @At("TAIL"))
     private void pvpvisuals$extractTargetScan(T entity, S state, float partialTick, CallbackInfo ci) {
         PvpConfig config = PvpConfig.get();
-        boolean scanTarget = config.targetEsp
-                && TargetEspMode.byName(config.targetEspSettings.mode) == TargetEspMode.SCAN
-                && TargetEspModule.isScanTarget(entity);
+        boolean scanTarget = config.targetEsp && TargetEspModule.isScanTarget(entity);
         ((TargetScanRenderState) state).pvpvisuals$setTargetScanTarget(scanTarget);
     }
 
@@ -60,7 +57,7 @@ public abstract class TargetScanLivingEntityRendererMixin<
         }
 
         PvpConfig config = PvpConfig.get();
-        if (!config.targetEsp || TargetEspMode.byName(config.targetEspSettings.mode) != TargetEspMode.SCAN) {
+        if (!config.targetEsp) {
             return;
         }
 
