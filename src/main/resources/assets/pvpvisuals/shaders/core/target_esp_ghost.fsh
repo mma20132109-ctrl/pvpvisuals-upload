@@ -6,57 +6,29 @@ in vec2 ghostUv;
 in vec4 ghostColor;
 out vec4 fragColor;
 
-const float PI = 3.14159265359;
-
 void main() {
-    // Local billboard coordinates: x is left/right, y is bottom/top.
-    vec2 p = vec2((ghostUv.x - 0.5) * 2.0, (0.5 - ghostUv.y) * 2.0);
-    float aa = max(max(fwidth(p.x), fwidth(p.y)) * 1.35, 0.0035);
+    vec3 tint = ghostColor.rgb;
+    float alpha;
 
-    // Rounded head and upper body.
-    float capDistance = length(vec2(p.x, p.y - 0.05)) - 0.47;
-    float capMask = (1.0 - smoothstep(-aa, aa, capDistance))
-            * smoothstep(0.015, 0.075, p.y);
-
-    // Soft, wavy lower edge makes the silhouette read as a little floating ghost.
-    float bottomY = -0.63 + 0.075 * cos((p.x / 0.47) * 5.0 * PI);
-    float lowerDistance = max(abs(p.x) - 0.47,
-            max(bottomY - p.y, p.y - 0.05));
-    float lowerMask = 1.0 - smoothstep(-aa, aa, lowerDistance);
-    float bodyMask = max(capMask, lowerMask);
-
-    // A wider, low-opacity copy produces a soft aura without using a circular texture.
-    float glowCapDistance = length(vec2(p.x, p.y - 0.05)) - 0.59;
-    float glowCap = (1.0 - smoothstep(-aa, aa, glowCapDistance))
-            * smoothstep(-0.035, 0.045, p.y);
-    float glowBottomY = bottomY - 0.10;
-    float glowLowerDistance = max(abs(p.x) - 0.59,
-            max(glowBottomY - p.y, p.y - 0.12));
-    float glowLower = 1.0 - smoothstep(-aa, aa, glowLowerDistance);
-    float glowMask = max(glowCap, glowLower);
-
-    if (glowMask < 0.003) {
-        discard;
+    if (ghostUv.y > 1.5) {
+        // A separate UV range marks the glowing spirit heads and drifting motes.
+        vec2 p = vec2((ghostUv.x - 0.5) * 2.0, (ghostUv.y - 2.5) * 2.0);
+        float radius = length(p);
+        float halo = exp(-radius * 4.6);
+        float core = 1.0 - smoothstep(0.08, 0.52, radius);
+        alpha = ghostColor.a * clamp(halo * 0.48 + core * 0.78, 0.0, 1.0);
+        tint = mix(tint, vec3(1.0), core * 0.78);
+    } else {
+        // The U axis runs across the ribbon; its centre is bright and its edges dissolve softly.
+        float across = abs(ghostUv.x * 2.0 - 1.0);
+        float core = 1.0 - smoothstep(0.04, 0.42, across);
+        float aura = exp(-across * 4.7);
+        alpha = ghostColor.a * clamp(aura * 0.72 + core * 0.28, 0.0, 1.0);
+        tint = mix(tint, vec3(1.0), core * 0.60);
     }
 
-    // Two tiny dark eyes distinguish the ghost silhouette from a generic particle.
-    float eyeLeft = 1.0 - smoothstep(0.035, 0.055,
-            length(p - vec2(-0.16, -0.105)));
-    float eyeRight = 1.0 - smoothstep(0.035, 0.055,
-            length(p - vec2(0.16, -0.105)));
-    float eyes = max(eyeLeft, eyeRight);
-
-    float verticalLight = 0.72 + 0.28 * smoothstep(-0.66, 0.60, p.y);
-    vec3 tint = ghostColor.rgb * verticalLight;
-    tint = mix(tint, vec3(0.12, 0.045, 0.19), eyes * 0.88);
-
-    float edgeDistance = min(abs(capDistance), abs(lowerDistance));
-    float rim = 1.0 - smoothstep(0.0, 0.075, edgeDistance);
-    tint += ghostColor.rgb * rim * 0.20;
-
-    float alpha = ghostColor.a * max(bodyMask * 0.88, glowMask * 0.30);
     alpha *= ColorModulator.a;
-    if (alpha < 0.003) {
+    if (alpha < 0.002) {
         discard;
     }
 
