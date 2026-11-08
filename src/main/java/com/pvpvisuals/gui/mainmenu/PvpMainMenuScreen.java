@@ -575,7 +575,13 @@ public final class PvpMainMenuScreen extends Screen {
         float dockItemX = dockX + 7f;
         for (int i = 0; i < 4; i++) {
             if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 46, 28)) {
-                if (i != 0 || !worldSelectPage) activateDock(i);
+                if (i == 0 && worldSelectPage) {
+                    // The reference flow returns to the main menu from its singleplayer page.
+                    worldSelectPage = false;
+                    Minecraft.getInstance().setScreen(this);
+                } else {
+                    activateDock(i);
+                }
                 return true;
             }
             dockItemX += 48f;
