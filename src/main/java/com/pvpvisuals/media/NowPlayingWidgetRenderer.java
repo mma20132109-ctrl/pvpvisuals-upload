@@ -75,7 +75,8 @@ public final class NowPlayingWidgetRenderer {
 		lastMs = now;
 		NowPlayingSettings s = PvpConfig.get().nowPlaying;
 
-		TrackInfo cur = MediaManager.available() ? MediaManager.track() : null;
+		// Prefer the last published track snapshot even if the bridge temporarily reports unavailable.
+		TrackInfo cur = MediaManager.track();
 		boolean want = s.showNowPlaying && cur != null && (MediaManager.playing() || !s.hideWhenPaused);
 
 		if (cur != null) {
