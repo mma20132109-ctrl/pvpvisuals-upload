@@ -104,14 +104,15 @@ public final class TargetEspStyleRenderer {
             float cx=(x0+x1)*0.5f, cz=(z0+z1)*0.5f;
             float size=clamp(s.auraSize,0.5f,2.0f), fade=clamp01(frame.fade);
             double time=System.nanoTime()/1_000_000_000.0*clamp(s.animationSpeed,0.1f,4.0f);
-            double ghostTime=time*20.0;
+            double ghostPhase=time*clamp(s.ghostSpeed,0.25f,4.0f);
+            double ghostTime=ghostPhase*20.0;
             Matrix4f inverseView = new Matrix4f(frame.view).invert();
             Vector3f right=inverseView.transformDirection(new Vector3f(1,0,0)).normalize();
             Vector3f up=inverseView.transformDirection(new Vector3f(0,1,0)).normalize();
 
             COLOR_DATA.clear(); TEX_DATA.clear(); colorVertices=0; texVertices=0;
             switch (TargetEspMode.byName(s.mode)) {
-                case GHOSTS -> drawGhosts(cx,cz,y0,height,width,s,frame,time,fade,size,right,up);
+                case GHOSTS -> drawGhosts(cx,cz,y0,height,width,s,frame,ghostPhase,fade,size,right,up);
                 case GHOSTS_2 -> drawGhosts2(cx,cz,y0,height,s,frame,ghostTime,fade,size,right,up);
                 case KVADRAT -> drawKvadrat(cx,cz,y0,height,s,frame,time,fade,size,right,up);
                 case KRUG -> drawKrug(cx,cz,y0,height,s,frame,time,fade,worldPerPixel);
