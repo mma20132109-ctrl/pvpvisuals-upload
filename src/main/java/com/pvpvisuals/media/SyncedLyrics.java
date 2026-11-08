@@ -227,7 +227,7 @@ public final class SyncedLyrics {
 	private static List<Line> search(String url, String artist, String title, int durationSeconds) {
 		try {
 			HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-					.header("User-Agent", "PvPVisuals (Minecraft client)")
+					.header("User-Agent", "PvPVisuals/1.0.0 (https://github.com/mma20132109-ctrl/pvpvisuals-upload)")
 					.timeout(Duration.ofSeconds(6))
 					.GET()
 					.build();
@@ -291,7 +291,7 @@ public final class SyncedLyrics {
 			return List.of();
 		}
 		List<String> textLines = new ArrayList<>();
-		for (String raw : plainLyrics.replace("\\r", "").split("\\n")) {
+		for (String raw : plainLyrics.split("\\R")) {
 			String line = raw.trim();
 			if (!line.isEmpty()) {
 				textLines.add(line);
