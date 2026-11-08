@@ -134,14 +134,14 @@ public final class GhostEspRenderer {
             float partialTick = mc.getDeltaTracker().getGameTimeDeltaPartialTick(false);
             double yaw = Math.toRadians(mc.player.getViewYRot(partialTick));
             double pitch = Math.toRadians(mc.player.getViewXRot(partialTick));
-            float cameraX = (float) (Math.sin(yaw) * Math.cos(pitch));
-            float cameraY = (float) Math.sin(pitch);
-            float cameraZ = (float) (-Math.cos(yaw) * Math.cos(pitch));
+            float cameraX = (float) (-Math.sin(yaw) * Math.cos(pitch));
+            float cameraY = (float) -Math.sin(pitch);
+            float cameraZ = (float) (Math.cos(yaw) * Math.cos(pitch));
             float cameraLeftX = (float) Math.cos(yaw);
             float cameraLeftZ = (float) Math.sin(yaw);
-            float cameraUpX = -cameraY * cameraLeftZ;
-            float cameraUpY = (float) (Math.cos(pitch));
-            float cameraUpZ = cameraY * cameraLeftX;
+            float cameraUpX = cameraY * cameraLeftZ;
+            float cameraUpY = cameraZ * cameraLeftX - cameraX * cameraLeftZ;
+            float cameraUpZ = -cameraY * cameraLeftX;
 
             int accent = TargetEspRenderer.resolveColor(settings, frame);
             int trailCount = Math.max(4, Math.min(MAX_TRAIL_GHOSTS, settings.ghostCount / 2));
@@ -271,7 +271,7 @@ public final class GhostEspRenderer {
         }
         float bodyAlpha = alpha * (inner ? 0.86f : 0.42f);
         appendBody(center, o, scale, bodyAlpha,
-                red, green, blue, cameraX, cameraY, cameraZ, 1.7f);
+                red, green, blue, -cameraX, -cameraY, -cameraZ, 1.7f);
         float tailX = center[0] - o.tx * (0.415f * scale);
         float tailY = center[1] - o.ty * (0.415f * scale);
         float tailZ = center[2] - o.tz * (0.415f * scale);
