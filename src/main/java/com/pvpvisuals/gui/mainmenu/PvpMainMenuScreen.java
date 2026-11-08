@@ -90,12 +90,11 @@ public final class PvpMainMenuScreen extends Screen {
     private float accountCarouselPosition;
     private long lastFrameNs;
 
-    // Use Minecraft's crisp vanilla font in this screen instead of the thin Inter face.
-    // A modest size boost keeps the compact Zenith layout readable without clipping labels.
+    // Keep the custom Inter typeface, but enlarge it for clearer reading.
     private static final float MENU_TEXT_BOOST = 1.25f;
 
     private static int menuWidth(net.minecraft.client.gui.Font font, String value, float size) {
-        return Math.round(font.width(Component.literal(value)) * (size / 7.4f) * MENU_TEXT_BOOST);
+        return Math.round(Gfx.widthAtSize(font, value, size) * MENU_TEXT_BOOST);
     }
 
     private static String menuTrim(net.minecraft.client.gui.Font font, String value, int maxWidth, float size) {
@@ -109,15 +108,7 @@ public final class PvpMainMenuScreen extends Screen {
 
     private static void menuText(GuiGraphics graphics, net.minecraft.client.gui.Font font, String value,
                                  float x, float y, float size, int color, boolean shadow) {
-        float scale = (size / 7.4f) * MENU_TEXT_BOOST;
-        graphics.pose().pushMatrix();
-        try {
-            graphics.pose().translate(x, y);
-            graphics.pose().scale(scale, scale);
-            graphics.drawString(font, Component.literal(value), 0, 0, color, shadow);
-        } finally {
-            graphics.pose().popMatrix();
-        }
+        Gfx.textAtSize(graphics, font, value, x, y, size * MENU_TEXT_BOOST, color, shadow);
     }
 
     public PvpMainMenuScreen() {
