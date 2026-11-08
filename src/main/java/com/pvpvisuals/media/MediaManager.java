@@ -73,4 +73,9 @@ public final class MediaManager {
 	public static int positionSeconds() {
 		return provider == null ? 0 : provider.getPositionSeconds();
 	}
+
+	/** Позиция воспроизведения с миллисекундной точностью — для синхронизации субтитров. */
+	public static long positionMillis() {
+		return provider == null ? 0L : provider.getPositionMillis();
+	}
 }
