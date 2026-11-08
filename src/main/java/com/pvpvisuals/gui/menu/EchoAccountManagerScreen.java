@@ -196,7 +196,10 @@ public final class EchoAccountManagerScreen extends Screen {
         for (int i = start; i < end; i++) {
             String account = accounts.get(i);
             boolean isPreferred = account.equalsIgnoreCase(preferred);
-            String label = (isPreferred ? "★  " : "   ") + account;
+            User currentUser = Minecraft.getInstance().getUser();
+            boolean isActive = currentUser.getAccessToken().isBlank()
+                && currentUser.getName().equalsIgnoreCase(account);
+            String label = (isActive ? "● ACTIVE  " : isPreferred ? "★ Use  " : "Use  ") + account;
             addRenderableWidget(Button.builder(Component.literal(label), b -> choosePreferred(account))
                 .bounds(left, rowY, panelWidth - 92, 22).build());
             addRenderableWidget(Button.builder(Component.literal("×"), b -> removeProfile(account))
