@@ -37,6 +37,7 @@ public final class EchoAccountManagerScreen extends Screen {
     private int pageSize = MAX_VISIBLE_PROFILES;
     private String status = "";
     private boolean statusError;
+    private int pageIndicatorY;
 
     public EchoAccountManagerScreen(Screen parent) {
         super(Component.literal("PvPVisuals Accounts"));
@@ -154,6 +155,7 @@ public final class EchoAccountManagerScreen extends Screen {
         int left = (this.width - panelWidth) / 2;
         int top = Math.min(120, Math.max(54, this.height / 5));
         int listTop = top + 42;
+        pageIndicatorY = listTop - 14;
         int footerTop = this.height - 92;
         pageSize = Math.max(1, Math.min(MAX_VISIBLE_PROFILES, (footerTop - listTop - 24) / 27));
         page = Math.max(0, Math.min(page, pageCount() - 1));
@@ -199,7 +201,7 @@ public final class EchoAccountManagerScreen extends Screen {
         } else {
             graphics.drawCenteredString(this.font, "Page " + (page + 1) + " / " + pageCount()
                 + "  •  " + accounts.size() + " / " + MAX_PROFILES + " profiles", this.width / 2,
-                Math.min(this.height - 96, this.height / 5 + 42 + pageSize * 27 + 4), 0xFF9990AA);
+                pageIndicatorY, 0xFF9990AA);
         }
 
         graphics.drawCenteredString(this.font, "Saved choice only — it does not change your Minecraft login.",
