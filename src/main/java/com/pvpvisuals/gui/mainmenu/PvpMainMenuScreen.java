@@ -1,6 +1,7 @@
 package com.pvpvisuals.gui.mainmenu;
 
 import com.pvpvisuals.PvpVisualsClient;
+import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.renderer.RenderPipelines;
@@ -24,6 +25,7 @@ import com.pvpvisuals.gui.echo.LiquidGlassRenderer;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.PlayerSkinWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
@@ -34,6 +36,9 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * Zenith-style main-menu port for PvP Visuals.
@@ -72,6 +77,7 @@ public final class PvpMainMenuScreen extends Screen {
     private static int backdropIndex;
     private static long backdropToastAt;
     private final float[] dockHover = new float[6];
+    private final Map<String, PlayerSkinWidget> skinWidgets = new HashMap<>();
     private float sidebarHover;
     private float parallaxX;
     private float parallaxY;
@@ -416,6 +422,14 @@ public final class PvpMainMenuScreen extends Screen {
         }
     }
 
+    private PlayerSkinWidget skinWidget(PvpAccountManager.Profile profile) {
+        return skinWidgets.computeIfAbsent(profile.uuid, key -> {
+            GameProfile gameProfile = new GameProfile(UUID.fromString(profile.uuid), profile.name);
+            var skinSupplier = Minecraft.getInstance().getSkinManager().createLookup(gameProfile, false);
+            return new PlayerSkinWidget(58, 70, Minecraft.getInstance().getEntityModels(), skinSupplier);
+        });
+    }
+
     private void drawAccountsPage(GuiGraphics g, int mouseX, int mouseY, float dt) {
         float w = Math.min(402f, width - 36f);
         float h = Math.min(270f, height - 24f);
@@ -457,25 +471,20 @@ public final class PvpMainMenuScreen extends Screen {
                 Gfx.glass(g, cardX, cardY, cardW, cardH, 9f,
                         active ? 0xA5384057 : 0x87232B39, 0x74101620,
                         active ? 0x668C9EFF : 0x35FFFFFF);
-                Gfx.circle(g, cardX + cardW / 2f, cardY + 31f, 19f,
+                Gfx.circle(g, cardX + cardW / 2f, cardY + 38f, 25f,
                         active ? 0x4C8C9EFF : 0x403F526E);
-                Gfx.circle(g, cardX + cardW / 2f, cardY + 25f, 8f,
-                        active ? 0xFFE2E8FF : 0xFFB8C1D5);
-                Gfx.rrect(g, cardX + cardW / 2f - 13f, cardY + 34f, 26f, 16f,
-                        8f, active ? 0xFFE2E8FF : 0xFFB8C1D5,
-                        active ? 0xFFD1D9F1 : 0xFFA5B0C8, 0, 0f);
-                String initial = profile.name.isEmpty() ? "?" : profile.name.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
-                float initialW = Gfx.widthAtSize(font, initial, 9f);
-                Gfx.textAtSize(g, font, initial, cardX + (cardW - initialW) / 2f,
-                        cardY + 22f, 9f, 0xFF263047, false);
+                PlayerSkinWidget skin = skinWidget(profile);
+                skin.setPosition(Math.round(cardX + (cardW - 58f) / 2f), Math.round(cardY + 3f));
+                skin.setAlpha(fade);
+                skin.render(g, mouseX, mouseY, Math.min(1f, dt / 50f));
                 String name = Gfx.trimAtSize(font, profile.name, Math.round(cardW - 12f), 6.5f);
                 float nameW = Gfx.widthAtSize(font, name, 6.5f);
                 Gfx.textAtSize(g, font, name, cardX + (cardW - nameW) / 2f,
-                        cardY + 61f, 6.5f, 0xFFF0F2FA, false);
-                String type = active ? "ВЫБРАН" : "OFFLINE";
+                        cardY + 76f, 6.5f, 0xFFF0F2FA, false);
+                String type = active ? "ВЫБРАН" : ("MICROSOFT".equals(profile.type) ? "MICROSOFT" : "OFFLINE");
                 float typeW = Gfx.widthAtSize(font, type, 4.8f);
                 Gfx.textAtSize(g, font, type, cardX + (cardW - typeW) / 2f,
-                        cardY + 75f, 4.8f, active ? EchoTheme.ACCENT_TEXT : 0xFF9CA5B8, false);
+                        cardY + 88f, 4.8f, active ? EchoTheme.ACCENT_TEXT : 0xFF9CA5B8, false);
                 if (index == accountCarouselIndex) {
                     Gfx.glass(g, cardX + 9f, cardY + cardH - 24f, cardW - 18f, 17f, 5f,
                             0x74475270, 0x50202A3A, 0x408C9EFF);
