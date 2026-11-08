@@ -27,12 +27,14 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.5.1
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.1'
 
       - name: Build mod
         shell: pwsh
-        run: .\gradlew.bat --no-daemon build
+        run: gradle --no-daemon build
 
       - name: Upload built mod
         if: success()
