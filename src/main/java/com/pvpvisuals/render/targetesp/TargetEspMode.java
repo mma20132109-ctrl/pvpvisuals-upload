@@ -5,7 +5,8 @@ public enum TargetEspMode {
     GHOSTS("Ghosts"),
     GHOSTS_2("Ghosts 2"),
     KVADRAT("Kvadrat"),
-    KRUG("Krug");
+    KRUG("Krug"),
+    SCAN("Scan Line");
 
     public final String title;
     TargetEspMode(String title) { this.title = title; }
@@ -16,6 +17,7 @@ public enum TargetEspMode {
             case "GHOSTS_2", "GHOSTS2", "GHOSTS 2" -> GHOSTS_2;
             case "KVADRAT", "SQUARE", "3D BOX" -> KVADRAT;
             case "KRUG", "CIRCLE", "RING" -> KRUG;
+            case "SCAN", "SCAN_LINE", "SCANNING", "SCAN LINE" -> SCAN;
             case "GHOSTS", "GHOST" -> GHOSTS;
             default -> GHOSTS;
         };
