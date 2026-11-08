@@ -605,9 +605,6 @@ public final class PvpMainMenuScreen extends Screen {
         graphics.nextStratum();
         LiquidGlassRenderer.scheduleBackgroundCapture();
         graphics.blurBeforeThisStratum();
-        Gfx.glass(graphics, width * 0.13f, 18f, width * 0.74f,
-                Math.max(120f, height - 92f), 14f,
-                0x401C202B, 0x3010141D, 0x20FFFFFF);
     }
 
     void renderWorldSelectDock(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
