@@ -83,8 +83,7 @@ public final class TargetEspRenderer {
 
         try {
             TargetEspSettings settings = PvpConfig.get().targetEspSettings;
-            // Ghosts are native Minecraft particles emitted during END_EXTRACTION.
-            // Never submit ESP geometry for this style.
+            // Ghosts use the custom textured sprite renderer; bypass line/box geometry for this style.
             TargetEspMode selectedMode = TargetEspMode.byName(settings.mode);
             if (selectedMode == TargetEspMode.GHOSTS) {
                 GhostEspRenderer.render(context);
