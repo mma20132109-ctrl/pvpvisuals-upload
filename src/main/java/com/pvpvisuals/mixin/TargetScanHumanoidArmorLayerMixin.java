@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
 import net.minecraft.client.resources.model.EquipmentClientInfo;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
@@ -61,11 +60,9 @@ public abstract class TargetScanHumanoidArmorLayerMixin<
         if (equippable == null || equippable.assetId().isEmpty()) {
             return;
         }
-        EquipmentClientInfo.LayerType layerType = state.isBaby && state.entityType != EntityTypes.ARMOR_STAND
-                ? EquipmentClientInfo.LayerType.HUMANOID_BABY
-                : (slot == EquipmentSlot.LEGS
-                        ? EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS
-                        : EquipmentClientInfo.LayerType.HUMANOID);
+        EquipmentClientInfo.LayerType layerType = slot == EquipmentSlot.LEGS
+                ? EquipmentClientInfo.LayerType.HUMANOID_LEGGINGS
+                : EquipmentClientInfo.LayerType.HUMANOID;
         List<EquipmentClientInfo.Layer> layers = ((TargetScanEquipmentLayerRendererAccessor) this.equipmentRenderer)
                 .pvpvisuals$getEquipmentAssets()
                 .get(equippable.assetId().orElseThrow())
