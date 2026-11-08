@@ -134,10 +134,10 @@ public final class MusicHudModule extends AbstractHudModule {
 	@Override
 	protected void drawContent(GuiGraphics g, boolean preview) {
 		Minecraft mc = Minecraft.getInstance();
+		// Keep the card and its text visible while the media bridge is waiting for a track.
+		// The previous early return made the card completely blank outside editor preview,
+		// even though the title fallback below was intended to display an idle state.
 		TrackInfo track = MediaManager.available() ? MediaManager.track() : null;
-		if (track == null && !preview) {
-			return;
-		}
 
 		if (track != null && !track.key.equals(shownKey)) {
 			shownKey = track.key;
@@ -163,8 +163,10 @@ public final class MusicHudModule extends AbstractHudModule {
 		HudStyle.panel(g, 0, 0, W, height, 8, alpha);
 		HudStyle.accentWash(g, 0, 0, Math.min(48, W), height, 8, alpha);
 
-		String title = track == null || track.title.isBlank() ? "Ничего не играет" : track.title;
-		String artist = track == null ? "" : track.artist;
+		String title = track == null
+				? "Ожидание воспроизведения"
+				: track.title.isBlank() ? "Неизвестный трек" : track.title;
+		String artist = track == null ? "Запусти музыку в плеере" : track.artist;
 		String source = track == null ? "" : displaySource(track.app);
 		if (musicSettings().showSource && !source.isEmpty()) {
 			artist = artist.isEmpty() ? source : artist + "  ·  " + source;
