@@ -62,8 +62,7 @@ public final class TargetEspModule {
         return entity != null
                 && entity == trackedScanTarget
                 && fade > 0.001f
-                && config.targetEsp
-                ;
+                && config.targetEsp;
     }
 
     public static float scanAnimation() {
