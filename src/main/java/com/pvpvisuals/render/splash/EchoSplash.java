@@ -154,7 +154,6 @@ public final class EchoSplash {
 		boolean cyberpunk = "CYBERPUNK".equals(scene);
 		boolean sunset = "SUNSET".equals(scene);
 		boolean theme = "THEME".equals(scene) || "GRADIENT".equals(scene);
-		boolean nebula = "SHADER".equals(scene) || "NEBULA".equals(scene) || !obsidian && !aurora && !cyberpunk && !sunset && !theme;
 
 		int top = obsidian ? 0xFF080B12 : 0xFF080A14;
 		int bottom = obsidian ? 0xFF0D111A : sunset ? 0xFF1B101A : 0xFF100D1D;
@@ -193,13 +192,13 @@ public final class EchoSplash {
 
 		if (aurora) {
 			// Three aurora ribbons move horizontally with independent wave phases.
-			for (int band = 0; band < 4; band++) {
+			for (int band = 0; band < 3; band++) {
 				float previousX = 0f;
 				float phase = band * 1.37f;
 				float previousY = h * (0.30f + band * 0.10f)
 						+ (float) Math.sin(phase + t * 0.26f) * h * 0.045f;
-				for (int step = 1; step <= 42; step++) {
-					float x = w * step / 42f;
+				for (int step = 1; step <= 30; step++) {
+					float x = w * step / 30f;
 					float nx = x / Math.max(1f, w);
 					float y = h * (0.28f + band * 0.105f)
 						+ (float) Math.sin(nx * 5.3f + phase + t * 0.26f) * h * 0.075f
