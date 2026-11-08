@@ -31,9 +31,10 @@ public final class HudManager {
 	public static final WatermarkModule WATERMARK = new WatermarkModule();
 	public static final CoordinatesHudModule COORDINATES = new CoordinatesHudModule();
 	public static final ModuleListHudModule MODULE_LIST = new ModuleListHudModule();
+	public static final MusicHudModule MUSIC = new MusicHudModule();
 	public static final com.pvpvisuals.hud.binds.HudBindsModule HUD_BINDS = new com.pvpvisuals.hud.binds.HudBindsModule();
 	public static final List<AbstractHudModule> COMPONENTS = List.of(
-			WATERMARK, COORDINATES, MODULE_LIST, TARGET, ARMOR, NOTIFICATIONS, COMBO, INVENTORY, HUD_BINDS);
+			WATERMARK, COORDINATES, MODULE_LIST, MUSIC, TARGET, ARMOR, NOTIFICATIONS, COMBO, INVENTORY, HUD_BINDS);
 
 	private static final TopBar ISLAND = new TopBar();
 

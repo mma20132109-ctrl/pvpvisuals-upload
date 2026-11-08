@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+
 import com.pvpvisuals.hud.inventory.InventoryHudConfig;
 import com.pvpvisuals.render.particle.BlockParticleConfig;
 import com.pvpvisuals.render.particle.HitParticleConfig;
@@ -48,6 +49,8 @@ public final class PvpConfig {
 	public boolean showIsland = true;
 	/** Виджет «Сейчас играет» в Island HUD. */
 	public NowPlayingSettings nowPlaying = new NowPlayingSettings();
+	/** Отдельная карточка Music HUD с синхронизированными субтитрами. */
+	public MusicHudSettings musicHud = new MusicHudSettings();
 	public ShaderSkySettings shaderSky = new ShaderSkySettings();
 	public FreelookSettings freelook = new FreelookSettings();
 	public SplashSettings splash = new SplashSettings();

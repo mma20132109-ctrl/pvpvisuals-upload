@@ -127,6 +127,11 @@ public final class ModuleRegistry {
 				ModuleDef.toggle("Module List", Category.UTILS, () -> c.moduleListHud, v -> c.moduleListHud = v)
 						.child(HudModuleUi.layout(HudManager.MODULE_LIST, Category.UTILS))
 						.child(ModuleDef.toggle("Glow", Category.UTILS, () -> c.moduleListGlow, v -> c.moduleListGlow = v)),
+				ModuleDef.toggle("Music HUD", Category.UTILS, () -> c.musicHud.enabled, v -> c.musicHud.enabled = v)
+						.child(HudModuleUi.layout(HudManager.MUSIC, Category.UTILS))
+						.child(ModuleDef.toggle("Lyrics", Category.UTILS, () -> c.musicHud.showLyrics, v -> c.musicHud.showLyrics = v))
+						.child(ModuleDef.toggle("Source", Category.UTILS, () -> c.musicHud.showSource, v -> c.musicHud.showSource = v))
+						.child(ModuleDef.toggle("Cover Art", Category.UTILS, () -> c.musicHud.showCover, v -> c.musicHud.showCover = v)),
 				InventoryHudModule.def(c),
 				com.pvpvisuals.hud.binds.HudBindsModule.def(c),
 				ModuleDef.toggle("Notifications", Category.UTILS,

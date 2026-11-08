@@ -23,7 +23,7 @@ public final class MediaManager {
 	}
 
 	private static void tick() {
-		boolean wanted = PvpConfig.get().nowPlaying.showNowPlaying;
+		boolean wanted = PvpConfig.get().nowPlaying.showNowPlaying || PvpConfig.get().musicHud.enabled;
 		if (!wanted) {
 			if (provider != null) {
 				shutdown();
@@ -55,6 +55,7 @@ public final class MediaManager {
 			provider = null;
 		}
 		CoverArtCache.clear();
+		SyncedLyrics.clear();
 	}
 
 	public static boolean available() {
