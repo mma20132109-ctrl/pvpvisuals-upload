@@ -55,8 +55,6 @@ public final class PvpMainMenuScreen extends Screen {
             "Тёмный обсидиан", "Цвета темы"
     };
     private static final String[] MAIN_LABELS = {"Одиночная", "Сетевая игра", "Аккаунты", "Моды"};
-    private static final String[] MAIN_GLYPHS = {"◈", "⌁", "♙", "▦"};
-    private static final String[] ACTION_GLYPHS = {"⚙", "⏻"};
     private static final String SOURCE_ASSET_BASE =
             "https://raw.githubusercontent.com/mma20132109-ctrl/pvpvisuals-mainmenu-source/72f5841359a6c47d4d254d1accda8c5e80da4fe2/assets/menu/";
     private static final String[] IMAGE_BACKGROUNDS = {"sadnes.png", "sky.png"};
@@ -333,13 +331,14 @@ public final class PvpMainMenuScreen extends Screen {
     private void drawUserBadge(GuiGraphics g) {
         String username = Minecraft.getInstance().getUser().getName();
         if (username == null || username.isBlank()) username = "Zenith User";
-        String value = "◉  " + username;
-        int textWidth = Gfx.widthAtSize(font, value, 7.2f);
-        float w = Math.max(72f, textWidth + 18f);
+        int textWidth = Gfx.widthAtSize(font, username, 7.2f);
+        float w = Math.max(72f, textWidth + 34f);
         float x = width - w - 16f;
         float y = 16f;
         Gfx.glass(g, x, y, w, 28f, 10f, GLASS_TOP, GLASS_BOTTOM, GLASS_BORDER);
-        Gfx.textAtSize(g, font, value, x + 9f, y + 9f, 7.2f, 0xFFE6E9F5, false);
+        Gfx.circle(g, x + 15f, y + 10f, 3f, 0xFFE1E7F7);
+        Gfx.rrect(g, x + 9.5f, y + 14f, 11f, 7f, 4f, 0xFFE1E7F7, 0xFFB8C4E2, 0, 0f);
+        Gfx.textAtSize(g, font, username, x + 26f, y + 9f, 7.2f, 0xFFE6E9F5, false);
     }
 
     private void drawSidebar(GuiGraphics g, int mouseX, int mouseY, float dt, long now) {
@@ -349,8 +348,15 @@ public final class PvpMainMenuScreen extends Screen {
         sidebarHover += ((over ? 1f : 0f) - sidebarHover) * Math.min(1f, dt / 90f);
         Gfx.glass(g, x, y, 26f, 32f, 11f, GLASS_TOP, GLASS_BOTTOM, GLASS_BORDER);
         int iconColor = lerp(0xFFC1C6D8, EchoTheme.ACCENT_TEXT, sidebarHover);
-        Gfx.textAtSize(g, font, "✦", x + 8f - sidebarHover, y + 8f - sidebarHover,
-                12f + sidebarHover * 2f, iconColor, false);
+        float sparkleSize = 5.5f + sidebarHover;
+        float sx = x + 13f;
+        float sy = y + 16f;
+        Gfx.line(g, sx, sy - sparkleSize, sx, sy + sparkleSize, 1.15f, iconColor);
+        Gfx.line(g, sx - sparkleSize, sy, sx + sparkleSize, sy, 1.15f, iconColor);
+        Gfx.line(g, sx - sparkleSize * 0.68f, sy - sparkleSize * 0.68f,
+                sx + sparkleSize * 0.68f, sy + sparkleSize * 0.68f, 0.8f, iconColor);
+        Gfx.line(g, sx - sparkleSize * 0.68f, sy + sparkleSize * 0.68f,
+                sx + sparkleSize * 0.68f, sy - sparkleSize * 0.68f, 0.8f, iconColor);
 
         long elapsed = now / 1_000_000L - backdropToastAt;
         if (backdropToastAt != 0L && elapsed >= 0L && elapsed < 2400L) {
@@ -363,6 +369,71 @@ public final class PvpMainMenuScreen extends Screen {
             Gfx.glass(g, tx, ty, w, 22f, 6f, GLASS_TOP, GLASS_BOTTOM, GLASS_BORDER);
             Gfx.textAtSize(g, font, label, tx + 9f, ty + 7f, 7f, 0xFFF0F2FA, false);
             Gfx.alpha = 1f;
+        }
+    }
+
+    private void drawDockIcon(GuiGraphics g, int index, float cx, float cy, float scale, int color) {
+        float s = 1.0f * scale;
+        switch (index) {
+            case 0 -> { // Singleplayer: small world/orb
+                Gfx.ringCircle(g, cx, cy, 5.2f * s, 1.05f * s, color);
+                Gfx.line(g, cx - 4.2f * s, cy, cx + 4.2f * s, cy, 0.85f * s, color);
+                Gfx.line(g, cx, cy - 4.2f * s, cx, cy + 4.2f * s, 0.85f * s, color);
+                Gfx.polyline(g, 0.8f * s, color,
+                        cx - 2.4f * s, cy - 4.4f * s, cx - 1.1f * s, cy - 2.0f * s,
+                        cx - 1.1f * s, cy + 2.0f * s, cx - 2.4f * s, cy + 4.4f * s);
+                Gfx.polyline(g, 0.8f * s, color,
+                        cx + 2.4f * s, cy - 4.4f * s, cx + 1.1f * s, cy - 2.0f * s,
+                        cx + 1.1f * s, cy + 2.0f * s, cx + 2.4f * s, cy + 4.4f * s);
+            }
+            case 1 -> { // Multiplayer: two heads and shoulders
+                Gfx.circle(g, cx - 2.7f * s, cy - 2.1f * s, 1.8f * s, color);
+                Gfx.circle(g, cx + 3.0f * s, cy - 1.2f * s, 1.55f * s, color);
+                Gfx.polyline(g, 1.25f * s, color,
+                        cx - 7f * s, cy + 5f * s, cx - 6f * s, cy + 1.5f * s,
+                        cx - 2.7f * s, cy + 0.4f * s, cx + 1.0f * s, cy + 2.0f * s,
+                        cx + 2.0f * s, cy + 5f * s);
+                Gfx.polyline(g, 1.1f * s, color,
+                        cx + 1.0f * s, cy + 2.3f * s, cx + 4.6f * s, cy + 1.0f * s,
+                        cx + 7.0f * s, cy + 4.7f * s);
+            }
+            case 2 -> { // Accounts: user bust
+                Gfx.circle(g, cx, cy - 2.8f * s, 2.5f * s, color);
+                Gfx.polyline(g, 1.35f * s, color,
+                        cx - 6.2f * s, cy + 5.6f * s, cx - 5.0f * s, cy + 1.8f * s,
+                        cx, cy + 0.3f * s, cx + 5.0f * s, cy + 1.8f * s,
+                        cx + 6.2f * s, cy + 5.6f * s);
+            }
+            case 3 -> { // Mods: four compact tiles
+                for (int row = 0; row < 2; row++) {
+                    for (int col = 0; col < 2; col++) {
+                        Gfx.rrect(g, cx - 5.8f * s + col * 6.2f * s,
+                                cy - 5.8f * s + row * 6.2f * s, 4.7f * s, 4.7f * s,
+                                1.0f * s, color, color, 0, 0f);
+                    }
+                }
+            }
+            case 4 -> { // Settings: eight-tooth gear
+                Gfx.ringCircle(g, cx, cy, 4.4f * s, 1.25f * s, color);
+                Gfx.ringCircle(g, cx, cy, 1.35f * s, 1.05f * s, color);
+                for (int i = 0; i < 8; i++) {
+                    double angle = Math.PI * i / 4.0;
+                    float ix = (float) Math.cos(angle);
+                    float iy = (float) Math.sin(angle);
+                    Gfx.line(g, cx + ix * 4.8f * s, cy + iy * 4.8f * s,
+                            cx + ix * 6.2f * s, cy + iy * 6.2f * s, 1.35f * s, color);
+                }
+            }
+            case 5 -> { // Exit: door and outward arrow
+                Gfx.line(g, cx - 4.7f * s, cy - 6f * s, cx - 4.7f * s, cy + 6f * s, 1.1f * s, color);
+                Gfx.line(g, cx - 4.7f * s, cy - 6f * s, cx + 1.5f * s, cy - 6f * s, 1.1f * s, color);
+                Gfx.line(g, cx + 1.5f * s, cy - 6f * s, cx + 1.5f * s, cy + 6f * s, 1.1f * s, color);
+                Gfx.line(g, cx + 1.5f * s, cy + 6f * s, cx - 4.7f * s, cy + 6f * s, 1.1f * s, color);
+                Gfx.line(g, cx - 1.3f * s, cy, cx + 6.5f * s, cy, 1.2f * s, color);
+                Gfx.line(g, cx + 3.4f * s, cy - 3.2f * s, cx + 6.5f * s, cy, 1.2f * s, color);
+                Gfx.line(g, cx + 3.4f * s, cy + 3.2f * s, cx + 6.5f * s, cy, 1.2f * s, color);
+            }
+            default -> { }
         }
     }
 
@@ -393,11 +464,8 @@ public final class PvpMainMenuScreen extends Screen {
                         alpha(active ? EchoTheme.NEON : 0x00FFFFFF, active ? 0.45f : h * 0.25f),
                         active ? 0.8f : 0f);
             }
-            String glyph = MAIN_GLYPHS[i];
-            float gs = 11f + h * 2f;
-            float gw = Gfx.widthAtSize(font, glyph, gs);
-            Gfx.textAtSize(g, font, glyph, x + (btnW - gw) / 2f, y + 2.5f - h,
-                    gs, active ? EchoTheme.ACCENT_TEXT : lerp(0xC3BFC5D8, 0xFFFFFFFF, h), false);
+            int iconColor = active ? EchoTheme.ACCENT_TEXT : lerp(0xC3BFC5D8, 0xFFFFFFFF, h);
+            drawDockIcon(g, i, x + btnW / 2f, y + 10f - h, 1f + h * 0.12f, iconColor);
             float lw = Gfx.widthAtSize(font, MAIN_LABELS[i], 6.5f);
             Gfx.textAtSize(g, font, MAIN_LABELS[i], x + (btnW - lw) / 2f, y + 18f,
                     6.5f, active ? 0xFFFFFFFF : lerp(0xB7B9C0D0, 0xFFF1F2FA, h), false);
@@ -411,13 +479,9 @@ public final class PvpMainMenuScreen extends Screen {
             boolean over = Gfx.hit(mouseX, mouseY, Math.round(x), Math.round(y), Math.round(actionW), Math.round(btnH));
             dockHover[i] += ((over ? 1f : 0f) - dockHover[i]) * Math.min(1f, dt / 70f);
             float h = dockHover[i];
-            String glyph = ACTION_GLYPHS[i - 4];
-            float gs = 12f + h * 2f;
-            float gw = Gfx.widthAtSize(font, glyph, gs);
             int base = i == 5 ? 0xFFC3BFCB : 0xFFC1C6D8;
             int hover = i == 5 ? 0xFFFF858B : 0xFFFFFFFF;
-            Gfx.textAtSize(g, font, glyph, x + (actionW - gw) / 2f, y + 7f - h,
-                    gs, lerp(base, hover, h), false);
+            drawDockIcon(g, i, x + actionW / 2f, y + 14f - h, 1f + h * 0.12f, lerp(base, hover, h));
             x += actionW + gap;
         }
     }
