@@ -119,11 +119,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
             worldList = foundList;
             worldList.setAlpha(0f);
-            try {
-                hideVanillaWorldList();
-            } catch (ReflectiveOperationException | RuntimeException exception) {
-                System.err.println("[pvpvisuals] Не удалось скрыть ванильные элементы: " + exception);
-            }
+            hideVanillaWorldList();
 
             worldEntries.clear();
             for (WorldSelectionList.Entry entry : worldList.children()) {
