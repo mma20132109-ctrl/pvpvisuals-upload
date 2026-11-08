@@ -158,6 +158,23 @@ public class EchoMainMenuScreen extends TitleScreen {
 		Gfx.alpha = lp;
 		float slide = -28f * (1f - lp);
 		EchoSplash.drawLogo(g, this.width / 2f, logoCy() + slide, logoSize(), t, 1f);
+
+		// Compact brand lockup fills the visual space between the emblem and navigation dock.
+		float brandAlpha = Gfx.ease((el - 220f) / 650f);
+		float brandY = logoCy() + logoSize() * 0.54f + 24f + slide * 0.35f;
+		Gfx.alpha = brandAlpha;
+		String brand = "PVP VISUALS";
+		float brandScale = 1.24f;
+		float brandWidth = Gfx.width(this.font, brand) * brandScale;
+		Gfx.textScaled(g, this.font, brand, this.width / 2f - brandWidth / 2f,
+				brandY, brandScale, 0xFFF2F0FA, false);
+		String tagline = "VISUAL CONTROL  /  REFINED GAMEPLAY";
+		float taglineWidth = Gfx.width(this.font, tagline);
+		Gfx.text(g, this.font, tagline, Math.round(this.width / 2f - taglineWidth / 2f),
+				Math.round(brandY + 18f), 0xFF9B9AAF);
+		float ruleWidth = 38f + 12f * (float) Math.sin(t * 0.8f);
+		Gfx.rrect(g, this.width / 2f - ruleWidth / 2f, brandY + 31f, ruleWidth, 1.4f, 1f,
+				EchoTheme.accent(), EchoTheme.accent2(), 0, 0f);
 		Gfx.alpha = 1f;
 
 		// Compact active-player card, inspired by the source menu's account header.
@@ -172,8 +189,8 @@ public class EchoMainMenuScreen extends TitleScreen {
 		Gfx.alpha = profileAlpha;
 		Gfx.glass(g, profileX, profileY, profileW, 34f, 10f,
 				0xA91B1E2B, 0x9410121C, 0x55FFFFFF);
-		Gfx.circle(g, profileX + 17f, profileY + 17f, 5f, EchoTheme.shift(0xFF9B5CFF));
-		Gfx.text(g, this.font, playerLabel, Math.round(profileX + 29f), Math.round(profileY + 6f), 0xFF9B8ABF);
+		Gfx.circle(g, profileX + 17f, profileY + 17f, 5f, EchoTheme.accent());
+		Gfx.text(g, this.font, playerLabel, Math.round(profileX + 29f), Math.round(profileY + 6f), EchoTheme.accent());
 		Gfx.text(g, this.font, playerName, Math.round(profileX + 29f), Math.round(profileY + 18f), 0xFFFFFFFF);
 		Gfx.alpha = 1f;
 
