@@ -26,7 +26,35 @@ public final class SyncedLyrics {
 			.followRedirects(HttpClient.Redirect.NORMAL)
 			.build();
 
-	public record Line(long startMs, String text) { }
+	public record Word(long startMs, long endMs, String text) { }
+
+	/** Character range of the currently sung word inside its line. */
+	public record WordTiming(int startChar, int endChar, float progress) { }
+
+	public record Line(long startMs, long endMs, String text, List<Word> words) {
+		public Line {
+			text = text == null ? "" : text;
+			words = words == null ? List.of() : List.copyOf(words);
+		}
+
+		/** Compatibility constructor for ordinary line-timed LRC. */
+		public Line(long startMs, String text) {
+			this(startMs, -1L, text, List.of());
+		}
+	}
+
+	private static final class MutableWord {
+		String text = "";
+		long startMs = -1L;
+		long endMs = -1L;
+	}
+
+	private static final class MutableLine {
+		String text = "";
+		long startMs = -1L;
+		long endMs = -1L;
+		final List<Word> words = new ArrayList<>();
+	}
 
 	private static volatile String activeKey = "";
 	private static volatile String requestedKey = "";
@@ -91,15 +119,55 @@ public final class SyncedLyrics {
 			if (line.startMs() > positionMs) {
 				break;
 			}
-			long end = i + 1 < snapshot.size()
+			long inferredEnd = i + 1 < snapshot.size()
 					? snapshot.get(i + 1).startMs()
 					: line.startMs() + 4000L;
+			long end = line.endMs() > line.startMs() ? line.endMs() : inferredEnd;
 			if (positionMs < end) {
 				return Math.max(0f, Math.min(1f,
 						(positionMs - line.startMs()) / (float) Math.max(1L, end - line.startMs())));
 			}
 		}
 		return 0f;
+	}
+
+	/**
+	 * Exact word timing from LRCLIB Lyricsfile. Returns null when the track has only ordinary
+	 * line-synced LRC, so the HUD can use its estimated line progress as a fallback.
+	 */
+	public static WordTiming wordTiming(String key, long positionMs) {
+		Line line = current(key, positionMs);
+		if (line == null || line.words().isEmpty()) {
+			return null;
+		}
+
+		int charOffset = 0;
+		Word previous = null;
+		for (int i = 0; i < line.words().size(); i++) {
+			Word word = line.words().get(i);
+			long nextStart = i + 1 < line.words().size()
+					? line.words().get(i + 1).startMs()
+					: line.endMs();
+			long end = word.endMs() > word.startMs() ? word.endMs()
+					: nextStart > word.startMs() ? nextStart : word.startMs() + 300L;
+			int wordEnd = charOffset + word.text().length();
+
+			if (positionMs < word.startMs()) {
+				return previous == null
+						? new WordTiming(0, 0, 0f)
+						: new WordTiming(charOffset - previous.text().length(),
+								charOffset, 1f);
+			}
+			if (positionMs < end || i == line.words().size() - 1) {
+				float p = Math.max(0f, Math.min(1f,
+						(positionMs - word.startMs()) / (float) Math.max(1L, end - word.startMs())));
+				return new WordTiming(charOffset, wordEnd, p);
+			}
+
+			charOffset = wordEnd;
+			previous = word;
+		}
+		return new WordTiming(charOffset, charOffset, 1f);
 	}
 
 	public static void clear() {
@@ -138,7 +206,7 @@ public final class SyncedLyrics {
 			if (!root.isJsonObject()) {
 				return List.of();
 			}
-			return parse(string(root.getAsJsonObject(), "syncedLyrics"));
+			return parseRecord(root.getAsJsonObject());
 		} catch (Exception ignored) {
 			return List.of();
 		}
@@ -177,7 +245,7 @@ public final class SyncedLyrics {
 								.contains(artist.toLowerCase(java.util.Locale.ROOT))) {
 					continue;
 				}
-				List<Line> parsed = parse(string(object, "syncedLyrics"));
+				List<Line> parsed = parseRecord(object);
 				if (!parsed.isEmpty()) {
 					return parsed;
 				}
@@ -186,6 +254,128 @@ public final class SyncedLyrics {
 			// Нет сети, подходящей записи или синхронизированного текста — виджет просто скроет строку.
 		}
 		return List.of();
+	}
+
+	private static List<Line> parseRecord(JsonObject object) {
+		String lyricsfile = string(object, "lyricsfile");
+		List<Line> wordSynced = parseLyricsfile(lyricsfile);
+		if (wordSynced.stream().anyMatch(line -> !line.words().isEmpty())) {
+			return wordSynced;
+		}
+		return parse(string(object, "syncedLyrics"));
+	}
+
+	/**
+	 * Reads the documented Lyricsfile YAML subset used by LRCLIB: lines, line start/end
+	 * milliseconds, and nested word text/start/end milliseconds. No YAML dependency is needed.
+	 */
+	private static List<Line> parseLyricsfile(String yaml) {
+		if (yaml == null || yaml.isBlank()) {
+			return List.of();
+		}
+
+		List<Line> result = new ArrayList<>();
+		MutableLine line = null;
+		MutableWord word = null;
+		boolean inLines = false;
+		boolean inWords = false;
+
+		for (String raw : yaml.split("\\R")) {
+			int indent = 0;
+			while (indent < raw.length() && raw.charAt(indent) == ' ') indent++;
+			String value = raw.substring(indent).trim();
+			if (value.isEmpty() || value.startsWith("#")) continue;
+
+			if (indent == 0) {
+				if (value.equals("lines:")) {
+					inLines = true;
+					continue;
+				}
+				if (inLines) break;
+			}
+
+			if (!inLines) continue;
+			if (indent == 2 && value.startsWith("- text:")) {
+				finishWord(line, word);
+				finishLine(result, line);
+				line = new MutableLine();
+				line.text = yamlScalar(value.substring("- text:".length()));
+				word = null;
+				inWords = false;
+				continue;
+			}
+
+			if (line == null) continue;
+			if (indent == 4) {
+				if (value.equals("words:")) {
+					inWords = true;
+					continue;
+				}
+				if (value.startsWith("start_ms:")) {
+					line.startMs = yamlLong(value.substring("start_ms:".length()), -1L);
+				} else if (value.startsWith("end_ms:")) {
+					line.endMs = yamlLong(value.substring("end_ms:".length()), -1L);
+				}
+			} else if (indent == 6 && inWords && value.startsWith("- text:")) {
+				finishWord(line, word);
+				word = new MutableWord();
+				word.text = yamlScalar(value.substring("- text:".length()));
+			} else if (indent == 8 && inWords && word != null) {
+				if (value.startsWith("start_ms:")) {
+					word.startMs = yamlLong(value.substring("start_ms:".length()), -1L);
+				} else if (value.startsWith("end_ms:")) {
+					word.endMs = yamlLong(value.substring("end_ms:".length()), -1L);
+				}
+			}
+		}
+
+		finishWord(line, word);
+		finishLine(result, line);
+		result.sort(Comparator.comparingLong(Line::startMs));
+		return List.copyOf(result);
+	}
+
+	private static void finishWord(MutableLine line, MutableWord word) {
+		if (line != null && word != null && word.startMs >= 0L && !word.text.isEmpty()) {
+			line.words.add(new Word(word.startMs, word.endMs, word.text));
+		}
+	}
+
+	private static void finishLine(List<Line> result, MutableLine line) {
+		if (line == null) return;
+		String text = line.text;
+		if (text.isBlank() && !line.words.isEmpty()) {
+			StringBuilder joined = new StringBuilder();
+			for (Word word : line.words) joined.append(word.text());
+			text = joined.toString();
+		}
+		if (text.isBlank()) return;
+		long start = line.startMs >= 0L ? line.startMs
+				: line.words.isEmpty() ? 0L : line.words.get(0).startMs();
+		result.add(new Line(start, line.endMs, text, line.words));
+	}
+
+	private static long yamlLong(String value, long fallback) {
+		try {
+			return Long.parseLong(value.trim());
+		} catch (NumberFormatException ignored) {
+			return fallback;
+		}
+	}
+
+	private static String yamlScalar(String value) {
+		String scalar = value == null ? "" : value.trim();
+		if (scalar.startsWith("'") && scalar.endsWith("'") && scalar.length() >= 2) {
+			return scalar.substring(1, scalar.length() - 1).replace("''", "'");
+		}
+		if (scalar.startsWith("\\\"") && scalar.endsWith("\\\"") && scalar.length() >= 2) {
+			try {
+				return JsonParser.parseString(scalar).getAsString();
+			} catch (RuntimeException ignored) {
+				return scalar.substring(1, scalar.length() - 1);
+			}
+		}
+		return scalar;
 	}
 
 	private static String string(JsonObject object, String key) {
