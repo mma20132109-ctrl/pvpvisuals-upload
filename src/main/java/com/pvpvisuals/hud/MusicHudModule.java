@@ -69,7 +69,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		if (!musicSettings().showLyrics || track == null) {
 			return LyricLayout.empty();
 		}
-		SyncedLyrics.ensure(track.key, track.artist, track.title);
+		SyncedLyrics.ensure(track.key, track.artist, track.title, track.durationSeconds);
 		if (!SyncedLyrics.has(track.key)) {
 			return LyricLayout.empty();
 		}
