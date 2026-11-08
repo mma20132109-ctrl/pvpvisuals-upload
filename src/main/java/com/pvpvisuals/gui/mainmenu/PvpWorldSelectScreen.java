@@ -66,9 +66,17 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     private void bindWorldList() {
         try {
-            Field field = SelectWorldScreen.class.getDeclaredField("list");
-            field.setAccessible(true);
-            worldList = (WorldSelectionList) field.get(this);
+            worldList = null;
+            for (Field field : SelectWorldScreen.class.getDeclaredFields()) {
+                if (WorldSelectionList.class.isAssignableFrom(field.getType())) {
+                    field.setAccessible(true);
+                    Object value = field.get(this);
+                    if (value instanceof WorldSelectionList found) {
+                        worldList = found;
+                        break;
+                    }
+                }
+            }
             if (worldList == null) return;
             worldList.setAlpha(0f);
             hideVanillaWorldList();
@@ -101,10 +109,22 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
      */
     @SuppressWarnings("unchecked")
     private void hideVanillaWorldList() throws ReflectiveOperationException {
-        Field renderablesField = Screen.class.getDeclaredField("renderables");
-        renderablesField.setAccessible(true);
-        List<Renderable> renderables = (List<Renderable>) renderablesField.get(this);
-        renderables.remove(worldList);
+        boolean removed = false;
+        for (Class<?> type = getClass(); type != null && !removed; type = type.getSuperclass()) {
+            for (Field field : type.getDeclaredFields()) {
+                if (!List.class.isAssignableFrom(field.getType())) continue;
+                field.setAccessible(true);
+                Object value = field.get(this);
+                if (value instanceof List<?> list && list.contains(worldList)) {
+                    ((List<Renderable>) list).remove(worldList);
+                    removed = true;
+                    break;
+                }
+            }
+        }
+        if (!removed) {
+            throw new IllegalStateException("Не найден renderable-список vanilla WorldSelectionList");
+        }
     }
 
     private void refreshWorldEntries() {
