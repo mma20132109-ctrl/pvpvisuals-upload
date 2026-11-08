@@ -41,6 +41,8 @@ public class EchoMainMenuScreen extends TitleScreen {
 	private EchoButton pressed;
 	private EchoButton pending;
 	private long pendingAt;
+	private long backgroundToastUntil;
+	private String backgroundToast = "";
 
 	private long startMs = -1;
 	private long lastMs;
@@ -223,6 +225,21 @@ public class EchoMainMenuScreen extends TitleScreen {
 		btnLang.render(g, this.font, pc, 0f);
 		btnVisuals.render(g, this.font, pc, 0f);
 
+		if (backgroundToastUntil > now) {
+			float remaining = (backgroundToastUntil - now) / 1000f;
+			float toastAlpha = Math.min(Gfx.ease((1.8f - remaining) / 0.18f), Gfx.ease(remaining / 0.28f));
+			float toastW = Gfx.width(this.font, backgroundToast) + 34f;
+			float toastX = (this.width - toastW) / 2f;
+			float toastY = this.height - 116f;
+			Gfx.alpha = toastAlpha;
+			Gfx.rrect(g, toastX, toastY, toastW, 25f, 8f,
+					0xD51B202B, 0xC20B101A, 0x66FFFFFF, 0.8f);
+			Gfx.circle(g, toastX + 12f, toastY + 12.5f, 3f, EchoTheme.accent());
+			Gfx.text(g, this.font, backgroundToast, Math.round(toastX + 22f),
+					Math.round(toastY + 8f), 0xFFE7E9F2);
+			Gfx.alpha = 1f;
+		}
+
 		if (cfg.menu.showVersionText) {
 			String v = FabricLoader.getInstance().getModContainer(PvpVisualsClient.MOD_ID)
 					.map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("");
@@ -235,11 +252,26 @@ public class EchoMainMenuScreen extends TitleScreen {
 
 	private void cycleBackground() {
 		PvpConfig cfg = PvpConfig.get();
+		String[] modes = {"NEBULA", "AURORA", "CYBERPUNK", "SUNSET", "OBSIDIAN", "THEME"};
 		String current = cfg.splash.splashBackground;
-		cfg.splash.splashBackground = "GRADIENT".equalsIgnoreCase(current) ? "SHADER"
-				: "SHADER".equalsIgnoreCase(current) ? "DARK" : "GRADIENT";
+		int index = -1;
+		for (int i = 0; i < modes.length; i++) {
+			if (modes[i].equalsIgnoreCase(current)) {
+				index = i;
+				break;
+			}
+		}
+		// Migrate the original three presets without losing a user's selected scene.
+		if (index < 0) {
+			if ("SHADER".equalsIgnoreCase(current)) index = 0;
+			else if ("DARK".equalsIgnoreCase(current)) index = 4;
+			else if ("GRADIENT".equalsIgnoreCase(current)) index = 5;
+		}
+		cfg.splash.splashBackground = modes[(index + 1) % modes.length];
 		cfg.markDirtyQuiet();
 		cfg.save();
+		backgroundToast = "BACKGROUND  /  " + cfg.splash.splashBackground;
+		backgroundToastUntil = Util.getMillis() + 1800L;
 	}
 
 	private void update(EchoButton b, int mx, int my, float dt, float appear) {
