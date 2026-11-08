@@ -8,7 +8,6 @@
     "CloudRendererMixin",
     "FreelookCameraMixin",
     "FreelookMouseMixin",
-    "LoadingOverlayMixin",
     "ScreenDiagMixin",
     "ItemInHandRendererMixin",
     "GameRendererBobMixin",

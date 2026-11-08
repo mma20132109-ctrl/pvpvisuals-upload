@@ -131,15 +131,6 @@ public final class ModuleRegistry {
 								() -> c.binds.durationMs, v -> c.binds.durationMs = (int) v)),
 
 				themeGroup(c),
-				ModuleDef.group(Category.CLIENT, () -> "Loading Screen")
-						.child(ModuleDef.toggle("Custom Splash", Category.CLIENT,
-								() -> c.splash.customSplashScreen, v -> c.splash.customSplashScreen = v))
-						.child(ModuleDef.toggle("Splash Particles", Category.CLIENT,
-								() -> c.splash.showSplashParticles, v -> c.splash.showSplashParticles = v))
-						.child(ModuleDef.choice("Background", Category.CLIENT,
-								() -> splashBackgroundTitle(c.splash.splashBackground),
-								List.of("Gradient", "Animated", "Dark"),
-								v -> c.splash.splashBackground = "Gradient".equals(v) ? "GRADIENT" : "Animated".equals(v) ? "SHADER" : "DARK")),
 				CapeModule.def(c),
 				ModuleDef.group(Category.CLIENT, () -> "Logo")
 						.child(ModuleDef.toggle("Watermark Logo", Category.CLIENT,
@@ -201,14 +192,6 @@ public final class ModuleRegistry {
 			case "PRESET" -> "Preset";
 			default -> "Health";
 		};
-	}
-
-	private static String splashBackgroundTitle(String v) {
-		return "DARK".equalsIgnoreCase(v) ? "Dark" : "SHADER".equalsIgnoreCase(v) ? "Animated" : "Gradient";
-	}
-
-	private static String nextSplashBackground(String v) {
-		return "GRADIENT".equalsIgnoreCase(v) ? "SHADER" : "SHADER".equalsIgnoreCase(v) ? "DARK" : "GRADIENT";
 	}
 
 	/** Выбор цветовой темы GUI и HUD: раскрывающийся список, клик по теме применяет её сразу. */

@@ -8,7 +8,6 @@
 		"CloudRendererMixin",
 		"FreelookCameraMixin",
 		"FreelookMouseMixin",
-		"LoadingOverlayMixin",
 		"MinecraftScreenMixin",
 		"ScreenBackgroundMixin",
 		"AbstractButtonMixin",

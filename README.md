@@ -172,18 +172,6 @@ Menu: Client -> Theme (dropdown): Purple (default), Blue, Cyan, Green, Red, Oran
 panels, Island and HUD editor recolor at once. Implemented as hue rotation of the base palette (`gui/echo/EchoTheme.java`,
 `EchoPalette.java`); config: `gui.palette`. Colors hard-coded elsewhere can use `EchoTheme.shift(argb)`.
 
-## Loading Screen
-
-Custom Echo Visual loading screen instead of the Mojang one (Client -> Loading Screen): code-drawn logo, no image files (fade-in + scale 800 ms, soft pulse), smooth purple progress bar with glow, status text, optional spark particles, 500 ms fade-out. Background: Gradient / Animated / Dark. Disable "Custom Splash" to get the vanilla screen back. If drawing ever fails, it switches itself off and logs an error to `pvpvisuals/splash`.
-
-## Main Menu
-
-Custom Echo Visual title screen (Client -> Main Menu): code-drawn logo, animated Singleplayer / Multiplayer / Settings buttons, exit and language icons, optional particles and version text. It opens the vanilla world list, server list and options screens. Turn off "Custom Menu" to get the vanilla menu back; if the custom menu ever throws, it disables itself and logs to `pvpvisuals/menu`.
-
-### World screens style
-
-Client -> Main Menu -> World Screens Style: the world list, the Create/Edit World screens , the world generation/loading screen and the saving/preparing screens get the Echo Visual look (gradient background with particles, dark buttons with purple outline, purple selection frame). Vanilla widgets are restyled by mixins (`ScreenBackgroundMixin`, `AbstractButtonMixin`, `AbstractSelectionListMixin`); text fields, checkboxes and tabs keep the vanilla look for now.
-
 ## Block Overlay
 
 Visual -> Block Overlay (off by default): shader highlight of the block under the crosshair instead of the vanilla black outline. Styles: Pulse, Grid, Scanline, Glow, Solid and the space styles Void, Nebula, Starfield, Galaxy (second color, star density, render quality); color/alpha, animation speed, line thickness, Through Walls, Outline Only. Own `RenderPipeline` + GLSL (`assets/pvpvisuals/shaders/core/block_overlay*.vsh/.fsh`); if the shader fails it falls back to a plain fill and logs to `pvpvisuals/blockoverlay`.

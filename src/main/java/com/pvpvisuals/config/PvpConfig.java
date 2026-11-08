@@ -53,7 +53,6 @@ public final class PvpConfig {
 	public MusicHudSettings musicHud = new MusicHudSettings();
 	public ShaderSkySettings shaderSky = new ShaderSkySettings();
 	public FreelookSettings freelook = new FreelookSettings();
-	public SplashSettings splash = new SplashSettings();
 	public BlockOverlaySettings blockOverlay = new BlockOverlaySettings();
 	public HitBoxSettings hitBox = new HitBoxSettings();
 	/** Независимые настройки Target ESP (не затрагивают обычный HitBox). */

@@ -79,7 +79,6 @@ public final class ConfigMigrator {
 		c.shaderSky.colorHue = Mth.clamp(c.shaderSky.colorHue, 0, 360);
 		c.shaderSky.colorSaturation = Mth.clamp(c.shaderSky.colorSaturation, 0.0f, 2.0f);
 		if (c.gui != null) c.gui.palette = com.pvpvisuals.gui.echo.EchoPalette.byName(c.gui.palette).name();
-		if (c.splash == null) c.splash = new SplashSettings();
 		if (c.handShader == null) c.handShader = new HandShaderSettings();
 		c.handShader.shaderType = com.pvpvisuals.render.handshader.HandShaderStyle.byName(c.handShader.shaderType).name();
 		c.handShader.colorPrimary &= 0xFFFFFF;
@@ -134,8 +133,6 @@ public final class ConfigMigrator {
 		c.blockOverlay.starDensity = Mth.clamp(c.blockOverlay.starDensity, 0.2f, 3.0f);
 		String rq = c.blockOverlay.renderQuality == null ? "" : c.blockOverlay.renderQuality.trim().toUpperCase(java.util.Locale.ROOT);
 		c.blockOverlay.renderQuality = rq.equals("LOW") || rq.equals("HIGH") ? rq : "MEDIUM";
-		String bg = c.splash.splashBackground == null ? "" : c.splash.splashBackground.trim().toUpperCase(java.util.Locale.ROOT);
-		c.splash.splashBackground = bg.equals("DARK") || bg.equals("SHADER") ? bg : "GRADIENT";
 		if (c.freelook == null) c.freelook = new FreelookSettings();
 		c.freelook.activationMode = "TOGGLE".equalsIgnoreCase(c.freelook.activationMode) ? "TOGGLE" : "HOLD";
 		c.freelook.sensitivity = Mth.clamp(c.freelook.sensitivity, 0.2f, 3.0f);
