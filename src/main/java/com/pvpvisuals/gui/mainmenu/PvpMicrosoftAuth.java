@@ -152,7 +152,15 @@ public final class PvpMicrosoftAuth {
         String form = "grant_type=" + encode("urn:ietf:params:oauth:grant-type:device_code")
                 + "&client_id=" + encode(CLIENT_ID)
                 + "&device_code=" + encode(deviceCode);
-        return sendForm(TOKEN_URL, form);
+        HttpRequest request = HttpRequest.newBuilder(URI.create(TOKEN_URL))
+                .timeout(TIMEOUT)
+                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header("Accept", "application/json")
+                .header("User-Agent", "PvPVisuals/1.0")
+                .POST(HttpRequest.BodyPublishers.ofString(form))
+                .build();
+        // OAuth device-code polling deliberately returns HTTP 400 for authorization_pending/slow_down.
+        return send(request, TOKEN_URL, false, true);
     }
 
     private static CompletableFuture<JsonObject> postForm(String url, String form) {
@@ -167,7 +175,7 @@ public final class PvpMicrosoftAuth {
                 .header("User-Agent", "PvPVisuals/1.0")
                 .POST(HttpRequest.BodyPublishers.ofString(form))
                 .build();
-        return send(request, url, false);
+        return send(request, url, false, false);
     }
 
     private static JsonObject sendJson(String url, JsonObject body) {
@@ -188,14 +196,14 @@ public final class PvpMicrosoftAuth {
                 .header("Accept", "application/json")
                 .header("User-Agent", "PvPVisuals/1.0")
                 .GET().build();
-        return send(request, url, true);
+        return send(request, url, true, false);
     }
 
-    private static JsonObject send(HttpRequest request, String endpoint, boolean profileRequest) {
+    private static JsonObject send(HttpRequest request, String endpoint, boolean profileRequest, boolean allowOAuthErrorBody) {
         try {
             HttpResponse<String> response = HTTP.send(request, HttpResponse.BodyHandlers.ofString());
             JsonObject body = JsonParser.parseString(response.body()).getAsJsonObject();
-            if (response.statusCode() / 100 != 2) {
+            if (response.statusCode() / 100 != 2 && !allowOAuthErrorBody) {
                 if (profileRequest && response.statusCode() == 404) {
                     throw new IllegalStateException("Этот Microsoft-аккаунт не владеет Minecraft Java Edition");
                 }
