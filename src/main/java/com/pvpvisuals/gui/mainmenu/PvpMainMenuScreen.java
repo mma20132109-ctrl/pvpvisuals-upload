@@ -87,6 +87,7 @@ public final class PvpMainMenuScreen extends Screen {
     private boolean accountInputFocused = true;
     private String accountInput = "";
     private int accountCarouselIndex;
+    private float accountCarouselPosition;
     private long lastFrameNs;
 
     public PvpMainMenuScreen() {
@@ -548,19 +549,24 @@ public final class PvpMainMenuScreen extends Screen {
         java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
         if (profiles.isEmpty()) {
             accountCarouselIndex = 0;
+            accountCarouselPosition = 0f;
         } else {
             accountCarouselIndex = Math.max(0, Math.min(profiles.size() - 1, accountCarouselIndex));
             float centerX = x + w / 2f;
             float centerY = y + 113f;
+            float targetPosition = accountCarouselIndex;
+            float slideSpeed = 1f - (float) Math.exp(-Math.max(0f, dt) / 105f);
+            accountCarouselPosition += (targetPosition - accountCarouselPosition) * slideSpeed;
+            if (Math.abs(targetPosition - accountCarouselPosition) < 0.001f) accountCarouselPosition = targetPosition;
             java.util.List<Integer> order = new java.util.ArrayList<>();
             for (int i = 0; i < profiles.size(); i++) {
-                if (Math.abs(i - accountCarouselIndex) <= 2) order.add(i);
+                if (Math.abs(i - accountCarouselPosition) <= 2.25f) order.add(i);
             }
             order.sort((left, right) -> Float.compare(
-                    Math.abs(right - accountCarouselIndex), Math.abs(left - accountCarouselIndex)));
+                    Math.abs(right - accountCarouselPosition), Math.abs(left - accountCarouselPosition)));
             for (int index : order) {
                 PvpAccountManager.Profile profile = profiles.get(index);
-                float distance = index - accountCarouselIndex;
+                float distance = index - accountCarouselPosition;
                 float abs = Math.abs(distance);
                 float scale = Math.max(0.68f, 1f - 0.16f * abs);
                 float cardW = 94f * scale;
@@ -656,7 +662,7 @@ public final class PvpMainMenuScreen extends Screen {
         switch (index) {
             case 0 -> minecraft.setScreen(new SelectWorldScreen(this));
             case 1 -> minecraft.setScreen(new JoinMultiplayerScreen(this));
-            case 2 -> { accountsPage = !accountsPage; accountInputFocused = accountsPage; accountInput = ""; accountCarouselIndex = PvpAccountManager.activeIndex(); }
+            case 2 -> { accountsPage = !accountsPage; accountInputFocused = accountsPage; accountInput = ""; accountCarouselIndex = PvpAccountManager.activeIndex(); accountCarouselPosition = accountCarouselIndex; }
             case 3 -> minecraft.setScreen(new EchoScreen());
             case 4 -> minecraft.setScreen(new OptionsScreen(this, minecraft.options));
             case 5 -> minecraft.stop();
@@ -712,7 +718,7 @@ public final class PvpMainMenuScreen extends Screen {
                 float centerX = x + w / 2f;
                 float centerY = y + 113f;
                 for (int i = 0; i < profiles.size(); i++) {
-                    float distance = i - accountCarouselIndex;
+                    float distance = i - accountCarouselPosition;
                     float abs = Math.abs(distance);
                     if (abs > 2f) continue;
                     float scale = Math.max(0.68f, 1f - 0.16f * abs);
