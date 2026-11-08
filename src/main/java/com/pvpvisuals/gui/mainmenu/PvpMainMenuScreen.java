@@ -122,6 +122,12 @@ public final class PvpMainMenuScreen extends Screen {
         super(Component.literal("Zenith"));
     }
 
+    /** The custom menu backdrop is submitted at the start of render(). */
+    @Override
+    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        // Avoid Screen's panorama/menu background and its optional vanilla blur barrier.
+    }
+
     /** Replaces only the vanilla title screen; all other Minecraft screens remain untouched. */
     public static void register() {
         PvpAccountManager.load();
