@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
 import net.minecraft.client.input.KeyEvent;
@@ -13,6 +14,8 @@ import net.minecraft.world.level.storage.LevelSummary;
 import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -104,27 +107,34 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     }
 
     /**
-     * Remove only the vanilla list from Screen's render pass. Keep it in the
-     * event children so vanilla selection and action-button state still work.
+     * Remove vanilla world-list and search controls from the render pass.
+     * Keep the list in the event hierarchy for vanilla world operations.
      */
     @SuppressWarnings("unchecked")
     private void hideVanillaWorldList() throws ReflectiveOperationException {
-        boolean removed = false;
-        for (Class<?> type = getClass(); type != null && !removed; type = type.getSuperclass()) {
+        List<Renderable> renderables = null;
+        for (Class<?> type = getClass(); type != null && renderables == null; type = type.getSuperclass()) {
             for (Field field : type.getDeclaredFields()) {
                 if (!List.class.isAssignableFrom(field.getType())) continue;
+                Type generic = field.getGenericType();
+                if (!(generic instanceof ParameterizedType parameterized)) continue;
+                Type[] arguments = parameterized.getActualTypeArguments();
+                if (arguments.length != 1 || arguments[0] != Renderable.class) continue;
                 field.setAccessible(true);
                 Object value = field.get(this);
-                if (value instanceof List<?> list && list.contains(worldList)) {
-                    ((List<Renderable>) list).remove(worldList);
-                    removed = true;
+                if (value instanceof List<?> list) {
+                    renderables = (List<Renderable>) list;
                     break;
                 }
             }
         }
-        if (!removed) {
-            throw new IllegalStateException("Не найден renderable-список vanilla WorldSelectionList");
+        if (renderables == null) {
+            throw new IllegalStateException("Не найден список отрисовки Screen");
         }
+        renderables.removeIf(renderable -> renderable == worldList
+                || renderable instanceof EditBox
+                || renderable.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("search"));
+        if (worldList != null) worldList.setAlpha(0f);
     }
 
     private void refreshWorldEntries() {
