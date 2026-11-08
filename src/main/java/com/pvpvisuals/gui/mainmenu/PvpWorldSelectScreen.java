@@ -66,7 +66,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     private void bindWorldList() {
         try {
-            Field field = SelectWorldScreen.class.getDeclaredField("levelList");
+            Field field = SelectWorldScreen.class.getDeclaredField("list");
             field.setAccessible(true);
             worldList = (WorldSelectionList) field.get(this);
             if (worldList == null) return;
