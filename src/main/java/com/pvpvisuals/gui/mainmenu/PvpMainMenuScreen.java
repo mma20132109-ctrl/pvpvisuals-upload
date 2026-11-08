@@ -35,10 +35,12 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.PlayerSkin;
 import org.lwjgl.glfw.GLFW;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * Zenith-style main-menu port for PvP Visuals.
@@ -76,6 +78,8 @@ public final class PvpMainMenuScreen extends Screen {
     private static long backdropToastAt;
     private final float[] dockHover = new float[6];
     private final Map<String, PlayerSkinWidget> skinWidgets = new HashMap<>();
+    private final Map<String, Supplier<PlayerSkin>> skinSuppliers = new HashMap<>();
+    private final java.util.Set<String> skinLookupsPending = new java.util.HashSet<>();
     private float sidebarHover;
     private float parallaxX;
     private float parallaxY;
@@ -488,10 +492,47 @@ public final class PvpMainMenuScreen extends Screen {
 
     private PlayerSkinWidget skinWidget(PvpAccountManager.Profile profile) {
         return skinWidgets.computeIfAbsent(profile.uuid, key -> {
+            Minecraft minecraft = Minecraft.getInstance();
             GameProfile gameProfile = new GameProfile(UUID.fromString(profile.uuid), profile.name);
-            var skinSupplier = Minecraft.getInstance().getSkinManager().createLookup(gameProfile, false);
-            return new PlayerSkinWidget(58, 70, Minecraft.getInstance().getEntityModels(), skinSupplier);
+            Supplier<PlayerSkin> initialSkin = minecraft.getSkinManager().createLookup(gameProfile, false);
+            skinSuppliers.put(key, initialSkin);
+
+            // Offline UUIDs are client-local, so resolve the name to its Mojang profile first,
+            // then ask Minecraft's own skin manager for the official player skin.
+            if ("OFFLINE".equals(profile.type) && profile.name.matches("[A-Za-z0-9_]{1,16}")
+                    && skinLookupsPending.add(key)) {
+                ASSET_EXECUTOR.execute(() -> resolveOfflineSkin(key, profile.name));
+            }
+            Supplier<PlayerSkin> dynamicSkin = () ->
+                    skinSuppliers.getOrDefault(key, initialSkin).get();
+            return new PlayerSkinWidget(58, 70, minecraft.getEntityModels(), dynamicSkin);
         });
+    }
+
+    private void resolveOfflineSkin(String key, String playerName) {
+        try {
+            HttpRequest request = HttpRequest.newBuilder(
+                            URI.create("https://api.mojang.com/users/profiles/minecraft/" + playerName))
+                    .timeout(Duration.ofSeconds(10)).header("User-Agent", "PvPVisuals/1.0").GET().build();
+            HttpResponse<String> response = ASSET_HTTP.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() != 200 || response.body().isBlank()) return;
+            com.google.gson.JsonObject json = com.google.gson.JsonParser.parseString(response.body()).getAsJsonObject();
+            if (!json.has("id")) return;
+            String rawId = json.get("id").getAsString();
+            if (rawId.length() == 32) {
+                rawId = rawId.replaceFirst("(\\p{XDigit}{8})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}{4})(\\p{XDigit}+)",
+                        "$1-$2-$3-$4-$5");
+            }
+            UUID resolvedId = UUID.fromString(rawId);
+            Minecraft.getInstance().execute(() -> {
+                GameProfile resolvedProfile = new GameProfile(resolvedId, playerName);
+                skinSuppliers.put(key, Minecraft.getInstance().getSkinManager().createLookup(resolvedProfile, false));
+            });
+        } catch (Exception ignored) {
+            // Keep the built-in default skin if Mojang profile lookup is unavailable.
+        } finally {
+            skinLookupsPending.remove(key);
+        }
     }
 
     private void drawAccountsPage(GuiGraphics g, int mouseX, int mouseY, float dt) {
