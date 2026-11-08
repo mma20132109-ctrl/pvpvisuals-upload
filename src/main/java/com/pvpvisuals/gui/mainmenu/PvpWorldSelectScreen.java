@@ -145,16 +145,14 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     }
 
     /**
-     * Keep the vanilla list in the render pass while making it invisible.
-     *
-     * IMPORTANT: WorldSelectionList polls its asynchronous LevelSummary future
-     * from renderWidget(). Removing it from Screen.renderables prevents that
-     * polling forever, so the custom carousel only ever sees an empty list.
+     * Hide the vanilla list from Screen's normal render and input passes.
+     * Its renderWidget method is invoked separately under an empty scissor
+     * because that method also polls the asynchronous LevelSummary future.
      */
     private void hideVanillaWorldList() {
-        // Do not remove WorldSelectionList from renderables and do not set it
-        // invisible: it must continue rendering internally to finish loading.
         worldList.setAlpha(0f);
+        worldList.visible = false;
+        worldList.active = false;
 
         // Search is not responsible for loading. It can be fully disabled.
         for (var child : children()) {
@@ -166,6 +164,22 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 widget.visible = false;
                 widget.setAlpha(0f);
             }
+        }
+    }
+
+    /**
+     * Continue polling vanilla world loading without drawing its rows.
+     * Calling renderWidget directly bypasses AbstractWidget's visible check;
+     * the empty scissor clips every pixel produced by the vanilla list.
+     */
+    private void renderWorldListForLoading(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        if (worldList == null) return;
+
+        graphics.enableScissor(0, 0, 0, 0);
+        try {
+            worldList.renderWidget(graphics, mouseX, mouseY, partialTick);
+        } finally {
+            graphics.disableScissor();
         }
     }
 
@@ -201,6 +215,8 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        if (worldList == null) bindWorldList();
+        renderWorldListForLoading(graphics, mouseX, mouseY, partialTick);
         refreshWorldEntries();
         super.render(graphics, mouseX, mouseY, partialTick);
         renderWorldCarousel(graphics, mouseX, mouseY, partialTick);
