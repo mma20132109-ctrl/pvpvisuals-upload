@@ -76,18 +76,36 @@ public final class LiquidGlassRenderer {
 
     public static void surface(GuiGraphics graphics, float x, float y, float width, float height, float radius,
             int topTint, int bottomTint, int border, float opacity) {
+        if (width <= 0f || height <= 0f) return;
         float alpha = Math.max(0f, Math.min(1f, opacity));
-        blurRect(graphics, x, y, width, height, radius,
+        float safeRadius = Math.max(1f, Math.min(radius, Math.min(width, height) * 0.5f));
+
+        // First refract and diffuse the live scene. The shader also adds the
+        // Fresnel shadow and specular reflection at the curved glass boundary.
+        blurRect(graphics, x, y, width, height, safeRadius,
                 withAlpha(topTint, alpha), withAlpha(bottomTint, alpha));
-        roundRect(graphics, x + 0.8f, y + 0.8f, width - 1.6f, Math.min(height - 1.6f, 18f),
-                Math.max(1f, radius - 0.8f),
-                withAlpha(0x26FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+
+        // iOS 27's updated material has a darker edge for depth separation,
+        // with a brighter specular rim sitting just inside it.
+        roundRect(graphics, x + 0.35f, y + 0.35f, width - 0.7f, height - 0.7f,
+                Math.max(1f, safeRadius - 0.35f), 0, 0, withAlpha(0x50000000, alpha), 1.05f);
         if (border != 0) {
-            roundRect(graphics, x + 0.5f, y + 0.5f, width - 1f, height - 1f,
-                    Math.max(1f, radius - 0.5f), 0, 0, withAlpha(border, alpha), 0.8f);
-            roundRect(graphics, x + 1.5f, y + 1.5f, width - 3f, height - 3f,
-                    Math.max(1f, radius - 1.5f), 0, 0, withAlpha(0x26000000, alpha), 0.7f);
+            roundRect(graphics, x + 0.65f, y + 0.65f, width - 1.3f, height - 1.3f,
+                    Math.max(1f, safeRadius - 0.65f), 0, 0, withAlpha(border, alpha), 0.75f);
         }
+        roundRect(graphics, x + 1.65f, y + 1.65f, width - 3.3f, height - 3.3f,
+                Math.max(1f, safeRadius - 1.65f), 0, 0, withAlpha(0x2A000000, alpha), 0.65f);
+
+        // Broad upper reflection and a narrow white glint make the surface
+        // read as curved glass instead of a flat translucent rectangle.
+        float sheenHeight = Math.min(25f, Math.max(5f, height * 0.30f));
+        roundRect(graphics, x + 1.2f, y + 1.2f, width - 2.4f, sheenHeight,
+                Math.max(1f, safeRadius - 1.2f),
+                withAlpha(0x2CFFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+        float glintInset = Math.min(safeRadius * 1.1f, width * 0.22f);
+        float glintWidth = Math.max(1f, width - glintInset * 2f);
+        roundRect(graphics, x + glintInset, y + 1.25f, glintWidth, 1.05f, 0.6f,
+                withAlpha(0x52FFFFFF, alpha), withAlpha(0x08FFFFFF, alpha), 0, 0f);
     }
 
     /** Submits a locally blurred, rounded glass panel. */
