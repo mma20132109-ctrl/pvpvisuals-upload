@@ -69,7 +69,7 @@ public final class ModuleRegistry {
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
 						.child(ModuleDef.slider("Alpha Period (ms)", Category.VISUAL, 80, 3000, 0, () -> c.targetEspSettings.alphaAnimationMs, v -> c.targetEspSettings.alphaAnimationMs = (int) v)
 								.visibleWhen(() -> c.targetEspSettings.enableAlphaAnimation && com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
-						.child(ModuleDef.slider("Max Particle Alpha", Category.VISUAL, 32, 255, 0, () -> c.targetEspSettings.maxAlpha, v -> c.targetEspSettings.maxAlpha = (int) v)
+						.child(ModuleDef.slider("Max Particle Alpha", Category.VISUAL, 100, 255, 0, () -> c.targetEspSettings.maxAlpha, v -> c.targetEspSettings.maxAlpha = (int) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
 						.child(ModuleDef.slider("Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
 						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 4.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))

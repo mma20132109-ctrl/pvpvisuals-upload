@@ -102,13 +102,14 @@ public final class TargetEspStyleRenderer {
             float cx=(x0+x1)*0.5f, cz=(z0+z1)*0.5f;
             float size=clamp(s.auraSize,0.5f,2.0f), fade=clamp01(frame.fade);
             double time=System.nanoTime()/1_000_000_000.0*clamp(s.animationSpeed,0.1f,4.0f);
+            double ghostTime=time*20.0;
             Matrix4f inverseView = new Matrix4f(frame.view).invert();
             Vector3f right=inverseView.transformDirection(new Vector3f(1,0,0)).normalize();
             Vector3f up=inverseView.transformDirection(new Vector3f(0,1,0)).normalize();
 
             COLOR_DATA.clear(); TEX_DATA.clear(); colorVertices=0; texVertices=0;
             switch (TargetEspMode.byName(s.mode)) {
-                case GHOSTS -> drawGhosts(cx,cz,y0,height,width,depth,s,frame,time,fade,size,right,up);
+                case GHOSTS -> drawGhosts(cx,cz,y0,height,width,depth,s,frame,ghostTime,fade,size,right,up);
                 case KVADRAT -> drawKvadrat(cx,cz,y0,height,s,frame,time,fade,size,right,up);
                 case KRUG -> drawKrug(cx,cz,y0,height,width,depth,s,frame,time,fade,size,worldPerPixel);
             }
@@ -131,7 +132,17 @@ public final class TargetEspStyleRenderer {
         float rx=Math.max(radius,width*0.52f+0.10f), rz=Math.max(radius,depth*0.52f+0.10f);
         float shaking=clamp(s.ghostShaking,0.2f,8f), amplitude=clamp(s.ghostAmplitude,0.1f,8f);
         float factor=clamp(s.ghostFactor,1f,24f), speed=clamp(s.ghostSpeed,0.1f,8f);
-        int maxAlpha=clamp(s.maxAlpha,32,255);
+
+        // Original Ghosts mode pulses max alpha between 70% and 100%, then multiplies
+        // each particle alpha by its normalized position in the orbit trail.
+        float peakAlpha=clamp(s.maxAlpha,100,255);
+        if(s.enableAlphaAnimation) {
+            double periodMs=clamp(s.alphaAnimationMs,80,3000);
+            double phase=(System.currentTimeMillis()%periodMs)/periodMs;
+            float pulse=0.7f+0.3f*(float)Math.sin(phase*Math.PI*clamp(s.alphaFactor,0.25f,8f)*0.5);
+            peakAlpha=clamp(peakAlpha*pulse,100f,255f);
+        }
+
         for(int layer=0;layer<layers;layer++) {
             for(int j=0;j<=length;j++) {
                 float progress=j/(float)length;
@@ -141,15 +152,8 @@ public final class TargetEspStyleRenderer {
                 float x=cx+(float)Math.cos(angle)*rx, z=cz+(float)Math.sin(angle)*rz, y=y0+1.0f+bob;
                 float sizeFactor=Math.max(clamp(s.minSizeFactor,0.05f,1f),progress);
                 float sprite=clamp(s.ghostSize,0.04f,0.6f)*size*sizeFactor;
-                float alphaWave=1f;
-                if(s.enableAlphaAnimation) {
-                    double period=clamp(s.alphaAnimationMs,80,3000)/1000.0;
-                    alphaWave=0.35f+0.65f*(0.5f+0.5f*(float)Math.sin(time/period*TAU+j*0.7+layer));
-                }
-                float tail=(float)Math.pow(Math.max(0,progress),1.0/clamp(s.alphaFactor,0.25f,8f));
-                int alpha=clampByte(Math.round(maxAlpha*fade*alphaWave*(0.22f+0.78f*tail)));
-                int rgb=resolveColor(s,frame,progress+layer*0.13f);
-                sprite*=0.88f+0.12f*(float)Math.sin(time*3.0+j*0.3+layer);
+                int alpha=clampByte(Math.round(peakAlpha*progress*fade));
+                int rgb=resolveColor(s,frame,progress);
                 billboard(x,y,z,sprite,right,up,rgb,alpha);
             }
         }
