@@ -142,6 +142,21 @@ public final class EchoButton {
                 Math.round(ty + 6f), textColor);
     }
 
+    private static void drawArc(GuiGraphics g, float cx, float cy, float radius, float thickness,
+            float startDegrees, float endDegrees, int color) {
+        int segments = 12;
+        float previousX = cx + (float) Math.cos(Math.toRadians(startDegrees)) * radius;
+        float previousY = cy + (float) Math.sin(Math.toRadians(startDegrees)) * radius;
+        for (int i = 1; i <= segments; i++) {
+            float angle = startDegrees + (endDegrees - startDegrees) * i / segments;
+            float x = cx + (float) Math.cos(Math.toRadians(angle)) * radius;
+            float y = cy + (float) Math.sin(Math.toRadians(angle)) * radius;
+            Gfx.line(g, previousX, previousY, x, y, thickness, color);
+            previousX = x;
+            previousY = y;
+        }
+    }
+
     private void drawIcon(GuiGraphics g, float cx, float cy, float r, int color) {
         switch (icon) {
             case SINGLEPLAYER -> {
@@ -152,12 +167,12 @@ public final class EchoButton {
             case MULTIPLAYER -> {
                 Gfx.circle(g, cx - r * 0.38f, cy - r * 0.38f, r * 0.34f, color);
                 Gfx.circle(g, cx + r * 0.48f, cy - r * 0.20f, r * 0.28f, color);
-                Gfx.arc(g, cx - r * 0.35f, cy + r * 0.60f, r * 0.74f, 1.3f, 200f, 340f, color);
-                Gfx.arc(g, cx + r * 0.48f, cy + r * 0.62f, r * 0.52f, 1.1f, 205f, 335f, color);
+                drawArc(g, cx - r * 0.35f, cy + r * 0.06f, r * 0.74f, 1.3f, 20f, 160f, color);
+                drawArc(g, cx + r * 0.48f, cy + r * 0.10f, r * 0.52f, 1.1f, 20f, 160f, color);
             }
             case ACCOUNTS -> {
                 Gfx.ringCircle(g, cx, cy - r * 0.28f, r * 0.34f, 1.2f, color);
-                Gfx.arc(g, cx, cy + r * 0.55f, r * 0.72f, 1.4f, 205f, 335f, color);
+                drawArc(g, cx, cy + r * 0.08f, r * 0.72f, 1.4f, 20f, 160f, color);
             }
             case SETTINGS -> {
                 Gfx.ringCircle(g, cx, cy, r * 0.42f, 1.5f, color);
