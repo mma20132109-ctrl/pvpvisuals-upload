@@ -319,7 +319,10 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
         entrance = Math.min(1f, entrance + 0.045f);
         scrollOffset += (scrollTarget - scrollOffset) * 0.24f;
 
-        super.render(graphics, mouseX, mouseY, partialTick);
+        // This page owns its complete presentation. Calling SelectWorldScreen/Screen.render
+        // also paints vanilla header/footer chrome, which leaked above and below our glass UI.
+        // Render only the custom backdrop and custom world cards instead.
+        renderBackground(graphics, mouseX, mouseY, partialTick);
         renderWorldList(graphics, mouseX, mouseY);
         renderCreateButton(graphics, mouseX, mouseY);
         // This is a dedicated singleplayer page, not the main menu underneath:
@@ -478,8 +481,6 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-        if (event.button() == 0 && menu.handleDockClick(event.x(), event.y())) return true;
-
         if (event.button() == 0
                 && Gfx.hit(event.x(), event.y(), Math.round(createX), Math.round(createY), 160, 34)) {
             createWorld();
