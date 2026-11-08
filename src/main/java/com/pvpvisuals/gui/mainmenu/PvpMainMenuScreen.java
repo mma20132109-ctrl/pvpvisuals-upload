@@ -52,15 +52,19 @@ import java.util.function.Supplier;
  */
 public final class PvpMainMenuScreen extends Screen {
     private static final String[] BACKDROP_NAMES = {
-            "Sadnes пейзаж", "Небесный пейзаж", "Космическая туманность",
-            "Полярное сияние", "Киберпанк неон", "Закатный мираж",
-            "Тёмный обсидиан", "Цвета темы"
+            "Мой фон 1", "Мой фон 2", "Мой фон 3", "Мой фон 4"
     };
     private static final String[] MAIN_LABELS = {"Одиночная", "Сетевая игра", "Аккаунты", "Моды"};
     private static final String SOURCE_ASSET_BASE =
-            "https://raw.githubusercontent.com/mma20132109-ctrl/pvpvisuals-mainmenu-source/72f5841359a6c47d4d254d1accda8c5e80da4fe2/assets/menu/";
-    private static final String[] IMAGE_BACKGROUNDS = {"sadnes.png", "sky.png"};
+            "https://raw.githubusercontent.com/mma20132109-ctrl/pvpvisuals-upload/main/fon/";
+    private static final String[] IMAGE_BACKGROUNDS = {"fon1.png", "fon2.png", "fon3.png", "fon4.png"};
+    private static final String[] IMAGE_BACKGROUND_URLS = {
+            "%D1%84%D0%BE%D0%BD1.png", "%D1%84%D0%BE%D0%BD2.png",
+            "%D1%84%D0%BE%D0%BD3.png", "%D1%84%D0%BE%D0%BD4.png"
+    };
     private static final Identifier[] LOADED_BACKGROUNDS = new Identifier[IMAGE_BACKGROUNDS.length];
+    private static final int[] BACKGROUND_WIDTHS = new int[IMAGE_BACKGROUNDS.length];
+    private static final int[] BACKGROUND_HEIGHTS = new int[IMAGE_BACKGROUNDS.length];
     private static final boolean[] BACKGROUND_REQUESTED = new boolean[IMAGE_BACKGROUNDS.length];
     private static final long[] BACKGROUND_RETRY_AFTER = new long[IMAGE_BACKGROUNDS.length];
     private static final ExecutorService ASSET_EXECUTOR = Executors.newFixedThreadPool(2, task -> {
@@ -176,7 +180,7 @@ public final class PvpMainMenuScreen extends Screen {
             if (Files.isRegularFile(cache) && Files.size(cache) > 8L) {
                 bytes = Files.readAllBytes(cache);
             } else {
-                HttpRequest request = HttpRequest.newBuilder(URI.create(SOURCE_ASSET_BASE + fileName))
+                HttpRequest request = HttpRequest.newBuilder(URI.create(SOURCE_ASSET_BASE + IMAGE_BACKGROUND_URLS[index]))
                         .timeout(Duration.ofSeconds(25)).header("User-Agent", "PvPVisuals/1.0").GET().build();
                 HttpResponse<byte[]> response = ASSET_HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
                 if (response.statusCode() != 200 || response.body().length < 8 || response.body().length > 12_000_000) {
@@ -198,6 +202,8 @@ public final class PvpMainMenuScreen extends Screen {
             Minecraft.getInstance().execute(() -> {
                 try {
                     NativeImage image = NativeImage.read(new ByteArrayInputStream(imageBytes));
+                    BACKGROUND_WIDTHS[index] = image.getWidth();
+                    BACKGROUND_HEIGHTS[index] = image.getHeight();
                     DynamicTexture texture = new DynamicTexture(() -> "pvpvisuals_mainmenu_" + fileName, image);
                     texture.upload();
                     Identifier id = Identifier.fromNamespaceAndPath(PvpVisualsClient.MOD_ID, "menu_runtime/" + fileName);
@@ -228,7 +234,8 @@ public final class PvpMainMenuScreen extends Screen {
             float extra = maxOffset * 2f + 12f;
             float targetW = width + extra;
             float targetH = height + extra;
-            float imageAspect = 1920f / 1080f;
+            float imageAspect = (float) BACKGROUND_WIDTHS[backdropIndex]
+                    / Math.max(1, BACKGROUND_HEIGHTS[backdropIndex]);
             float screenAspect = targetW / Math.max(1f, targetH);
             float drawW;
             float drawH;
@@ -246,7 +253,9 @@ public final class PvpMainMenuScreen extends Screen {
             int w = Math.round(drawW);
             int h = Math.round(drawH);
             g.blit(RenderPipelines.GUI_TEXTURED, LOADED_BACKGROUNDS[backdropIndex],
-                    x, y, 0f, 0f, w, h, 1920, 1080, 1920, 1080, 0xFFFFFFFF);
+                    x, y, 0f, 0f, w, h, BACKGROUND_WIDTHS[backdropIndex],
+                    BACKGROUND_HEIGHTS[backdropIndex], BACKGROUND_WIDTHS[backdropIndex],
+                    BACKGROUND_HEIGHTS[backdropIndex], 0xFFFFFFFF);
             g.fill(0, 0, width, height, 0x1E000000);
             return;
         }
