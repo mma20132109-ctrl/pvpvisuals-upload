@@ -63,6 +63,8 @@ public class EchoMainMenuScreen extends TitleScreen {
 				() -> mc.setScreen(new SelectWorldScreen(this))));
 		main.add(new EchoButton("Multiplayer", EchoButton.Icon.NONE,
 				() -> mc.setScreen(new JoinMultiplayerScreen(this))));
+		main.add(new EchoButton("Accounts", EchoButton.Icon.NONE,
+				() -> mc.setScreen(new EchoAccountManagerScreen(this))));
 		main.add(new EchoButton("Settings", EchoButton.Icon.NONE,
 				() -> mc.setScreen(new OptionsScreen(this, mc.options))));
 		btnExit = new EchoButton("", EchoButton.Icon.EXIT, mc::stop);
