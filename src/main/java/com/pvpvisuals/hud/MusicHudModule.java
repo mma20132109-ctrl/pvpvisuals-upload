@@ -61,12 +61,12 @@ public final class MusicHudModule extends AbstractHudModule {
 		return W;
 	}
 
-	private MusicHudSettings settings() {
+	private MusicHudSettings musicSettings() {
 		return PvpConfig.get().musicHud;
 	}
 
 	private LyricLayout lyricLayout(TrackInfo track) {
-		if (!settings().showLyrics || track == null) {
+		if (!musicSettings().showLyrics || track == null) {
 			return LyricLayout.empty();
 		}
 		SyncedLyrics.ensure(track.key, track.artist, track.title);
@@ -98,18 +98,16 @@ public final class MusicHudModule extends AbstractHudModule {
 		StringBuilder first = new StringBuilder();
 		StringBuilder second = new StringBuilder();
 		for (String word : text.split("\\s+")) {
-			if (first.isEmpty()) {
-				first.append(word);
-				continue;
+			if (second.isEmpty()) {
+				String candidate = first.isEmpty() ? word : first + " " + word;
+				if (Gfx.widthAtSize(mc.font, candidate, size) <= maxWidth) {
+					first.setLength(0);
+					first.append(candidate);
+					continue;
+				}
 			}
-			String candidate = first + " " + word;
-			if (Gfx.widthAtSize(mc.font, candidate, size) <= maxWidth) {
-				first.setLength(0);
-				first.append(candidate);
-			} else {
-				if (!second.isEmpty()) second.append(' ');
-				second.append(word);
-			}
+			if (!second.isEmpty()) second.append(' ');
+			second.append(word);
 		}
 
 		if (second.isEmpty()) {
@@ -154,7 +152,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		trackFade += (1f - trackFade) * 0.2f;
 
 		LyricLayout lyrics = lyricLayout(track);
-		boolean lyricsKnown = track != null && settings().showLyrics && SyncedLyrics.has(track.key);
+		boolean lyricsKnown = track != null && musicSettings().showLyrics && SyncedLyrics.has(track.key);
 		float wantedRows = lyrics.lines().isEmpty() ? (lyricsKnown ? 1f : 0f) : lyrics.rows();
 		lyricRows += (wantedRows - lyricRows) * 0.22f;
 		lyricsRoom += ((lyricsKnown ? 1f : 0f) - lyricsRoom) * 0.22f;
@@ -168,13 +166,13 @@ public final class MusicHudModule extends AbstractHudModule {
 		String title = track == null || track.title.isBlank() ? "Ничего не играет" : track.title;
 		String artist = track == null ? "" : track.artist;
 		String source = track == null ? "" : displaySource(track.app);
-		if (settings().showSource && !source.isEmpty()) {
+		if (musicSettings().showSource && !source.isEmpty()) {
 			artist = artist.isEmpty() ? source : artist + "  ·  " + source;
 		}
 		float trackAlpha = 0.25f + 0.75f * trackFade;
 
 		float textX = PAD;
-		if (settings().showCover) {
+		if (musicSettings().showCover) {
 			drawCover(g, track, PAD, PAD);
 			textX += COVER + 7f;
 		}
