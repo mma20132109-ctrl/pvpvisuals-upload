@@ -128,7 +128,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		float lyricHeight = lyricsRoom > 0.01f
 				? (LYRIC_ROW * Math.max(1f, lyricRows) + 3f) * lyricsRoom
 				: 0f;
-		return Math.round(PAD * 2f + COVER + lyricHeight + 13f);
+		return Math.round(PAD * 2f + COVER + lyricHeight + 8f);
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		lyricRows += (wantedRows - lyricRows) * 0.22f;
 		lyricsRoom += ((lyricsKnown ? 1f : 0f) - lyricsRoom) * 0.22f;
 		float lyricHeight = (LYRIC_ROW * Math.max(1f, lyricRows) + 3f) * lyricsRoom;
-		int height = Math.round(PAD * 2f + COVER + lyricHeight + 13f);
+		int height = Math.round(PAD * 2f + COVER + lyricHeight + 8f);
 
 		float alpha = HudAlpha.current;
 		HudStyle.panel(g, 0, 0, W, height, 8, alpha);
@@ -420,7 +420,8 @@ public final class MusicHudModule extends AbstractHudModule {
 		Gfx.textAtSize(g, font, remaining, x + width - remainingWidth, y, timeSize,
 				HudAlpha.mul(HudStyle.MUTED), false);
 
-		float barY = y + 9f;
+		// Keep the progress rail and its thumb on the same horizontal line as both time labels.
+		float barY = y + 1.5f;
 		Gfx.rrect(g, barX, barY, barWidth, 3f, 1.5f,
 				HudStyle.opacity(HudStyle.MUTED, alpha(0.25f)),
 				HudStyle.opacity(HudStyle.MUTED, alpha(0.25f)), 0x00000000, 0f);
