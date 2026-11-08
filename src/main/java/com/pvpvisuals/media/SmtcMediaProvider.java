@@ -133,11 +133,11 @@ function Report($m) { if ($m -ne $script:lastErr) { $script:lastErr = $m; Emit (
 		return track;
 	}
 
-	@Override
-	public int getPositionSeconds() {
+	/** Returns the smoothly extrapolated playback position without truncating to whole seconds. */
+	private double currentPositionSeconds() {
 		Snapshot s = snap;
 		if (!s.present) {
-			return 0;
+			return 0.0;
 		}
 		double p = s.pos;
 		if (s.playing) {
@@ -146,7 +146,17 @@ function Report($m) { if ($m -ne $script:lastErr) { $script:lastErr = $m; Emit (
 		if (s.dur > 0) {
 			p = Math.min(p, s.dur);
 		}
-		return (int) Math.max(0, p);
+		return Math.max(0.0, p);
+	}
+
+	@Override
+	public int getPositionSeconds() {
+		return (int) currentPositionSeconds();
+	}
+
+	@Override
+	public long getPositionMillis() {
+		return Math.round(currentPositionSeconds() * 1000.0);
 	}
 
 	@Override
