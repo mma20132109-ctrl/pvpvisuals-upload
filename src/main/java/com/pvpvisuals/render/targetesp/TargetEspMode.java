@@ -5,7 +5,8 @@ public enum TargetEspMode {
     GHOSTS("Ghosts"),
     CIRCLE("Circle"),
     SQUARE("Square"),
-    BOX_3D("3D Box");
+    BOX_3D("3D Box"),
+    AURA("Aura");
 
     public final String title;
 

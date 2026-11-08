@@ -55,6 +55,7 @@ public final class TargetEspRenderer {
         PIPELINES[0] = null;
         PIPELINES[1] = null;
         GhostEspRenderer.reset();
+        AuraEspRenderer.reset();
     }
 
     private static RenderPipeline pipeline(boolean throughWalls) {
@@ -87,6 +88,10 @@ public final class TargetEspRenderer {
             TargetEspMode selectedMode = TargetEspMode.byName(settings.mode);
             if (selectedMode == TargetEspMode.GHOSTS) {
                 GhostEspRenderer.render(context);
+                return;
+            }
+            if (selectedMode == TargetEspMode.AURA) {
+                AuraEspRenderer.render(context);
                 return;
             }
             Minecraft mc = Minecraft.getInstance();
