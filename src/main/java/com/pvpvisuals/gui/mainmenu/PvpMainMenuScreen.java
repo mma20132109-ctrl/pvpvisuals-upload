@@ -567,7 +567,7 @@ public final class PvpMainMenuScreen extends Screen {
         float dockItemX = dockX + 7f;
         for (int i = 0; i < 4; i++) {
             if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 46, 28)) {
-                activateDock(i);
+                if (i != 0 || !worldSelectPage) activateDock(i);
                 return true;
             }
             dockItemX += 48f;
@@ -595,6 +595,7 @@ public final class PvpMainMenuScreen extends Screen {
     }
 
     void renderWorldSelectDock(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        worldSelectPage = true;
         Gfx.alpha = 1f;
         drawUserBadge(graphics);
         drawSidebar(graphics, mouseX, mouseY, 16f, System.nanoTime());
