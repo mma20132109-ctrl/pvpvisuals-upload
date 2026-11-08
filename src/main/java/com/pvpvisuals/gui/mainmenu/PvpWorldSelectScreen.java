@@ -163,11 +163,11 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
         // Search is not responsible for loading. It can be fully disabled.
         for (var child : children()) {
             if (child instanceof EditBox editBox) {
-                editBox.setVisible(false);
+                editBox.visible = false;
                 editBox.setAlpha(0f);
             } else if (child instanceof AbstractWidget widget
                     && widget.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("search")) {
-                widget.setVisible(false);
+                widget.visible = false;
                 widget.setAlpha(0f);
             }
         }
