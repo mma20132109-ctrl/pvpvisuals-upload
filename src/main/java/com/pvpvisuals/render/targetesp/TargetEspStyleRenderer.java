@@ -137,7 +137,7 @@ public final class TargetEspStyleRenderer {
     private static void drawGhosts(float cx,float cz,float y0,float height,float width,
             TargetEspSettings s,Frame frame,double time,float fade,float size,Vector3f right,Vector3f up) {
         int amount=clamp(s.ghostCount,12,96);
-        float radius=width*clamp(s.ghostRadius,0.5f,2.5f)*Math.max(0.5f,1.2f-0.5f*fade);
+        float radius=width*clamp(s.ghostOrbitRadius,0.5f,2.5f)*Math.max(0.5f,1.2f-0.5f*fade);
         double orbitDegrees=time*60.0;
         double waveDegrees=time*12.0;
         for(int i=0;i<amount;i++) {
