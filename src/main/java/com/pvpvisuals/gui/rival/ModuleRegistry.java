@@ -52,7 +52,7 @@ public final class ModuleRegistry {
 								v -> c.targetEspSettings.colorPreset = v.toUpperCase(java.util.Locale.ROOT))
 								.visibleWhen(() -> "PRESET".equalsIgnoreCase(c.targetEspSettings.colorMode)))
 						.child(ModuleDef.slider("Ghost Particles", Category.VISUAL, 12, 96, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
 						.child(ModuleDef.slider("Ghost Trail Length", Category.VISUAL, 4, 28, 0, () -> c.targetEspSettings.ghostLength, v -> c.targetEspSettings.ghostLength = (int) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
 						.child(ModuleDef.slider("Ghost Layers", Category.VISUAL, 1, 3, 0, () -> c.targetEspSettings.ghostLayers, v -> c.targetEspSettings.ghostLayers = (int) v)
@@ -65,8 +65,6 @@ public final class ModuleRegistry {
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
 						.child(ModuleDef.slider("Wave Height", Category.VISUAL, 0.0, 1.0, 2, () -> c.targetEspSettings.ghostAmplitude, v -> c.targetEspSettings.ghostAmplitude = (float) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
-						.child(ModuleDef.slider("Vertical Motion", Category.VISUAL, 0.1, 8.0, 1, () -> c.targetEspSettings.ghostAmplitude, v -> c.targetEspSettings.ghostAmplitude = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS_2))
 						.child(ModuleDef.slider("Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
 						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 4.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
 						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 4.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
@@ -75,6 +73,8 @@ public final class ModuleRegistry {
 						.child(ModuleDef.slider("Color G", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 8) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFF00FF) | ((int) v << 8)))
 						.child(ModuleDef.slider("Color B", Category.VISUAL, 0, 255, 0, () -> c.targetEspSettings.color & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFFFF00) | (int) v))
 						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0))),
+						.child(ModuleDef.slider("Ring Radius", Category.VISUAL, 0.25, 1.25, 2, () -> c.targetEspSettings.ringRadius, v -> c.targetEspSettings.ringRadius = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.KRUG)),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
 				com.pvpvisuals.render.radial.RadialMenuModule.def(c),
