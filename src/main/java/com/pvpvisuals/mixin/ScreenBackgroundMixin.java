@@ -24,6 +24,7 @@ public abstract class ScreenBackgroundMixin {
 		if (EchoWorldStyle.wantsBackground(this)) {
 			EchoWorldStyle.background(graphics);
 		}
+		EchoWorldStyle.renderChrome(graphics, this);
 	}
 
 	@Inject(method = "renderBackground", at = @At("HEAD"), cancellable = true, require = 0)
