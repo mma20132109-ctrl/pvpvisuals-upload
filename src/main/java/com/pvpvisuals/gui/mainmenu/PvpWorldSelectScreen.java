@@ -2,6 +2,8 @@ package com.pvpvisuals.gui.mainmenu;
 
 import com.pvpvisuals.gui.echo.Gfx;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldSelectionList;
@@ -69,6 +71,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
             worldList = (WorldSelectionList) field.get(this);
             if (worldList == null) return;
             worldList.setAlpha(0f);
+            hideVanillaWorldList();
             worldEntries.clear();
             for (WorldSelectionList.Entry entry : worldList.children()) {
                 if (entry instanceof WorldSelectionList.WorldListEntry world) {
@@ -90,6 +93,18 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
             worldEntries.clear();
             System.err.println("[pvpvisuals] Не удалось подключить карусель миров: " + exception);
         }
+    }
+
+    /**
+     * Remove only the vanilla list from Screen's render pass. Keep it in the
+     * event children so vanilla selection and action-button state still work.
+     */
+    @SuppressWarnings("unchecked")
+    private void hideVanillaWorldList() throws ReflectiveOperationException {
+        Field renderablesField = Screen.class.getDeclaredField("renderables");
+        renderablesField.setAccessible(true);
+        List<Renderable> renderables = (List<Renderable>) renderablesField.get(this);
+        renderables.remove(worldList);
     }
 
     private void refreshWorldEntries() {
