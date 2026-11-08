@@ -65,7 +65,7 @@ public final class TargetEspStyleRenderer {
                     .withVertexShader(Identifier.fromNamespaceAndPath(NS, "core/hitbox"))
                     .withFragmentShader(Identifier.fromNamespaceAndPath(NS, "core/hitbox"))
                     .withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLES)
-                    .withBlend(BlendFunction.TRANSLUCENT)
+                    .withBlend(BlendFunction.LIGHTNING)
                     .withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
                     .withDepthWrite(false).withCull(false).build();
         }
