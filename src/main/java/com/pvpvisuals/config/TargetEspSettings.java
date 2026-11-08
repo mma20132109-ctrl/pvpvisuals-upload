@@ -3,6 +3,14 @@ package com.pvpvisuals.config;
 /** Target ESP options. Defaults mirror TargetESP 1.0.0 where applicable. */
 public final class TargetEspSettings {
     public String mode = "GHOSTS";
+
+    /** Authentic model-surface scan-line effect. */
+    public int scanColor = 0x37AAFF;
+    public int scanSecondColor = 0xBE4BFF;
+    public boolean scanColorFlow = false;
+    public float scanSaturation = 1.0f;
+    public float scanSpeed = 1.0f;
+    public float scanGlow = 1.0f;
     public boolean showPlayers = true;
     public boolean showMobs = true;
     public float maxDistance = 64.0f;
