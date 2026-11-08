@@ -600,11 +600,12 @@ public final class PvpMainMenuScreen extends Screen {
     }
 
     void renderWorldSelectBackground(GuiGraphics graphics, int mouseX, int mouseY) {
+        // The main menu already performs the per-frame blur/capture pass.
+        // Repeating blurBeforeThisStratum() on the world screen crashes in 1.21.11
+        // ("Can only blur once per frame"). Keep drawing the same backdrop and
+        // let glass surfaces reuse the most recent menu backdrop capture.
         updateParallax(mouseX, mouseY, 16f);
         drawBackdrop(graphics, System.nanoTime());
-        graphics.nextStratum();
-        LiquidGlassRenderer.scheduleBackgroundCapture();
-        graphics.blurBeforeThisStratum();
     }
 
     void renderWorldSelectDock(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
