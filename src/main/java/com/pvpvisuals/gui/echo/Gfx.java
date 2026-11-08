@@ -51,6 +51,12 @@ public final class Gfx {
 		LiquidGlassRenderer.roundRect(g, x, y, w, h, r, fade(top), fade(bottom), fade(borderColor), border);
 	}
 
+	/** Draws a blurred frosted-glass panel with reflected top light and a double rim. */
+	public static void glass(GuiGraphics g, float x, float y, float w, float h, float r, int top, int bottom,
+			int borderColor) {
+		LiquidGlassRenderer.surface(g, x, y, w, h, r, fade(top), fade(bottom), fade(borderColor), alpha);
+	}
+
 	public static void circle(GuiGraphics g, int cx, int cy, int rad, int color) {
 		circle(g, cx + 0.5f, cy + 0.5f, rad + 0.5f, color);
 	}
@@ -239,22 +245,28 @@ public final class Gfx {
 			boolean shadow) {
 		float scale = size / 7.4f;
 		g.pose().pushMatrix();
-		g.pose().translate(x, y);
-		g.pose().scale(scale, scale);
-		Typo.check(font);
-		g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x, y);
+			g.pose().scale(scale, scale);
+			Typo.check(font);
+			g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
+		} finally {
+			g.pose().popMatrix();
+		}
 	}
 
 	public static void textAtSize(GuiGraphics g, Font font, Component s, float x, float y, float size, int color,
 			boolean shadow) {
 		float scale = size / 7.4f;
 		g.pose().pushMatrix();
-		g.pose().translate(x, y);
-		g.pose().scale(scale, scale);
-		Typo.check(font);
-		g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x, y);
+			g.pose().scale(scale, scale);
+			Typo.check(font);
+			g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
+		} finally {
+			g.pose().popMatrix();
+		}
 	}
 
 	public static String trimAtSize(Font font, String s, int maxWidth, float size) {
@@ -284,11 +296,14 @@ public final class Gfx {
 	public static void textScaled(GuiGraphics g, Font font, String s, float x, float y, float scale, int color,
 			boolean shadow) {
 		g.pose().pushMatrix();
-		g.pose().translate(x, y);
-		g.pose().scale(scale, scale);
-		Typo.check(font);
-		g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x, y);
+			g.pose().scale(scale, scale);
+			Typo.check(font);
+			g.drawString(font, Typo.of(s), 0, 0, a(color), shadow);
+		} finally {
+			g.pose().popMatrix();
+		}
 	}
 
 	public static boolean hit(double mx, double my, int x, int y, int w, int h) {

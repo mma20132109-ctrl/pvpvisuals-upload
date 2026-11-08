@@ -31,6 +31,44 @@ public final class ModuleRegistry {
 				ChinaHatModule.def(c),
 				com.pvpvisuals.render.blockoverlay.BlockOverlayModule.def(c),
 				com.pvpvisuals.render.hitbox.HitBoxModule.def(c),
+				ModuleDef.toggle("Target ESP", Category.VISUAL, () -> c.targetEsp, v -> c.targetEsp = v)
+						.child(ModuleDef.slider("Scan Saturation (%)", Category.VISUAL, 0, 200, 0,
+								() -> c.targetEspSettings.scanSaturation * 100.0,
+								v -> c.targetEspSettings.scanSaturation = (float) (v / 100.0)))
+						.child(ModuleDef.slider("Scan Speed", Category.VISUAL, 0.25, 3.0, 2,
+								() -> c.targetEspSettings.scanSpeed,
+								v -> c.targetEspSettings.scanSpeed = (float) v))
+						.child(ModuleDef.toggle("Two-color Flow", Category.VISUAL,
+								() -> c.targetEspSettings.scanColorFlow,
+								v -> c.targetEspSettings.scanColorFlow = v))
+						.child(ModuleDef.slider("Scan Glow (%)", Category.VISUAL, 25, 200, 0,
+								() -> c.targetEspSettings.scanGlow * 100.0,
+								v -> c.targetEspSettings.scanGlow = (float) (v / 100.0)))
+						.child(ModuleDef.slider("Scan Color R", Category.VISUAL, 0, 255, 0,
+								() -> (c.targetEspSettings.scanColor >> 16) & 255,
+								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0x00FFFF) | ((int) v << 16)))
+						.child(ModuleDef.slider("Scan Color G", Category.VISUAL, 0, 255, 0,
+								() -> (c.targetEspSettings.scanColor >> 8) & 255,
+								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0xFF00FF) | ((int) v << 8)))
+						.child(ModuleDef.slider("Scan Color B", Category.VISUAL, 0, 255, 0,
+								() -> c.targetEspSettings.scanColor & 255,
+								v -> c.targetEspSettings.scanColor = (c.targetEspSettings.scanColor & 0xFFFF00) | (int) v))
+						.child(ModuleDef.slider("Second Color R", Category.VISUAL, 0, 255, 0,
+								() -> (c.targetEspSettings.scanSecondColor >> 16) & 255,
+								v -> c.targetEspSettings.scanSecondColor = (c.targetEspSettings.scanSecondColor & 0x00FFFF) | ((int) v << 16))
+								.visibleWhen(() -> c.targetEspSettings.scanColorFlow))
+						.child(ModuleDef.slider("Second Color G", Category.VISUAL, 0, 255, 0,
+								() -> (c.targetEspSettings.scanSecondColor >> 8) & 255,
+								v -> c.targetEspSettings.scanSecondColor = (c.targetEspSettings.scanSecondColor & 0xFF00FF) | ((int) v << 8))
+								.visibleWhen(() -> c.targetEspSettings.scanColorFlow))
+						.child(ModuleDef.slider("Second Color B", Category.VISUAL, 0, 255, 0,
+								() -> c.targetEspSettings.scanSecondColor & 255,
+								v -> c.targetEspSettings.scanSecondColor = (c.targetEspSettings.scanSecondColor & 0xFFFF00) | (int) v)
+								.visibleWhen(() -> c.targetEspSettings.scanColorFlow))
+						.child(ModuleDef.toggle("Players", Category.VISUAL, () -> c.targetEspSettings.showPlayers, v -> c.targetEspSettings.showPlayers = v))
+						.child(ModuleDef.toggle("Mobs", Category.VISUAL, () -> c.targetEspSettings.showMobs, v -> c.targetEspSettings.showMobs = v))
+						.child(ModuleDef.slider("Max Distance", Category.VISUAL, 8, 128, 0, () -> c.targetEspSettings.maxDistance, v -> c.targetEspSettings.maxDistance = (float) v))
+						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0))),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
 				com.pvpvisuals.render.radial.RadialMenuModule.def(c),
@@ -49,11 +87,29 @@ public final class ModuleRegistry {
 				KillEffectModule.def(c),
 
 				ModuleDef.toggle("Target HUD", Category.UTILS, () -> c.targetHud, v -> c.targetHud = v)
-						.child(HudModuleUi.layout(HudManager.TARGET, Category.UTILS)),
+						.child(HudModuleUi.layout(HudManager.TARGET, Category.UTILS))
+						.child(ModuleDef.toggle("Items and Armor", Category.UTILS,
+								() -> c.targetHudItems, v -> c.targetHudItems = v))
+						.child(ModuleDef.toggle("Distance", Category.UTILS,
+								() -> c.targetHudDistance, v -> c.targetHudDistance = v)),
+				ModuleDef.toggle("Armor HUD", Category.UTILS, () -> c.armorHud, v -> c.armorHud = v)
+						.child(HudModuleUi.layout(HudManager.ARMOR, Category.UTILS))
+						.child(ModuleDef.toggle("Hand Items", Category.UTILS,
+								() -> c.armorHudHands, v -> c.armorHudHands = v))
+						.child(ModuleDef.toggle("Durability in %", Category.UTILS,
+								() -> c.armorHudPercent, v -> c.armorHudPercent = v)),
 				ModuleDef.toggle("Combo Counter", Category.UTILS, () -> c.comboCounter, v -> c.comboCounter = v)
 						.child(HudModuleUi.layout(HudManager.COMBO, Category.UTILS)),
 				ModuleDef.toggle("Watermark", Category.UTILS, () -> c.watermark, v -> c.watermark = v)
-						.child(HudModuleUi.layout(HudManager.WATERMARK, Category.UTILS)),
+						.child(HudModuleUi.layout(HudManager.WATERMARK, Category.UTILS))
+						.child(ModuleDef.toggle("Nickname", Category.UTILS,
+								() -> c.watermarkShowNick, v -> c.watermarkShowNick = v))
+						.child(ModuleDef.toggle("FPS", Category.UTILS,
+								() -> c.watermarkShowFps, v -> c.watermarkShowFps = v))
+						.child(ModuleDef.toggle("Ping", Category.UTILS,
+								() -> c.watermarkShowPing, v -> c.watermarkShowPing = v))
+						.child(ModuleDef.toggle("Time", Category.UTILS,
+								() -> c.watermarkShowTime, v -> c.watermarkShowTime = v)),
 				ModuleDef.toggle("Coordinates", Category.UTILS, () -> c.coordinatesHud, v -> c.coordinatesHud = v)
 						.child(HudModuleUi.layout(HudManager.COORDINATES, Category.UTILS))
 						.child(ModuleDef.toggle("Direction", Category.UTILS, () -> c.coordinatesDirection, v -> c.coordinatesDirection = v))
@@ -61,28 +117,20 @@ public final class ModuleRegistry {
 				ModuleDef.toggle("Module List", Category.UTILS, () -> c.moduleListHud, v -> c.moduleListHud = v)
 						.child(HudModuleUi.layout(HudManager.MODULE_LIST, Category.UTILS))
 						.child(ModuleDef.toggle("Glow", Category.UTILS, () -> c.moduleListGlow, v -> c.moduleListGlow = v)),
+				ModuleDef.toggle("Music HUD", Category.UTILS, () -> c.musicHud.enabled, v -> c.musicHud.enabled = v)
+						.child(HudModuleUi.layout(HudManager.MUSIC, Category.UTILS))
+						.child(ModuleDef.toggle("Lyrics", Category.UTILS, () -> c.musicHud.showLyrics, v -> c.musicHud.showLyrics = v))
+						.child(ModuleDef.toggle("Source", Category.UTILS, () -> c.musicHud.showSource, v -> c.musicHud.showSource = v))
+						.child(ModuleDef.toggle("Cover Art", Category.UTILS, () -> c.musicHud.showCover, v -> c.musicHud.showCover = v)),
 				InventoryHudModule.def(c),
 				com.pvpvisuals.hud.binds.HudBindsModule.def(c),
+				ModuleDef.toggle("Notifications", Category.UTILS,
+						() -> c.binds.showNotifications, v -> c.binds.showNotifications = v)
+						.child(HudModuleUi.layout(HudManager.NOTIFICATIONS, Category.UTILS))
+						.child(ModuleDef.slider("Duration (ms)", Category.UTILS, 500, 5000, 0,
+								() -> c.binds.durationMs, v -> c.binds.durationMs = (int) v)),
 
 				themeGroup(c),
-				ModuleDef.group(Category.CLIENT, () -> "Main Menu")
-						.child(ModuleDef.toggle("Custom Menu", Category.CLIENT,
-								() -> c.menu.customMainMenu, v -> c.menu.customMainMenu = v))
-						.child(ModuleDef.toggle("Menu Particles", Category.CLIENT,
-								() -> c.menu.showMenuParticles, v -> c.menu.showMenuParticles = v))
-						.child(ModuleDef.toggle("Version Text", Category.CLIENT,
-								() -> c.menu.showVersionText, v -> c.menu.showVersionText = v))
-						.child(ModuleDef.toggle("World Screens Style", Category.CLIENT,
-								() -> c.menu.styleWorldMenus, v -> c.menu.styleWorldMenus = v)),
-				ModuleDef.group(Category.CLIENT, () -> "Loading Screen")
-						.child(ModuleDef.toggle("Custom Splash", Category.CLIENT,
-								() -> c.splash.customSplashScreen, v -> c.splash.customSplashScreen = v))
-						.child(ModuleDef.toggle("Splash Particles", Category.CLIENT,
-								() -> c.splash.showSplashParticles, v -> c.splash.showSplashParticles = v))
-						.child(ModuleDef.choice("Background", Category.CLIENT,
-								() -> splashBackgroundTitle(c.splash.splashBackground),
-								List.of("Gradient", "Animated", "Dark"),
-								v -> c.splash.splashBackground = "Gradient".equals(v) ? "GRADIENT" : "Animated".equals(v) ? "SHADER" : "DARK")),
 				CapeModule.def(c),
 				ModuleDef.group(Category.CLIENT, () -> "Logo")
 						.child(ModuleDef.toggle("Watermark Logo", Category.CLIENT,
@@ -123,12 +171,27 @@ public final class ModuleRegistry {
 				}));
 	}
 
-	private static String splashBackgroundTitle(String v) {
-		return "DARK".equalsIgnoreCase(v) ? "Dark" : "SHADER".equalsIgnoreCase(v) ? "Animated" : "Gradient";
+	private static String targetEspColorPresetTitle(String value) {
+		return switch (value == null ? "CYAN" : value.toUpperCase(java.util.Locale.ROOT)) {
+			case "PINK" -> "Pink";
+			case "PURPLE" -> "Purple";
+			case "GREEN" -> "Green";
+			case "ORANGE" -> "Orange";
+			case "RED" -> "Red";
+			case "BLUE" -> "Blue";
+			case "YELLOW" -> "Yellow";
+			default -> "Cyan";
+		};
 	}
 
-	private static String nextSplashBackground(String v) {
-		return "GRADIENT".equalsIgnoreCase(v) ? "SHADER" : "SHADER".equalsIgnoreCase(v) ? "DARK" : "GRADIENT";
+	private static String targetEspColorTitle(String value) {
+		return switch (value == null ? "HEALTH" : value.toUpperCase(java.util.Locale.ROOT)) {
+			case "STATIC" -> "Static";
+			case "DISTANCE" -> "Distance";
+			case "RAINBOW" -> "Rainbow";
+			case "PRESET" -> "Preset";
+			default -> "Health";
+		};
 	}
 
 	/** Выбор цветовой темы GUI и HUD: раскрывающийся список, клик по теме применяет её сразу. */
@@ -159,19 +222,8 @@ public final class ModuleRegistry {
 		return out;
 	}
 
-	/** Список для GUI: модули + настройки уведомлений (бинды назначаются плашкой на карточке модуля). */
+	/** Полный список модулей GUI; бинд назначается плашкой на карточке модуля. */
 	public static List<ModuleDef> build() {
-		PvpConfig c = PvpConfig.get();
-		List<ModuleDef> list = new ArrayList<>(modules());
-		list.add(ModuleDef.group(Category.CLIENT, () -> "Bind Toasts")
-				.child(ModuleDef.toggle("Show Toasts", Category.CLIENT,
-						() -> c.binds.showNotifications, v -> c.binds.showNotifications = v))
-				.child(ModuleDef.slider("Duration (ms)", Category.CLIENT, 500, 5000, 0,
-						() -> c.binds.durationMs, v -> c.binds.durationMs = (int) v))
-				.child(ModuleDef.choice("Position", Category.CLIENT,
-						() -> NotificationPosition.byName(c.binds.position).title,
-						List.of("Top Left", "Top Right", "Bottom Left", "Bottom Right"),
-						v -> c.binds.position = v.toUpperCase(java.util.Locale.ROOT).replace(' ', '_'))));
-		return list;
+		return new ArrayList<>(modules());
 	}
 }

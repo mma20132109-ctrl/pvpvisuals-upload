@@ -1,8 +1,13 @@
 package com.pvpvisuals.hud;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.pvpvisuals.config.PvpConfig;
-import com.pvpvisuals.gui.echo.EchoScreen;
+import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.gui.rival.RoundedRender;
+import com.pvpvisuals.gui.rival.ModuleDef;
+import com.pvpvisuals.gui.rival.ModuleRegistry;
 import com.pvpvisuals.gui.echo.EchoTheme;
 import com.pvpvisuals.gui.rival.Theme;
 
@@ -27,6 +32,7 @@ public final class HudEditorOverlay {
 	private static AbstractHudModule dragging;
 	private static AbstractHudModule resizing;
 	private static AbstractHudModule selected;
+	private static HudContextMenu contextMenu;
 	private static int grabX;
 	private static int grabY;
 	private static int resizeX;
@@ -39,6 +45,7 @@ public final class HudEditorOverlay {
 	public static void reset() {
 		dragging = null;
 		resizing = null;
+		contextMenu = null;
 		guideX = -1;
 		guideY = -1;
 	}
@@ -101,13 +108,19 @@ public final class HudEditorOverlay {
 
 		toolbar(g, font, t, cfg, mx, my, sw);
 
-		String hint = "ЛКМ — переместить  •  ПКМ — настройки  •  Угол — изменить размер  •  Shift+колесо — прозрачность  •  Esc — сохранить";
-		RoundedRender.fill(g, (sw - font.width(hint)) / 2 - 6, hintY - 4, font.width(hint) + 12, 16, 5, 0xB0101010);
-		g.drawString(font, hint, (sw - font.width(hint)) / 2, hintY, 0xFFFFFFFF, true);
+		String hint = "ЛКМ — переместить  •  ПКМ — настройки  •  Колесо — масштаб  •  Угол — размер  •  Shift+колесо — альфа  •  Esc — сохранить";
+		int hintW = font.width(hint);
+		int hintX = (sw - hintW) / 2 - 6;
+		HudStyle.panel(g, hintX, hintY - 4, hintW + 12, 16, 5, 0.92f);
+		Gfx.textAtSize(g, font, hint, (sw - hintW) / 2f, hintY - 0.1f, 5.8f,
+				0xFFFFFFFF, false);
 
 		if (resizing != null) {
 			String s = String.format(java.util.Locale.ROOT, "%.2f×", resizing.scale());
 			g.drawString(font, s, mx + 12, my + 8, EchoTheme.ACCENT_TEXT, true);
+		}
+		if (contextMenu != null) {
+			contextMenu.render(g, font, mx, my);
 		}
 	}
 
@@ -138,8 +151,9 @@ public final class HudEditorOverlay {
 		String label = m.label();
 		int tw = font.width(label) + 8;
 		int ty = y - TITLE_H - 2 >= 0 ? y - TITLE_H - 2 : y + h + 3;
-		RoundedRender.fill(g, x, ty, tw, TITLE_H, 4, EchoTheme.HUD_TOP, EchoTheme.HUD_BOTTOM);
-		g.drawString(font, label, x + 4, ty + 2, EchoTheme.TEXT, false);
+		HudStyle.panel(g, x, ty, tw, TITLE_H, 4, 0.96f);
+		HudStyle.accentWash(g, x, ty, tw, TITLE_H, 4, 0.9f);
+		Gfx.textAtSize(g, font, label, x + 4f, ty + 2.1f, 6.2f, EchoTheme.TEXT, false);
 	}
 
 	private static void toolbar(GuiGraphics g, Font font, Theme t, PvpConfig cfg, int mx, int my, int sw) {
@@ -153,11 +167,14 @@ public final class HudEditorOverlay {
 			boolean hov = mx >= x && mx < x + w && my >= 6 && my < 6 + BTN_H;
 			int top = on ? EchoTheme.TAB_TOP : EchoTheme.shift(0xC01B1030);
 			int bottom = on ? EchoTheme.TAB_BOTTOM : EchoTheme.shift(0xC0120A22);
-			RoundedRender.fill(g, x, 6, w, BTN_H, 5, top, bottom);
+			HudStyle.panel(g, x, 6, w, BTN_H, 5, on ? 1f : 0.82f);
+			Gfx.rrect(g, x + 1, 7, Math.max(0, w - 2), BTN_H - 2, 4,
+					HudStyle.opacity(top, on ? 0.55f : 0.16f),
+					HudStyle.opacity(bottom, on ? 0.45f : 0.10f), 0, 0f);
 			if (hov) {
 				g.renderOutline(x, 6, w, BTN_H, EchoTheme.ACCENT_TEXT);
 			}
-			g.drawString(font, BUTTONS[i], x + 5, 6 + 3, 0xFFFFFFFF, false);
+			Gfx.textAtSize(g, font, BUTTONS[i], x + 5f, 9.0f, 5.8f, 0xFFFFFFFF, false);
 			x -= 4;
 		}
 	}
@@ -167,6 +184,15 @@ public final class HudEditorOverlay {
 	/** @return true, если клик обработан редактором. */
 	public static boolean onClick(double mx, double my, int button, int sw, int sh) {
 		PvpConfig cfg = PvpConfig.get();
+
+		if (contextMenu != null) {
+			HudContextMenu menu = contextMenu;
+			menu.click(mx, my, button);
+			if (menu.closed) {
+				contextMenu = null;
+			}
+			return true;
+		}
 
 		if (button == 0 && my >= 6 && my < 6 + BTN_H) {
 			for (int i = 0; i < BUTTONS.length; i++) {
@@ -199,8 +225,7 @@ public final class HudEditorOverlay {
 		}
 		selected = m;
 		if (button == 1) {
-			// то же подменю, что в основном GUI
-			Minecraft.getInstance().setScreen(new EchoScreen(m.label()));
+			contextMenu = new HudContextMenu(m, mx, my, sw, sh);
 			return true;
 		}
 		if (button != 0) {
@@ -310,25 +335,158 @@ public final class HudEditorOverlay {
 	/** @return true, если отпускание обработано (конфиг сохраняется). */
 	public static boolean onRelease() {
 		boolean was = dragging != null || resizing != null;
-		reset();
+		dragging = null;
+		resizing = null;
+		guideX = -1;
+		guideY = -1;
+		// Не закрываем contextMenu: правый клик открывает его по нажатию,
+		// а само меню должно оставаться после отпускания кнопки мыши.
 		if (was) {
 			PvpConfig.get().save();
 		}
-		return was;
+		return was || contextMenu != null;
 	}
 
-	/** Shift + колесо над элементом меняет его прозрачность. */
+	/** Колесо над элементом меняет масштаб; Shift + колесо — прозрачность. */
 	public static boolean onScroll(double mx, double my, double scrollY, boolean shift) {
-		if (!shift) {
+		if (contextMenu != null || scrollY == 0.0) {
 			return false;
 		}
 		AbstractHudModule m = top(mx, my);
 		if (m == null) {
 			return false;
 		}
-		float a = Mth.clamp(m.alpha() + (scrollY > 0 ? 0.05f : -0.05f), AbstractHudModule.MIN_ALPHA, 1.0f);
-		m.settings().alpha = Math.round(a * 100f) / 100f;
+
+		if (shift) {
+			float a = Mth.clamp(m.alpha() + (scrollY > 0 ? 0.05f : -0.05f),
+					AbstractHudModule.MIN_ALPHA, 1.0f);
+			m.settings().alpha = Math.round(a * 100f) / 100f;
+		} else {
+			var window = Minecraft.getInstance().getWindow();
+			int sw = window.getGuiScaledWidth();
+			int sh = window.getGuiScaledHeight();
+			float centerX = m.bounds.x + m.bounds.width / 2f;
+			float centerY = m.bounds.y + m.bounds.height / 2f;
+
+			float scale = Mth.clamp(m.scale() + (scrollY > 0 ? 0.05f : -0.05f),
+					AbstractHudModule.MIN_SCALE, AbstractHudModule.MAX_SCALE);
+			m.settings().scale = Math.round(scale * 100f) / 100f;
+			int newX = Math.round(centerX - m.width() / 2f);
+			int newY = Math.round(centerY - m.height() / 2f);
+			m.setScreenPos(newX, newY, sw, sh);
+		}
 		PvpConfig.get().save();
 		return true;
+	}
+
+	/** Контекстное меню настроек выбранного HUD-элемента, как в Svintus. */
+	private static final class HudContextMenu {
+		private static final float TITLE_H = 17f;
+		private static final float ITEM_H = 15f;
+		private static final float SWITCH_W = 20f;
+		private static final float SWITCH_H = 11f;
+
+		private final AbstractHudModule target;
+		private final ModuleDef parent;
+		private final List<ModuleDef> options = new ArrayList<>();
+		private final float x;
+		private final float y;
+		private final float w;
+		private final float h;
+		private boolean closed;
+
+		HudContextMenu(AbstractHudModule target, double mx, double my, int sw, int sh) {
+			this.target = target;
+			String moduleName = target == HudManager.INVENTORY ? "Inventory HUD" : target.label();
+			ModuleDef found = null;
+			for (ModuleDef def : ModuleRegistry.build()) {
+				if (def.isToggle() && (def.name.equals(moduleName) || def.title().equals(target.label()))) {
+					found = def;
+					break;
+				}
+			}
+			parent = found;
+			if (parent != null) {
+				for (ModuleDef child : parent.children) {
+					if (child.isToggle() && child.isVisible()) {
+						options.add(child);
+					}
+				}
+			}
+
+			Font font = Minecraft.getInstance().font;
+			float width = Math.max(112f, font.width(target.label()) + 20f);
+			for (ModuleDef option : options) {
+				width = Math.max(width, font.width(option.title()) + SWITCH_W + 29f);
+			}
+			w = Math.min(Math.max(80f, sw - 8f), width);
+			h = TITLE_H + (options.size() + 1) * ITEM_H + 6f;
+			x = Mth.clamp((float) mx, 4f, Math.max(4f, sw - w - 4f));
+			y = Mth.clamp((float) my, 4f, Math.max(4f, sh - h - 4f));
+		}
+
+		void render(GuiGraphics g, Font font, int mx, int my) {
+			HudStyle.panel(g, Math.round(x), Math.round(y), Math.round(w), Math.round(h), 7, 0.98f);
+			HudStyle.accentWash(g, x, y, w, TITLE_H, 7f, 0.92f);
+			Gfx.textAtSize(g, font, target.label(), x + 8f, y + 5.2f, 6.4f,
+					HudStyle.ACCENT, false);
+			Gfx.rrect(g, x + 7f, y + TITLE_H, w - 14f, 0.8f, 0.4f,
+					HudStyle.opacity(0x35FFFFFF, 0.8f), 0x00000000, 0, 0f);
+
+			for (int i = 0; i < options.size(); i++) {
+				float rowY = y + TITLE_H + 2f + i * ITEM_H;
+				ModuleDef option = options.get(i);
+				boolean hover = mx >= x + 3f && mx <= x + w - 3f
+						&& my >= rowY && my <= rowY + ITEM_H - 1f;
+				if (hover) {
+					Gfx.rrect(g, x + 3f, rowY, w - 6f, ITEM_H - 1f, 5f,
+							HudStyle.opacity(0x20FFFFFF, 1f), HudStyle.opacity(0x20FFFFFF, 1f), 0, 0f);
+				}
+				Gfx.textAtSize(g, font, option.title(), x + 9f, rowY + 4.4f, 6.2f,
+						option.enabled() ? HudStyle.TEXT : HudStyle.MUTED, false);
+				drawSwitch(g, x + w - 9f - SWITCH_W, rowY + (ITEM_H - SWITCH_H) / 2f - 1f,
+						option.enabled());
+			}
+
+			float hideY = y + TITLE_H + 2f + options.size() * ITEM_H;
+			boolean hideHover = mx >= x + 3f && mx <= x + w - 3f
+					&& my >= hideY && my <= hideY + ITEM_H - 1f;
+			if (hideHover) {
+				Gfx.rrect(g, x + 3f, hideY, w - 6f, ITEM_H - 1f, 5f,
+						HudStyle.opacity(0x24E0707A, 1f), HudStyle.opacity(0x24E0707A, 1f), 0, 0f);
+			}
+			Gfx.textAtSize(g, font, "Hide element", x + 9f, hideY + 4.4f, 6.2f,
+					hideHover ? 0xFFFF9AA2 : 0xFFE0707A, false);
+		}
+
+		void click(double mx, double my, int button) {
+			if (mx < x || mx > x + w || my < y || my > y + h) {
+				closed = true;
+				return;
+			}
+			if (button != 0 || my < y + TITLE_H) {
+				return;
+			}
+			int index = (int) ((my - y - TITLE_H - 2f) / ITEM_H);
+			if (index >= 0 && index < options.size()) {
+				options.get(index).activate();
+				PvpConfig.get().save();
+			} else if (index == options.size()) {
+				if (parent != null) {
+					parent.setEnabled(false);
+					PvpConfig.get().save();
+				}
+				closed = true;
+			}
+		}
+
+		private static void drawSwitch(GuiGraphics g, float x, float y, boolean enabled) {
+			float knob = SWITCH_H - 4f;
+			int track = enabled ? HudStyle.ACCENT : 0xFF30313B;
+			Gfx.rrect(g, x, y, SWITCH_W, SWITCH_H, SWITCH_H / 2f,
+					HudStyle.opacity(track, 0.88f), HudStyle.opacity(track, 0.88f), 0, 0f);
+			float knobX = x + 2f + (enabled ? SWITCH_W - 4f - knob : 0f);
+			Gfx.circle(g, knobX + knob / 2f, y + SWITCH_H / 2f, knob / 2f, 0xFFFFFFFF);
+		}
 	}
 }

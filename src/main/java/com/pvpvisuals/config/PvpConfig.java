@@ -5,6 +5,7 @@ import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+
 import com.pvpvisuals.hud.inventory.InventoryHudConfig;
 import com.pvpvisuals.render.particle.BlockParticleConfig;
 import com.pvpvisuals.render.particle.HitParticleConfig;
@@ -32,6 +33,12 @@ public final class PvpConfig {
 	public boolean hitParticles = true;
 	public boolean blockParticles = true;
 	public boolean targetHud = true;
+	/** Отображать броню и предметы в Target HUD. */
+	public boolean targetHudItems = true;
+	/** Показывать дистанцию до цели в Target HUD. */
+	public boolean targetHudDistance = true;
+	/** Выделять сущность, на которую наведён прицел, отдельным Target ESP. */
+	public boolean targetEsp = false;
 	public boolean damageNumbers = true;
 	public boolean critEffect = true;
 	public boolean trajectory = true;
@@ -42,12 +49,14 @@ public final class PvpConfig {
 	public boolean showIsland = true;
 	/** Виджет «Сейчас играет» в Island HUD. */
 	public NowPlayingSettings nowPlaying = new NowPlayingSettings();
+	/** Отдельная карточка Music HUD с синхронизированными субтитрами. */
+	public MusicHudSettings musicHud = new MusicHudSettings();
 	public ShaderSkySettings shaderSky = new ShaderSkySettings();
 	public FreelookSettings freelook = new FreelookSettings();
-	public SplashSettings splash = new SplashSettings();
-	public MenuSettings menu = new MenuSettings();
 	public BlockOverlaySettings blockOverlay = new BlockOverlaySettings();
 	public HitBoxSettings hitBox = new HitBoxSettings();
+	/** Независимые настройки Target ESP (не затрагивают обычный HitBox). */
+	public TargetEspSettings targetEspSettings = new TargetEspSettings();
 	public RadialMenuSettings radial = new RadialMenuSettings();
 	public ViewModelSettings viewModel = new ViewModelSettings();
 	public HandShaderSettings handShader = new HandShaderSettings();
@@ -125,6 +134,15 @@ public final class PvpConfig {
 	public boolean coordinatesDirection = true;
 	public boolean coordinatesNether = false;
 	public boolean moduleListGlow = true;
+	/** Сегменты Watermark в стиле Svintus. */
+	public boolean watermarkShowNick = true;
+	public boolean watermarkShowFps = true;
+	public boolean watermarkShowPing = true;
+	public boolean watermarkShowTime = true;
+	/** Отдельный HUD брони и предметов рук. */
+	public boolean armorHud = false;
+	public boolean armorHudHands = true;
+	public boolean armorHudPercent = true;
 	public LogoSettings logo = new LogoSettings();
 
 	// ---------- оформление меню ----------

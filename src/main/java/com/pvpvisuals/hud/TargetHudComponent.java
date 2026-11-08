@@ -26,9 +26,13 @@ public final class TargetHudComponent extends AbstractHudModule {
 	private static final int HEAD = 30;
 	private static final EquipmentSlot[] ARMOR = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
 
+	private static final long LINGER_MS = 1500L;
 	private float shownRatio = 1.0f;
 	private float shownAbs;
 	private float hurt;
+	private float visibleProgress;
+	private long lastSeenMs;
+	private long lastUpdateNs;
 	private LivingEntity lastTarget;
 
 	@Override public String id() { return "target_hud"; }
@@ -42,43 +46,53 @@ public final class TargetHudComponent extends AbstractHudModule {
 	@Override
 	protected void drawContent(GuiGraphics g, boolean preview) {
 		Minecraft mc = Minecraft.getInstance();
-		LivingEntity target = preview ? null : HudManager.currentTarget(mc);
-		if (!preview && target == null) {
+		long nowMs = System.currentTimeMillis();
+		LivingEntity candidate = preview ? mc.player : HudManager.currentTarget(mc);
+		if (candidate != null && candidate.isAlive()) {
+			if (candidate != lastTarget) {
+				shownRatio = Mth.clamp(candidate.getHealth() / Math.max(1f, candidate.getMaxHealth()), 0f, 1f);
+				shownAbs = 0f;
+			}
+			lastTarget = candidate;
+			lastSeenMs = nowMs;
+		}
+		boolean active = lastTarget != null && lastTarget.isAlive()
+				&& (preview || nowMs - lastSeenMs < LINGER_MS);
+		long nowNs = System.nanoTime();
+		float dt = lastUpdateNs == 0L ? 1f / 60f
+				: Mth.clamp((nowNs - lastUpdateNs) / 1_000_000_000f, 0f, 0.05f);
+		lastUpdateNs = nowNs;
+		float wanted = active ? 1f : 0f;
+		visibleProgress += (wanted - visibleProgress) * (1f - (float) Math.exp(-dt * 14f));
+		if (!active && visibleProgress < 0.01f) {
+			visibleProgress = 0f;
 			lastTarget = null;
+		}
+		LivingEntity target = lastTarget;
+		if (target == null || visibleProgress <= 0.005f) {
 			return;
 		}
+
 		EchoTheme.sync();
 		Font font = mc.font;
-
-		String name;
-		float hp;
-		float max;
-		float abs;
-		float dist;
-		boolean hit;
-		if (target != null) {
-			name = target.getName().getString();
-			hp = target.getHealth();
-			max = Math.max(1.0f, target.getMaxHealth());
-			abs = target.getAbsorptionAmount();
-			dist = mc.player.distanceTo(target);
-			hit = target.hurtTime > 0;
-			if (target != lastTarget) { // новая цель: полоса не «ползёт» от прошлого значения
-				shownRatio = Mth.clamp(hp / max, 0f, 1f);
-				shownAbs = 0f;
-				lastTarget = target;
-			}
-		} else {
-			name = "Steve";
-			hp = 14.5f;
-			max = 20.0f;
-			abs = 0f;
-			dist = 3.2f;
-			hit = false;
-		}
+		String name = target.getName().getString();
+		float hp = target.getHealth();
+		float max = Math.max(1.0f, target.getMaxHealth());
+		float abs = target.getAbsorptionAmount();
+		float dist = mc.player == null ? 0f : mc.player.distanceTo(target);
+		boolean hit = target.hurtTime > 0;
 		shownRatio += (Mth.clamp(hp / max, 0f, 1f) - shownRatio) * 0.15f;
 		shownAbs += (Mth.clamp(abs / max, 0f, 1f) - shownAbs) * 0.15f;
 		hurt += ((hit ? 1f : 0f) - hurt) * 0.25f;
+
+		float oldAlpha = HudAlpha.current;
+		g.pose().pushMatrix();
+		try {
+			HudAlpha.current = oldAlpha * visibleProgress;
+			float scale = 0.92f + 0.08f * visibleProgress;
+			g.pose().translate(W / 2f, contentHeight() / 2f);
+			g.pose().scale(scale, scale);
+			g.pose().translate(-W / 2f, -contentHeight() / 2f);
 
 		int w = W;
 		int h = contentHeight();
@@ -101,14 +115,22 @@ public final class TargetHudComponent extends AbstractHudModule {
 		int tx = hx + HEAD + 7;
 		int right = w - PAD;
 		int rowW = right - tx;
-		String distText = String.format("%.1fm", dist);
-		int distW = Gfx.width(font, distText) + 4;
+		String distText = PvpConfig.get().targetHudDistance && target != mc.player
+				? String.format(java.util.Locale.ROOT, "%.1fm", dist) : "";
+		int distW = distText.isEmpty() ? 0 : Gfx.widthAtSize(font, distText, 5.6f) + 4;
 		String shown = name;
-		while (shown.length() > 1 && Gfx.width(font, shown) > rowW - distW) {
+		while (shown.length() > 1 && Gfx.widthAtSize(font, shown + "…", 7.2f) > rowW - distW) {
 			shown = shown.substring(0, shown.length() - 1);
 		}
-		g.drawString(font, shown, tx, hy + 1, HudAlpha.mul(HudStyle.TEXT), false);
-		g.drawString(font, distText, right - distW + 4, hy + 1, HudAlpha.mul(EchoTheme.DIM), false);
+		if (!shown.equals(name)) {
+			shown += "…";
+		}
+		Gfx.textAtSize(g, font, shown, tx, hy + 2f, 7.2f,
+				HudAlpha.mul(HudStyle.TEXT), false);
+		if (!distText.isEmpty()) {
+			Gfx.textAtSize(g, font, distText, right - distW + 4, hy + 3.1f, 5.6f,
+					HudAlpha.mul(EchoTheme.DIM), false);
+		}
 
 		// полоса здоровья + значение
 		int barY = hy + 12;
@@ -125,10 +147,11 @@ public final class TargetHudComponent extends AbstractHudModule {
 			Gfx.rrect(g, tx, barY, aw, barH, barH / 2f, HudAlpha.mul(0xD0F5C542), HudAlpha.mul(0xD0F5C542), 0, 0f);
 		}
 		HudIcons.heart(g, right - 21, barY + barH / 2f, 2.6f, HudAlpha.mul(0xFFFF5A6A));
-		g.drawString(font, String.format("%.1f", hp + abs), right - 15, barY - 2, HudAlpha.mul(HudStyle.TEXT), false);
+		Gfx.textAtSize(g, font, String.format(java.util.Locale.ROOT, "%.1f", hp + abs),
+				right - 15, barY - 2f, 5.8f, HudAlpha.mul(HudStyle.TEXT), false);
 
 		// предметы и броня
-		if (target != null) {
+		if (PvpConfig.get().targetHudItems) {
 			int iy = hy + 20;
 			int step = 13;
 			int ix = tx;
@@ -137,6 +160,10 @@ public final class TargetHudComponent extends AbstractHudModule {
 			for (EquipmentSlot s : ARMOR) {
 				ix = slot(g, target.getItemBySlot(s), ix, iy) + step;
 			}
+		}
+		} finally {
+			g.pose().popMatrix();
+			HudAlpha.current = oldAlpha;
 		}
 	}
 
@@ -150,10 +177,13 @@ public final class TargetHudComponent extends AbstractHudModule {
 		}
 		String letter = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(java.util.Locale.ROOT);
 		g.pose().pushMatrix();
-		g.pose().translate(x + size / 2f - Gfx.width(font, letter) * 1.4f / 2f, y + size / 2f - 5f);
-		g.pose().scale(1.4f, 1.4f);
-		g.drawString(font, letter, 0, 0, HudAlpha.mul(EchoTheme.ACCENT_TEXT), false);
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x + size / 2f - Gfx.width(font, letter) * 1.4f / 2f, y + size / 2f - 5f);
+			g.pose().scale(1.4f, 1.4f);
+			g.drawString(font, letter, 0, 0, HudAlpha.mul(EchoTheme.ACCENT_TEXT), false);
+		} finally {
+			g.pose().popMatrix();
+		}
 	}
 
 	/** Слот 10×10 с предметом и полоской прочности; возвращает x слота. */
@@ -163,10 +193,13 @@ public final class TargetHudComponent extends AbstractHudModule {
 			return x;
 		}
 		g.pose().pushMatrix();
-		g.pose().translate(x, y);
-		g.pose().scale(10f / 16f, 10f / 16f);
-		g.renderItem(stack, 0, 0); // ПРОВЕРИТЬ: GuiGraphics#renderItem(ItemStack, int, int) в 1.21.11
-		g.pose().popMatrix();
+		try {
+			g.pose().translate(x, y);
+			g.pose().scale(10f / 16f, 10f / 16f);
+			g.renderItem(stack, 0, 0);
+		} finally {
+			g.pose().popMatrix();
+		}
 		if (stack.isDamageableItem() && stack.getDamageValue() > 0) {
 			int max = stack.getMaxDamage();
 			float ratio = Mth.clamp((max - stack.getDamageValue()) / (float) max, 0f, 1f);

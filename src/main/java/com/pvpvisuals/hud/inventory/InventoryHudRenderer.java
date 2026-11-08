@@ -1,6 +1,7 @@
 package com.pvpvisuals.hud.inventory;
 
 import com.pvpvisuals.gui.echo.EchoScreen;
+import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.hud.HudAlpha;
 import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.hud.HudStyle;
@@ -116,9 +117,11 @@ public final class InventoryHudRenderer {
 		int pw = Math.max(contentW, 54) + PAD * 2;
 		int ph = HEADER + contentH + PAD;
 
-		// единый стиль HUD
+		// Общая стеклянная поверхность и типографика всех HUD-виджетов.
 		HudStyle.panel(g, 0, 0, pw, ph, HudStyle.RADIUS, op);
-		g.drawString(font, "Inventory", PAD, 6, scaleAlpha(HudStyle.TEXT, op), true);
+		HudStyle.accentWash(g, 0, 0, 58, HEADER, HudStyle.RADIUS, op);
+		Gfx.textAtSize(g, font, "Inventory", PAD, 5.1f, 6.4f,
+				scaleAlpha(HudStyle.TEXT, op), false);
 
 		int ox = PAD;
 		int oy = HEADER;

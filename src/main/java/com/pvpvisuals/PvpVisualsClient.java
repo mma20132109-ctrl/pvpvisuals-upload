@@ -21,8 +21,10 @@ public class PvpVisualsClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		com.pvpvisuals.gui.mainmenu.PvpMainMenuScreen.register();
 		PvpConfig.load();
 		SvintusRenderEngine.initialize();
+		com.pvpvisuals.render.targetesp.TargetScanRenderTypes.initialize();
 		com.pvpvisuals.keybind.KeybindManager.register();
 
 		// Регистрируется до обработчика CLIENT_STOPPING конфига: гамма восстанавливается раньше, чем пишется конфиг.
@@ -51,6 +53,7 @@ public class PvpVisualsClient implements ClientModInitializer {
 		ChinaHatModule.register();
 		com.pvpvisuals.render.blockoverlay.BlockOverlayModule.register();
 		com.pvpvisuals.render.hitbox.HitBoxModule.register();
+		com.pvpvisuals.render.targetesp.TargetEspModule.register();
 		ParticleRenderer.register();
 		TrajectoryModule.register();
 	}

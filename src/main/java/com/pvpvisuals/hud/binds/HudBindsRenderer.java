@@ -14,6 +14,7 @@ import com.pvpvisuals.gui.rival.ModuleDef;
 import com.pvpvisuals.gui.rival.ModuleRegistry;
 import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.gui.echo.EchoTheme;
+import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.hud.HudAlpha;
 import com.pvpvisuals.hud.HudStyle;
 import com.pvpvisuals.keybind.KeybindManager;
@@ -152,9 +153,9 @@ public final class HudBindsRenderer {
 		l.bindFirst = s.showBindFirst;
 		l.name = l.module;
 		l.bind = s.showBindFirst ? key : "[" + key + "]";
-		l.nameW = font.width(l.name);
-		l.bindW = font.width(l.bind);
-		l.width = l.nameW + font.width(" ") + l.bindW;
+		l.nameW = Gfx.widthAtSize(font, l.name, 6.2f);
+		l.bindW = Gfx.widthAtSize(font, l.bind, 5.4f);
+		l.width = l.nameW + Gfx.widthAtSize(font, " ", 5.4f) + l.bindW;
 		dirtySort = true;
 	}
 
@@ -170,9 +171,10 @@ public final class HudBindsRenderer {
 	public int width() {
 		ensureFresh();
 		Font f = Minecraft.getInstance().font;
-		int w = f.width("Binds") + f.width("99/99") + GAP;
+		int w = Gfx.widthAtSize(f, "Binds", 6.8f) + Gfx.widthAtSize(f, "99/99", 5.4f) + GAP;
 		if (lines.isEmpty()) {
-			w = Math.max(w, f.width("Fullbright") + f.width("[G]") + GAP + 2 * SIDE);
+			w = Math.max(w, Gfx.widthAtSize(f, "Fullbright", 6.2f)
+					+ Gfx.widthAtSize(f, "[G]", 5.4f) + GAP + 2 * SIDE);
 		}
 		for (int i = 0; i < lines.size(); i++) {
 			w = Math.max(w, lines.get(i).width + GAP);
@@ -205,7 +207,8 @@ public final class HudBindsRenderer {
 		int w = width();
 		int h = height();
 		HudStyle.panel(g, 0, 0, w, h);
-		g.drawString(font, "Binds", SIDE, 6, HudAlpha.mul(HudStyle.TEXT), true);
+		HudStyle.accentWash(g, 0, 0, 42, HEAD_H, 8, HudAlpha.current);
+		Gfx.textAtSize(g, font, "Binds", SIDE, 5.4f, 6.8f, HudAlpha.mul(HudStyle.TEXT), false);
 
 		int pages = pages();
 		if (pages > 1) {
@@ -214,7 +217,9 @@ public final class HudBindsRenderer {
 				pageShown = page;
 				pageText = (page + 1) + "/" + pages;
 			}
-			g.drawString(font, pageText, w - SIDE - font.width(pageText), 6, HudAlpha.mul(HudStyle.ACCENT), false);
+			int pageW = Gfx.widthAtSize(font, pageText, 5.4f);
+			Gfx.textAtSize(g, font, pageText, w - SIDE - pageW, 6.1f, 5.4f,
+					HudAlpha.mul(HudStyle.ACCENT), false);
 		}
 
 		if (lines.isEmpty()) {
@@ -244,12 +249,14 @@ public final class HudBindsRenderer {
 			boolean bindFirst, boolean on, float k) {
 		int nameC = col(on ? HudStyle.TEXT : EchoTheme.DIM, k);
 		int bindC = col(on ? HudStyle.ACCENT : EchoTheme.DIM, k);
+		int bindW = Gfx.widthAtSize(font, bind, 5.4f);
 		if (bindFirst) {
-			g.drawString(font, bind, SIDE, y, bindC, false);
-			g.drawString(font, name, SIDE + font.width(bind) + font.width(" "), y, nameC, on);
+			Gfx.textAtSize(g, font, bind, SIDE, y + 1.8f, 5.4f, bindC, false);
+			float nameX = SIDE + bindW + Gfx.widthAtSize(font, " ", 5.4f);
+			Gfx.textAtSize(g, font, name, nameX, y + 1.5f, 6.2f, nameC, on);
 		} else {
-			g.drawString(font, name, SIDE, y, nameC, on);
-			g.drawString(font, bind, w - SIDE - font.width(bind), y, bindC, false);
+			Gfx.textAtSize(g, font, name, SIDE, y + 1.5f, 6.2f, nameC, on);
+			Gfx.textAtSize(g, font, bind, w - SIDE - bindW, y + 1.8f, 5.4f, bindC, false);
 		}
 	}
 }

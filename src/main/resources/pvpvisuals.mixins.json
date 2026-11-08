@@ -1,30 +1,26 @@
 {
-	"required": true,
-	"package": "com.pvpvisuals.mixin",
-	"compatibilityLevel": "JAVA_21",
-	"client": [
-		"CapeLayerMixin",
-		"SkyRendererMixin",
-		"CloudRendererMixin",
-		"FreelookCameraMixin",
-		"FreelookMouseMixin",
-		"LoadingOverlayMixin",
-		"MinecraftScreenMixin",
-		"ScreenBackgroundMixin",
-		"AbstractButtonMixin",
-		"AbstractSliderButtonMixin",
-		"EditBoxMixin",
-		"AbstractSelectionListMixin",
-		"LevelLoadingScreenMixin",
-		"GenericMessageScreenMixin",
-		"FocusableTextWidgetMixin",
-		"ScreenDiagMixin",
-		"ItemInHandRendererMixin",
-		"GameRendererBobMixin",
-		"OptionInstanceAccessor",
-		"GuiGraphicsAccessor"
-	],
-	"injectors": {
-		"defaultRequire": 1
-	}
+  "required": true,
+  "package": "com.pvpvisuals.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "CapeLayerMixin",
+    "SkyRendererMixin",
+    "CloudRendererMixin",
+    "FreelookCameraMixin",
+    "FreelookMouseMixin",
+    "ScreenDiagMixin",
+    "ItemInHandRendererMixin",
+    "GameRendererBobMixin",
+    "OptionInstanceAccessor",
+    "GuiGraphicsAccessor",
+    "GameRendererLiquidGlassMixin",
+    "TargetScanEntityRenderStateMixin",
+    "TargetScanLivingEntityRendererMixin",
+    "TargetScanHumanoidArmorLayerMixin",
+    "TargetScanEquipmentLayerRendererAccessor",
+    "MinecraftUserAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
 }

@@ -273,8 +273,10 @@ public final class SettingsView {
 			Gfx.alpha = prev;
 			return;
 		}
-		Gfx.fill(g, x, ry, rw, rh, 7, RoundedRender.lerp(EchoTheme.CARD, EchoTheme.CARD_HOVER, hoverProgress));
-		Gfx.ring(g, x, ry, rw, rh, 7, 1, RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hoverProgress));
+		int rowTop = RoundedRender.lerp(0x624B5870, 0x805D6C83, hoverProgress);
+		int rowBottom = RoundedRender.lerp(0x7D293448, 0x963A4960, hoverProgress);
+		Gfx.glass(g, x, ry, rw, rh, 7, rowTop, rowBottom,
+				RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hoverProgress));
 
 		int tx = x + 10 + e.depth * 8 - 8;
 		boolean lit = d.enabled() || d.isGroup() || d.isSlider();
@@ -365,8 +367,8 @@ public final class SettingsView {
 		PopupBounds bounds = popupBounds();
 		if (bounds == null) return;
 		List<String> values = dropdown.def.choices();
-		Gfx.fill(g, bounds.x(), bounds.y(), bounds.w(), bounds.h(), 7, 0xF01B1E28);
-		Gfx.ring(g, bounds.x(), bounds.y(), bounds.w(), bounds.h(), 7, 1, EchoTheme.CARD_BORDER_HOT);
+		Gfx.glass(g, bounds.x(), bounds.y(), bounds.w(), bounds.h(), 7,
+				0xA65A6880, 0xC0273040, EchoTheme.CARD_BORDER_HOT);
 		for (int i = 0; i < bounds.visibleCount(); i++) {
 			String value = values.get(i);
 			int iy = bounds.y() + 2 + i * bounds.itemH();
@@ -382,8 +384,10 @@ public final class SettingsView {
 
 	private void renderTextRow(GuiGraphics g, Font font, ModuleEntry e, int ry, int rh, int rw, boolean hover) {
 		boolean edit = e == editing;
-		Gfx.fill(g, x, ry, rw, rh, 7, hover || edit ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
-		Gfx.ring(g, x, ry, rw, rh, 7, 1, edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
+		Gfx.glass(g, x, ry, rw, rh, 7,
+				edit || hover ? 0x895C6C84 : 0x704B5870,
+				edit || hover ? 0xA13A4960 : 0x8A293448,
+				edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
 		int labelX = x + 10 + e.depth * 8 - 8;
 		String label = Gfx.trimAtSize(font, e.def.title(), Math.max(12, x + (int) (rw * 0.36f) - labelX - 12), 6.6f);
 		Gfx.textAtSize(g, font, label, labelX, ry + (rh - 7) / 2, 6.6f, EchoTheme.TEXT, false);

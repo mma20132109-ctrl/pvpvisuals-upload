@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.pvpvisuals.PvpVisualsClient;
 import com.pvpvisuals.config.PvpConfig;
-import com.pvpvisuals.gui.rival.NotificationToast;
 import com.pvpvisuals.gui.echo.EchoScreen;
 import com.pvpvisuals.gui.rival.TopBar;
 import com.pvpvisuals.hud.inventory.InventoryHudComponent;
@@ -25,13 +24,17 @@ import net.minecraft.world.entity.LivingEntity;
 /** Регистрирует HUD-слой мода и рисует все модули. */
 public final class HudManager {
 	public static final TargetHudComponent TARGET = new TargetHudComponent();
+	public static final ArmorHudModule ARMOR = new ArmorHudModule();
+	public static final NotificationsHudModule NOTIFICATIONS = new NotificationsHudModule();
 	public static final ComboComponent COMBO = new ComboComponent();
 	public static final InventoryHudComponent INVENTORY = new InventoryHudComponent();
 	public static final WatermarkModule WATERMARK = new WatermarkModule();
 	public static final CoordinatesHudModule COORDINATES = new CoordinatesHudModule();
 	public static final ModuleListHudModule MODULE_LIST = new ModuleListHudModule();
+	public static final MusicHudModule MUSIC = new MusicHudModule();
 	public static final com.pvpvisuals.hud.binds.HudBindsModule HUD_BINDS = new com.pvpvisuals.hud.binds.HudBindsModule();
-	public static final List<AbstractHudModule> COMPONENTS = List.of(WATERMARK, COORDINATES, MODULE_LIST, TARGET, COMBO, INVENTORY, HUD_BINDS);
+	public static final List<AbstractHudModule> COMPONENTS = List.of(
+			WATERMARK, COORDINATES, MODULE_LIST, MUSIC, TARGET, ARMOR, NOTIFICATIONS, COMBO, INVENTORY, HUD_BINDS);
 
 	private static final TopBar ISLAND = new TopBar();
 
@@ -77,10 +80,6 @@ public final class HudManager {
 		// Островок сверху всегда виден; в меню (EchoScreen) он скрыт.
 		if (PvpConfig.get().showIsland && !(mc.screen instanceof EchoScreen)) {
 			ISLAND.render(g, mc.font, g.guiWidth());
-		}
-
-		if (!(mc.screen instanceof EchoScreen)) {
-			NotificationToast.render(g, mc.font, g.guiWidth(), g.guiHeight());
 		}
 
 		// В чате элементы рисует HudChatEditor (превью + перетаскивание), здесь не дублируем.

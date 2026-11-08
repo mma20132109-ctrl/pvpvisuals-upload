@@ -20,8 +20,22 @@ import org.joml.Matrix3x2f;
 public final class LiquidGlassRenderer {
     private static TextureTarget backdrop;
     private static GpuSampler backdropSampler;
+    private static boolean capturePending;
 
     private LiquidGlassRenderer() { }
+
+    /** Schedule the copy for the actual GUI draw pass, after the backdrop has reached the GPU. */
+    public static void scheduleBackgroundCapture() {
+        capturePending = true;
+    }
+
+    /** Called by GameRendererLiquidGlassMixin between the background and glass render passes. */
+    public static boolean capturePendingBackground() {
+        if (!capturePending) return false;
+        capturePending = false;
+        captureBackground();
+        return true;
+    }
 
     /** Copies the current scene into a texture before Echo submits its GUI elements. */
     public static void captureBackground() {
@@ -57,19 +71,55 @@ public final class LiquidGlassRenderer {
         float alpha = Math.max(0f, Math.min(1f, opacity));
         blurRect(graphics, x, y, width, height, radius,
                 withAlpha(EchoTheme.WIN_TOP, alpha), withAlpha(EchoTheme.WIN_BOTTOM, alpha));
-        roundRect(graphics, x + 1f, y + 1f, width - 2f, Math.min(54f, height * 0.22f),
+        // Broad reflected light near the upper edge, like a curved glass sheet.
+        roundRect(graphics, x + 1f, y + 1f, width - 2f, Math.min(62f, height * 0.28f),
                 Math.max(1f, radius - 1f),
-                withAlpha(0x18FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+                withAlpha(0x30FFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+        // Bright outer rim plus a softer inner shadow create visible glass thickness.
         roundRect(graphics, x + 0.6f, y + 0.6f, width - 1.2f, height - 1.2f,
-                Math.max(1f, radius - 0.6f), 0, 0, withAlpha(0x55FFFFFF, alpha), 0.8f);
+                Math.max(1f, radius - 0.6f), 0, 0, withAlpha(0x78FFFFFF, alpha), 0.9f);
+        roundRect(graphics, x + 1.8f, y + 1.8f, width - 3.6f, height - 3.6f,
+                Math.max(1f, radius - 1.8f), 0, 0, withAlpha(0x26000000, alpha), 0.8f);
+    }
+
+    /** Frosted glass surface for module cards, fields and compact settings panels. */
+    public static void surface(GuiGraphics graphics, float x, float y, float width, float height, float radius,
+            int tint, int border) {
+        surface(graphics, x, y, width, height, radius, tint, withAlpha(tint, 0.76f), border, 1f);
     }
 
     public static void surface(GuiGraphics graphics, float x, float y, float width, float height, float radius,
-            int tint, int border) {
-        blurRect(graphics, x, y, width, height, radius, tint, withAlpha(tint, 0.72f));
+            int topTint, int bottomTint, int border, float opacity) {
+        if (width <= 0f || height <= 0f) return;
+        float alpha = Math.max(0f, Math.min(1f, opacity));
+        float safeRadius = Math.max(1f, Math.min(radius, Math.min(width, height) * 0.5f));
+
+        // First refract and diffuse the live scene. The shader also adds the
+        // Fresnel shadow and specular reflection at the curved glass boundary.
+        blurRect(graphics, x, y, width, height, safeRadius,
+                withAlpha(topTint, alpha), withAlpha(bottomTint, alpha));
+
+        // iOS 27's updated material has a darker edge for depth separation,
+        // with a brighter specular rim sitting just inside it.
+        roundRect(graphics, x + 0.35f, y + 0.35f, width - 0.7f, height - 0.7f,
+                Math.max(1f, safeRadius - 0.35f), 0, 0, withAlpha(0x50000000, alpha), 1.05f);
         if (border != 0) {
-            roundRect(graphics, x, y, width, height, radius, 0, 0, border, 0.8f);
+            roundRect(graphics, x + 0.65f, y + 0.65f, width - 1.3f, height - 1.3f,
+                    Math.max(1f, safeRadius - 0.65f), 0, 0, withAlpha(border, alpha), 0.75f);
         }
+        roundRect(graphics, x + 1.65f, y + 1.65f, width - 3.3f, height - 3.3f,
+                Math.max(1f, safeRadius - 1.65f), 0, 0, withAlpha(0x2A000000, alpha), 0.65f);
+
+        // Broad upper reflection and a narrow white glint make the surface
+        // read as curved glass instead of a flat translucent rectangle.
+        float sheenHeight = Math.min(25f, Math.max(5f, height * 0.30f));
+        roundRect(graphics, x + 1.2f, y + 1.2f, width - 2.4f, sheenHeight,
+                Math.max(1f, safeRadius - 1.2f),
+                withAlpha(0x2CFFFFFF, alpha), withAlpha(0x00FFFFFF, alpha), 0, 0f);
+        float glintInset = Math.min(safeRadius * 1.1f, width * 0.22f);
+        float glintWidth = Math.max(1f, width - glintInset * 2f);
+        roundRect(graphics, x + glintInset, y + 1.25f, glintWidth, 1.05f, 0.6f,
+                withAlpha(0x52FFFFFF, alpha), withAlpha(0x08FFFFFF, alpha), 0, 0f);
     }
 
     /** Submits a locally blurred, rounded glass panel. */
@@ -90,7 +140,7 @@ public final class LiquidGlassRenderer {
         GpuTextureView view = backdrop.getColorTextureView();
         TextureSetup textureSetup = new TextureSetup(view, null, null, backdropSampler, null, null);
         float glassOpacity = Math.max(0f, Math.min(1f, com.pvpvisuals.config.PvpConfig.get().gui.panelOpacity));
-        float tintStrength = 0.18f * glassOpacity;
+        float tintStrength = 0.62f * glassOpacity;
         graphicsState(graphics).submitGuiElement(new LiquidGlassBlurState(pose, textureSetup,
                 x, y, width, height, radius,
                 tint(top, tintStrength), tint(top, tintStrength), tint(bottom, tintStrength), tint(bottom, tintStrength), bounds));
@@ -117,6 +167,7 @@ public final class LiquidGlassRenderer {
     }
 
     public static void close() {
+        capturePending = false;
         if (backdrop != null) {
             backdrop.destroyBuffers();
             backdrop = null;
