@@ -48,11 +48,26 @@ public final class TargetEspModule {
     private static float distance;
     private static boolean allied;
     private static boolean invisible;
+    private static LivingEntity trackedScanTarget;
 
     private TargetEspModule() { }
 
     public static Frame frame() {
         return FRAME;
+    }
+
+    /** Target entity currently carrying the model-surface scan effect. */
+    public static boolean isScanTarget(LivingEntity entity) {
+        PvpConfig config = PvpConfig.get();
+        return entity != null
+                && entity == trackedScanTarget
+                && fade > 0.001f
+                && config.targetEsp
+                && TargetEspMode.byName(config.targetEspSettings.mode) == TargetEspMode.SCAN;
+    }
+
+    public static float scanAnimation() {
+        return Mth.clamp(fade, 0.0f, 1.0f);
     }
 
     public static void register() {
@@ -72,6 +87,7 @@ public final class TargetEspModule {
         if (!config.targetEsp || mc.level == null || mc.player == null) {
             fade = 0.0f;
             hasBounds = false;
+            trackedScanTarget = null;
             FRAME.visible = false;
             return;
         }
@@ -85,6 +101,7 @@ public final class TargetEspModule {
             AABB box = interpolatedBox(target, mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
             Frustum frustum = context.frustum();
             if (frustum == null || frustum.isVisible(box)) {
+                trackedScanTarget = target;
                 LAST_BOUNDS[0] = box.minX;
                 LAST_BOUNDS[1] = box.minY;
                 LAST_BOUNDS[2] = box.minZ;
@@ -148,6 +165,7 @@ public final class TargetEspModule {
         fade = Math.max(0.0f, fade - dt / duration);
         if (fade <= 0.001f) {
             hasBounds = false;
+            trackedScanTarget = null;
         }
     }
 }
