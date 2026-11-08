@@ -170,8 +170,8 @@ public class EchoMainMenuScreen extends TitleScreen {
 		Gfx.glass(g, profileX, profileY, profileW, 34f, 10f,
 				0xA91B1E2B, 0x9410121C, 0x55FFFFFF);
 		Gfx.circle(g, profileX + 17f, profileY + 17f, 5f, EchoTheme.shift(0xFF9B5CFF));
-		Gfx.text(g, this.font, playerLabel, profileX + 29f, profileY + 6f, 0xFF9B8ABF);
-		Gfx.text(g, this.font, playerName, profileX + 29f, profileY + 18f, 0xFFFFFFFF);
+		Gfx.text(g, this.font, playerLabel, Math.round(profileX + 29f), Math.round(profileY + 6f), 0xFF9B8ABF);
+		Gfx.text(g, this.font, playerName, Math.round(profileX + 29f), Math.round(profileY + 18f), 0xFFFFFFFF);
 		Gfx.alpha = 1f;
 
 		// Frosted-glass dock backing, matching the source menu's bottom navigation.
