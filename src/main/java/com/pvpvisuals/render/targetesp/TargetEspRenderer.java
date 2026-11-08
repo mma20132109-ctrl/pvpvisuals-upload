@@ -83,7 +83,7 @@ public final class TargetEspRenderer {
 
         try {
             TargetEspSettings settings = PvpConfig.get().targetEspSettings;
-            // Ghosts use the procedural three-wisp ribbon renderer; bypass line/box geometry for this style.
+            // Ghosts use the volumetric three-spirit mesh renderer; bypass line/box geometry for this style.
             TargetEspMode selectedMode = TargetEspMode.byName(settings.mode);
             if (selectedMode == TargetEspMode.GHOSTS) {
                 GhostEspRenderer.render(context);
