@@ -37,7 +37,7 @@ public final class ModuleRegistry {
 				})
 						.child(ModuleDef.choice("Style", Category.VISUAL,
 								() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode).title,
-								List.of("Ghosts", "Circle", "Square", "3D Box"),
+								List.of("Ghosts", "Circle", "Square", "3D Box", "Aura"),
 								v -> c.targetEspSettings.mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(v).name()))
 						.child(ModuleDef.choice("Color Mode", Category.VISUAL,
 								() -> targetEspColorTitle(c.targetEspSettings.colorMode),
