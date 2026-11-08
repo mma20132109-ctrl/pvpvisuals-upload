@@ -3,7 +3,6 @@ package com.pvpvisuals.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.config.TargetEspSettings;
-import com.pvpvisuals.render.targetesp.TargetEspMode;
 import com.pvpvisuals.render.targetesp.TargetEspModule;
 import com.pvpvisuals.render.targetesp.TargetScanRenderState;
 import com.pvpvisuals.render.targetesp.TargetScanRenderer;
@@ -73,7 +72,7 @@ public abstract class TargetScanHumanoidArmorLayerMixin<
         Identifier armorTexture = layers.getFirst().getTextureLocation(layerType);
 
         PvpConfig config = PvpConfig.get();
-        if (!config.targetEsp || TargetEspMode.byName(config.targetEspSettings.mode) != TargetEspMode.SCAN) {
+        if (!config.targetEsp) {
             return;
         }
         TargetEspSettings settings = config.targetEspSettings;
