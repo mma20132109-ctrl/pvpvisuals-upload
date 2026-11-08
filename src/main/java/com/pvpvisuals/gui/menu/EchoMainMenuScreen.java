@@ -37,6 +37,7 @@ public class EchoMainMenuScreen extends TitleScreen {
 	private final List<EchoButton> main = new ArrayList<>();
 	private EchoButton btnExit;
 	private EchoButton btnLang;
+	private EchoButton btnVisuals;
 	private EchoButton pressed;
 	private EchoButton pending;
 	private long pendingAt;
@@ -67,6 +68,7 @@ public class EchoMainMenuScreen extends TitleScreen {
 		btnExit = new EchoButton("", EchoButton.Icon.EXIT, mc::stop);
 		btnLang = new EchoButton("", EchoButton.Icon.GLOBE,
 				() -> mc.setScreen(new LanguageSelectScreen(this, mc.options, mc.getLanguageManager())));
+		btnVisuals = new EchoButton("", EchoButton.Icon.VISUALS, this::cycleBackground);
 		layout();
 	}
 
@@ -92,6 +94,7 @@ public class EchoMainMenuScreen extends TitleScreen {
 		}
 		int s = 20;
 		btnExit.setBounds(this.width - s - 8, this.height - s - 8, s, s);
+		btnVisuals.setBounds(8, this.height - s - 8, s, s);
 		btnLang.setBounds(this.width - 2 * s - 14, this.height - s - 8, s, s);
 	}
 
@@ -173,8 +176,10 @@ public class EchoMainMenuScreen extends TitleScreen {
 		float pc = Gfx.ease((el - 280f - main.size() * 130f) / 450f);
 		update(btnExit, mx, my, dt, pc);
 		update(btnLang, mx, my, dt, pc);
+		update(btnVisuals, mx, my, dt, pc);
 		btnExit.render(g, this.font, pc, 0f);
 		btnLang.render(g, this.font, pc, 0f);
+		btnVisuals.render(g, this.font, pc, 0f);
 
 		if (cfg.menu.showVersionText) {
 			String v = FabricLoader.getInstance().getModContainer(PvpVisualsClient.MOD_ID)
@@ -184,6 +189,15 @@ public class EchoMainMenuScreen extends TitleScreen {
 			Gfx.text(g, this.font, text, 8, this.height - 8 - 9, 0xFF8E7BB8);
 			Gfx.alpha = 1f;
 		}
+	}
+
+	private void cycleBackground() {
+		PvpConfig cfg = PvpConfig.get();
+		String current = cfg.splash.splashBackground;
+		cfg.splash.splashBackground = "GRADIENT".equalsIgnoreCase(current) ? "SHADER"
+				: "SHADER".equalsIgnoreCase(current) ? "DARK" : "GRADIENT";
+		cfg.markDirtyQuiet();
+		cfg.save();
 	}
 
 	private void update(EchoButton b, int mx, int my, float dt, float appear) {
@@ -204,6 +218,7 @@ public class EchoMainMenuScreen extends TitleScreen {
 	private List<EchoButton> all() {
 		List<EchoButton> l = new ArrayList<>(main);
 		l.add(btnLang);
+		l.add(btnVisuals);
 		l.add(btnExit);
 		return l;
 	}
