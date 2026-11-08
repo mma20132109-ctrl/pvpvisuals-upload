@@ -69,20 +69,42 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     private void bindWorldList() {
         try {
-            worldList = null;
-            // Screen.children() is the event hierarchy and keeps the vanilla list
-            // available even after it is removed from the render pass.
+            WorldSelectionList foundList = null;
+
+            // Depending on the vanilla screen implementation, the list can be
+            // registered as an event child, a renderable, or both.
             for (var child : children()) {
                 if (child instanceof WorldSelectionList found) {
-                    worldList = found;
+                    foundList = found;
                     break;
                 }
             }
-            if (worldList == null) {
-                System.err.println("[pvpvisuals] WorldSelectionList не найден среди элементов экрана");
+            if (foundList == null) {
+                for (Class<?> type = getClass(); type != null && foundList == null; type = type.getSuperclass()) {
+                    for (Field field : type.getDeclaredFields()) {
+                        if (!List.class.isAssignableFrom(field.getType())) continue;
+                        field.setAccessible(true);
+                        Object value = field.get(this);
+                        if (value instanceof List<?> list) {
+                            for (Object element : list) {
+                                if (element instanceof WorldSelectionList found) {
+                                    foundList = found;
+                                    break;
+                                }
+                            }
+                        }
+                        if (foundList != null) break;
+                    }
+                }
+            }
+
+            if (foundList == null) {
+                worldList = null;
+                worldEntries.clear();
                 return;
             }
 
+            worldList = foundList;
             worldList.setAlpha(0f);
             try {
                 hideVanillaWorldList();
@@ -143,12 +165,15 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     }
 
     private void refreshWorldEntries() {
+        // Vanilla may finish constructing/registering the list after init().
+        if (worldList == null) bindWorldList();
         if (worldList == null) return;
+
         List<WorldSelectionList.WorldListEntry> latest = new ArrayList<>();
         for (WorldSelectionList.Entry entry : worldList.children()) {
             if (entry instanceof WorldSelectionList.WorldListEntry world) latest.add(world);
         }
-        if (latest.size() != worldEntries.size()) {
+        if (!latest.equals(worldEntries)) {
             worldEntries.clear();
             worldEntries.addAll(latest);
             worldIndex = Math.max(0, Math.min(worldEntries.size() - 1, worldIndex));
