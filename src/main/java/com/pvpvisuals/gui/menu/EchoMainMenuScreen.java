@@ -59,18 +59,18 @@ public class EchoMainMenuScreen extends TitleScreen {
 		// super.init() не вызываем: он создал бы ванильные кнопки и Realms
 		main.clear();
 		Minecraft mc = Minecraft.getInstance();
-		main.add(new EchoButton("Singleplayer", EchoButton.Icon.NONE,
+		main.add(new EchoButton("Singleplayer", EchoButton.Icon.SINGLEPLAYER,
 				() -> mc.setScreen(new SelectWorldScreen(this))));
-		main.add(new EchoButton("Multiplayer", EchoButton.Icon.NONE,
+		main.add(new EchoButton("Multiplayer", EchoButton.Icon.MULTIPLAYER,
 				() -> mc.setScreen(new JoinMultiplayerScreen(this))));
-		main.add(new EchoButton("Accounts", EchoButton.Icon.NONE,
+		main.add(new EchoButton("Accounts", EchoButton.Icon.ACCOUNTS,
 				() -> mc.setScreen(new EchoAccountManagerScreen(this))));
-		main.add(new EchoButton("Settings", EchoButton.Icon.NONE,
+		main.add(new EchoButton("Settings", EchoButton.Icon.SETTINGS,
 				() -> mc.setScreen(new OptionsScreen(this, mc.options))));
-		btnExit = new EchoButton("", EchoButton.Icon.EXIT, mc::stop);
-		btnLang = new EchoButton("", EchoButton.Icon.GLOBE,
+		btnExit = new EchoButton("Exit", EchoButton.Icon.EXIT, mc::stop);
+		btnLang = new EchoButton("Language", EchoButton.Icon.GLOBE,
 				() -> mc.setScreen(new LanguageSelectScreen(this, mc.options, mc.getLanguageManager())));
-		btnVisuals = new EchoButton("", EchoButton.Icon.VISUALS, this::cycleBackground);
+		btnVisuals = new EchoButton("Background", EchoButton.Icon.VISUALS, this::cycleBackground);
 		layout();
 	}
 
@@ -83,21 +83,24 @@ public class EchoMainMenuScreen extends TitleScreen {
 	}
 
 	private void layout() {
-		// Компактный нижний dock по мотивам Zenith MainMenu.
-		int bh = 28;
-		int gap = 8;
-		int available = Math.max(0, this.width - 40);
-		int bw = Math.max(76, Math.min(148, (available - (main.size() - 1) * gap) / Math.max(1, main.size())));
+		// Centered navigation dock with responsive width for smaller GUI scales.
+		int bh = 36;
+		int gap = this.width < 720 ? 5 : 9;
+		int available = Math.max(220, this.width - 52);
+		int bw = Math.max(76, Math.min(156,
+				(available - (main.size() - 1) * gap) / Math.max(1, main.size())));
 		int total = main.size() * bw + (main.size() - 1) * gap;
 		int left = (this.width - total) / 2;
-		int top = Math.max(8, this.height - bh - 24);
+		int top = Math.max(10, this.height - 68);
 		for (int i = 0; i < main.size(); i++) {
 			main.get(i).setBounds(left + i * (bw + gap), top, bw, bh);
 		}
-		int s = 20;
-		btnExit.setBounds(this.width - s - 8, this.height - s - 8, s, s);
-		btnVisuals.setBounds(8, this.height - s - 8, s, s);
-		btnLang.setBounds(this.width - 2 * s - 14, this.height - s - 8, s, s);
+
+		int utility = 26;
+		int utilityY = this.height - utility - 12;
+		btnVisuals.setBounds(12, utilityY, utility, utility);
+		btnLang.setBounds(this.width - utility * 2 - 18, utilityY, utility, utility);
+		btnExit.setBounds(this.width - utility - 12, utilityY, utility, utility);
 	}
 
 	@Override
@@ -159,7 +162,7 @@ public class EchoMainMenuScreen extends TitleScreen {
 
 		// Compact active-player card, inspired by the source menu's account header.
 		String playerName = mc.getUser().getName();
-		String playerLabel = "PLAYER";
+		String playerLabel = mc.getUser().getAccessToken().isBlank() ? "OFFLINE PROFILE" : "PLAYER";
 		int nameWidth = this.font.width(playerName);
 		int labelWidth = this.font.width(playerLabel);
 		float profileW = Math.max(112f, nameWidth + labelWidth + 38f);
@@ -180,9 +183,12 @@ public class EchoMainMenuScreen extends TitleScreen {
 			EchoButton first = main.get(0);
 			EchoButton last = main.get(main.size() - 1);
 			Gfx.alpha = dockAlpha;
-			Gfx.glass(g, first.x - 10f, first.y - 7f,
-					last.x + last.w - first.x + 20f, first.h + 14f, 13f,
-					0xB51B1E2B, 0xA510121C, 0x55FFFFFF);
+			Gfx.glass(g, first.x - 12f, first.y - 8f,
+					last.x + last.w - first.x + 24f, first.h + 16f, 15f,
+					0xC91C222E, 0xB90B101B, 0x66FFFFFF);
+			Gfx.rrect(g, first.x + 4f, first.y - 5f,
+					last.x + last.w - first.x - 8f, 1f, 1f,
+					0x30FFFFFF, 0x00FFFFFF, 0, 0f);
 			Gfx.alpha = 1f;
 		}
 		// Dock buttons appear sequentially with a short upward motion.
@@ -203,9 +209,9 @@ public class EchoMainMenuScreen extends TitleScreen {
 		if (cfg.menu.showVersionText) {
 			String v = FabricLoader.getInstance().getModContainer(PvpVisualsClient.MOD_ID)
 					.map(m -> m.getMetadata().getVersion().getFriendlyString()).orElse("");
-			String text = v.isEmpty() ? "Echo Visual" : "Echo Visual v" + v;
+			String text = v.isEmpty() ? "ECHO VISUAL" : "ECHO VISUAL  /  " + v;
 			Gfx.alpha = pc;
-			Gfx.text(g, this.font, text, 8, this.height - 8 - 9, 0xFF8E7BB8);
+			Gfx.text(g, this.font, text, 46, this.height - 17, 0xFF8E98AE);
 			Gfx.alpha = 1f;
 		}
 	}
