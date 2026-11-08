@@ -79,17 +79,16 @@ public class EchoMainMenuScreen extends TitleScreen {
 	}
 
 	private void layout() {
-		int bw = Math.max(120, Math.min(200, this.width / 3));
-		int bh = 24;
+		// Компактный нижний dock по мотивам Zenith MainMenu.
+		int bh = 28;
 		int gap = 8;
-		int top = Math.round(logoCy() + logoSize() / 2f + 22f);
-		// на очень низких окнах сжимаем отступ, чтобы всё влезло
-		int total = main.size() * bh + (main.size() - 1) * gap;
-		if (top + total > this.height - 30) {
-			top = Math.max(Math.round(logoCy() + logoSize() / 2f + 8f), this.height - 30 - total);
-		}
+		int available = Math.max(0, this.width - 40);
+		int bw = Math.max(76, Math.min(148, (available - (main.size() - 1) * gap) / Math.max(1, main.size())));
+		int total = main.size() * bw + (main.size() - 1) * gap;
+		int left = (this.width - total) / 2;
+		int top = Math.max(8, this.height - bh - 24);
 		for (int i = 0; i < main.size(); i++) {
-			main.get(i).setBounds((this.width - bw) / 2, top + i * (bh + gap), bw, bh);
+			main.get(i).setBounds(left + i * (bw + gap), top, bw, bh);
 		}
 		int s = 20;
 		btnExit.setBounds(this.width - s - 8, this.height - s - 8, s, s);
@@ -153,7 +152,18 @@ public class EchoMainMenuScreen extends TitleScreen {
 		EchoSplash.drawLogo(g, this.width / 2f, logoCy() + slide, logoSize(), t, 1f);
 		Gfx.alpha = 1f;
 
-		// кнопки: по очереди, fade-in + подъём снизу
+		// Frosted-glass dock backing, matching the source menu's bottom navigation.
+		float dockAlpha = Gfx.ease((el - 280f) / 450f);
+		if (dockAlpha > 0.003f && !main.isEmpty()) {
+			EchoButton first = main.get(0);
+			EchoButton last = main.get(main.size() - 1);
+			Gfx.alpha = dockAlpha;
+			Gfx.glass(g, first.x - 10f, first.y - 7f,
+					last.x + last.w - first.x + 20f, first.h + 14f, 13f,
+					0xB51B1E2B, 0xA510121C, 0x55FFFFFF);
+			Gfx.alpha = 1f;
+		}
+		// Dock buttons appear sequentially with a short upward motion.
 		for (int i = 0; i < main.size(); i++) {
 			EchoButton b = main.get(i);
 			float p = Gfx.ease((el - 280f - i * 130f) / 450f);
