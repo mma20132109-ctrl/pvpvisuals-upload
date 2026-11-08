@@ -86,22 +86,31 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     private void updateLayout() {
         panelWidth = Math.min(CONTENT_WIDTH, Math.max(240f, width - 40f));
-        panelHeight = Math.min(MAX_LIST_HEIGHT, Math.max(160f, height - 220f));
 
-        float usableTop = 24f;
-        float usableBottom = height - 82f;
-        float usableHeight = Math.max(panelHeight + 82f, usableBottom - usableTop);
-        float totalHeight = panelHeight + 48f + 34f;
+        // Keep the title, glass list and create action inside one centered
+        // safe area. The previous layout reserved space for menu chrome that
+        // is no longer drawn on this screen, pushing the controls apart.
+        float titleHeight = 20f;
+        float titleGap = 10f;
+        float createGap = 14f;
+        float createHeight = 34f;
+        float verticalMargin = 38f;
+        float maxPanelHeight = Math.max(112f,
+                height - verticalMargin * 2f - titleHeight - titleGap - createGap - createHeight);
+        panelHeight = Math.min(MAX_LIST_HEIGHT, maxPanelHeight);
+
+        float groupHeight = titleHeight + titleGap + panelHeight + createGap + createHeight;
+        float groupTop = Math.max(8f, (height - groupHeight) * 0.5f);
         panelX = (width - panelWidth) * 0.5f;
-        panelY = usableTop + Math.max(0f, (usableHeight - totalHeight) * 0.5f);
+        panelY = groupTop + titleHeight + titleGap;
 
         viewportX = panelX + 10f;
         viewportY = panelY + 10f;
         viewportWidth = Math.max(120f, panelWidth - 34f);
-        viewportHeight = Math.max(100f, panelHeight - 20f);
+        viewportHeight = Math.max(84f, panelHeight - 20f);
 
         createX = (width - 160f) * 0.5f;
-        createY = panelY + panelHeight + 48f;
+        createY = panelY + panelHeight + createGap;
     }
 
     private void bindWorldList() {
@@ -313,7 +322,8 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
         super.render(graphics, mouseX, mouseY, partialTick);
         renderWorldList(graphics, mouseX, mouseY);
         renderCreateButton(graphics, mouseX, mouseY);
-        menu.renderWorldSelectDock(graphics, mouseX, mouseY, partialTick);
+        // This is a dedicated singleplayer page, not the main menu underneath:
+        // do not draw the main menu's top badge, side pill or bottom navigation.
         Gfx.alpha = 1f;
     }
 
