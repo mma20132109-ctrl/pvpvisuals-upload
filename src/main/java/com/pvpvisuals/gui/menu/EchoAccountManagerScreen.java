@@ -27,8 +27,9 @@ import net.minecraft.network.chat.Component;
 import com.pvpvisuals.mixin.MinecraftUserAccessor;
 
 /**
- * Локальный менеджер сохранённых офлайн-профилей.
- * Он не подменяет текущую Minecraft-сессию: для этого нужна отдельная безопасная интеграция с auth/session API.
+ * Менеджер сохранённых offline-профилей.
+ * Выбранный профиль меняет локальную Minecraft-идентичность, но не создаёт Microsoft-токен и не авторизует
+ * пользователя на серверах, требующих online-mode.
  */
 public final class EchoAccountManagerScreen extends Screen {
     private static final Logger LOG = LoggerFactory.getLogger("pvpvisuals/accounts");
