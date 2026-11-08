@@ -107,18 +107,26 @@ public final class GhostEspRenderer {
                 return;
             }
 
-            Identifier textureId = findSprite(mc);
-            if (textureId == null) {
+            Identifier ringId = findNamedTexture(mc, "target-esp1.png");
+            if (ringId == null) {
+                ringId = findSprite(mc);
+            }
+            if (ringId == null) {
                 if (!warnedMissing) {
                     warnedMissing = true;
-                    LOG.warn("No PNG found in project-root target_esp/. Add ghost.png or ghost_glow.png; vanilla Soul particles are disabled.");
+                    LOG.warn("No PNG found in project-root target_esp/. Add target-esp1.png or another PNG texture.");
                 }
                 return;
             }
 
-            AbstractTexture texture = mc.getTextureManager().getTexture(textureId);
-            if (texture.getTextureView() == null) {
+            Identifier glowId = findNamedTexture(mc, "glow.png");
+            AbstractTexture ringTexture = mc.getTextureManager().getTexture(ringId);
+            AbstractTexture glowTexture = glowId == null ? null : mc.getTextureManager().getTexture(glowId);
+            if (ringTexture.getTextureView() == null) {
                 return;
+            }
+            if (glowTexture != null && glowTexture.getTextureView() == null) {
+                glowTexture = null;
             }
 
             RenderTarget target = mc.getMainRenderTarget();
@@ -160,35 +168,51 @@ public final class GhostEspRenderer {
 
             DATA.clear();
             vertexCount = 0;
-
-            for (int i = 0; i < count; i++) {
-                int orbit = i % 3;
-                double phase = time * speed * (orbit == 1 ? -1.15 : 1.0)
-                        + (Math.PI * 2.0 * i / count) + orbit * 1.7;
-
-                // Each sprite rises, fades and loops at a different point on the spiral.
-                double lift = fract(time * speed * 0.22 + i * 0.6180339887498949);
-                float y = minY + (float) (0.12 + lift * 0.78) * height;
-                float radiusX = width * (0.42f + orbit * 0.13f) + 0.12f;
-                float radiusZ = depth * (0.42f + orbit * 0.13f) + 0.12f;
-                float x = centerX + (float) Math.cos(phase) * radiusX;
-                float z = centerZ + (float) Math.sin(phase) * radiusZ;
-
-                float pulse = 0.82f + 0.18f * (float) Math.sin(time * speed * 2.4 + i);
-                float size = (0.22f + orbit * 0.045f) * pulse;
-                float alpha = frame.fade * (0.28f + 0.58f * (float) Math.sin(Math.PI * lift));
-                alpha *= 0.78f + 0.22f * pulse;
-
-                // Spin the sprite around its normal to get the floating spirit/ribbon feel.
-                float rotation = (float) (phase * 0.38 + Math.sin(phase * 0.7) * 0.25);
-                drawBillboard(x, y, z, size, rotation, alpha, red, green, blue,
-                        leftX, leftZ, upX, upY, upZ);
+            if (glowTexture != null) {
+                appendSprites(minX, minY, minZ, width, depth, height, centerX, centerZ,
+                        count, speed, time, frame.fade, red, green, blue,
+                        leftX, leftZ, upX, upY, upZ, 1.8f, 0.22f);
+                flush(frame.view, settings.throughWalls, target, glowTexture);
             }
 
-            flush(frame.view, settings.throughWalls, target, texture);
+            DATA.clear();
+            vertexCount = 0;
+            appendSprites(minX, minY, minZ, width, depth, height, centerX, centerZ,
+                    count, speed, time, frame.fade, red, green, blue,
+                    leftX, leftZ, upX, upY, upZ, 1.0f, 0.72f);
+            flush(frame.view, settings.throughWalls, target, ringTexture);
         } catch (Throwable error) {
             failed = true;
             LOG.error("Textured Ghost ESP renderer failed and was disabled until re-enabled", error);
+        }
+    }
+
+    private static void appendSprites(float minX, float minY, float minZ,
+            float width, float depth, float height, float centerX, float centerZ,
+            int count, float speed, double time, float fade,
+            int red, int green, int blue,
+            double leftX, double leftZ, double upX, double upY, double upZ,
+            float sizeMultiplier, float alphaMultiplier) {
+        for (int i = 0; i < count; i++) {
+            int orbit = i % 3;
+            double phase = time * speed * (orbit == 1 ? -1.15 : 1.0)
+                    + (Math.PI * 2.0 * i / count) + orbit * 1.7;
+
+            double lift = fract(time * speed * 0.22 + i * 0.6180339887498949);
+            float y = minY + (float) (0.12 + lift * 0.78) * height;
+            float radiusX = width * (0.42f + orbit * 0.13f) + 0.12f;
+            float radiusZ = depth * (0.42f + orbit * 0.13f) + 0.12f;
+            float x = centerX + (float) Math.cos(phase) * radiusX;
+            float z = centerZ + (float) Math.sin(phase) * radiusZ;
+
+            float pulse = 0.82f + 0.18f * (float) Math.sin(time * speed * 2.4 + i);
+            float size = (0.28f + orbit * 0.065f) * pulse * sizeMultiplier;
+            float alpha = fade * (0.28f + 0.58f * (float) Math.sin(Math.PI * lift));
+            alpha *= (0.78f + 0.22f * pulse) * alphaMultiplier;
+
+            float rotation = (float) (phase * 0.38 + Math.sin(phase * 0.7) * 0.25);
+            drawBillboard(x, y, z, size, rotation, alpha, red, green, blue,
+                    leftX, leftZ, upX, upY, upZ);
         }
     }
 
@@ -196,6 +220,11 @@ public final class GhostEspRenderer {
      * Resolve PNGs packaged from the root target_esp/ folder.
      * Explicit ghost names take priority; if the folder has differently named PNGs, use its first PNG.
      */
+    private static Identifier findNamedTexture(Minecraft mc, String file) {
+        Identifier id = Identifier.fromNamespaceAndPath("pvpvisuals", TEXTURE_DIRECTORY + "/" + file);
+        return mc.getResourceManager().getResource(id).isPresent() ? id : null;
+    }
+
     private static Identifier findSprite(Minecraft mc) {
         long now = System.nanoTime();
         if (spriteId != null && now < nextTextureScan
@@ -226,12 +255,15 @@ public final class GhostEspRenderer {
         String path = id.getPath().toLowerCase(java.util.Locale.ROOT);
         String file = path.substring(path.lastIndexOf('/') + 1);
         return switch (file) {
-            case "ghost.png" -> 0;
-            case "ghost_glow.png" -> 1;
-            case "ghost_particle.png" -> 2;
-            case "spirit.png" -> 3;
-            case "ghost_trail.png" -> 4;
-            case "soul.png" -> 5;
+            case "target-esp1.png" -> 0;
+            case "ghost.png" -> 1;
+            case "ghost_glow.png" -> 2;
+            case "ghost_particle.png" -> 3;
+            case "spirit.png" -> 4;
+            case "ghost_trail.png" -> 5;
+            case "soul.png" -> 6;
+            case "target-esp2.png" -> 7;
+            case "glow.png" -> 8;
             default -> 20;
         };
     }
