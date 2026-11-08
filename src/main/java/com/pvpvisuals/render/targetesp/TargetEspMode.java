@@ -1,26 +1,17 @@
 package com.pvpvisuals.render.targetesp;
 
-/** Target ESP styles matching the three effects shown in the original TargetESP mod. */
+/** Visual modes ported from TargetESP 1.0.0 (CC0-1.0). */
 public enum TargetEspMode {
-    GHOSTS("Ghosts"),
-    CIRCLE("Circle"),
-    SQUARE("Square");
-
+    GHOSTS("Ghosts"), KVADRAT("Kvadrat"), KRUG("Krug");
     public final String title;
-
-    TargetEspMode(String title) {
-        this.title = title;
-    }
-
-    /** Old Aura/3D Box values fall back to Ghosts without breaking saved profiles. */
+    TargetEspMode(String title) { this.title = title; }
     public static TargetEspMode byName(String value) {
-        if (value != null) {
-            for (TargetEspMode mode : values()) {
-                if (mode.name().equalsIgnoreCase(value) || mode.title.equalsIgnoreCase(value)) {
-                    return mode;
-                }
-            }
-        }
-        return GHOSTS;
+        if (value == null) return GHOSTS;
+        return switch (value.trim().toUpperCase(java.util.Locale.ROOT)) {
+            case "KVADRAT", "SQUARE", "3D BOX" -> KVADRAT;
+            case "KRUG", "CIRCLE", "RING" -> KRUG;
+            case "GHOSTS", "GHOST" -> GHOSTS;
+            default -> GHOSTS;
+        };
     }
 }

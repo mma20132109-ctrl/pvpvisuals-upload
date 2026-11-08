@@ -37,16 +37,39 @@ public final class ModuleRegistry {
 				})
 						.child(ModuleDef.choice("Style", Category.VISUAL,
 								() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode).title,
-								List.of("Ghosts", "Circle", "Square"),
+								List.of("Ghosts", "Kvadrat", "Krug"),
 								v -> c.targetEspSettings.mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(v).name()))
 						.child(ModuleDef.toggle("Players", Category.VISUAL, () -> c.targetEspSettings.showPlayers, v -> c.targetEspSettings.showPlayers = v))
 						.child(ModuleDef.toggle("Mobs", Category.VISUAL, () -> c.targetEspSettings.showMobs, v -> c.targetEspSettings.showMobs = v))
 						.child(ModuleDef.slider("Max Distance", Category.VISUAL, 8, 128, 0, () -> c.targetEspSettings.maxDistance, v -> c.targetEspSettings.maxDistance = (float) v))
 						.child(ModuleDef.choice("Color Mode", Category.VISUAL,
 								() -> targetEspColorTitle(c.targetEspSettings.colorMode),
-								List.of("Health", "Static", "Distance", "Rainbow"),
+								List.of("Health", "Static", "Distance", "Rainbow", "Preset"),
 								v -> c.targetEspSettings.colorMode = v.toUpperCase(java.util.Locale.ROOT)))
-						.child(ModuleDef.slider("Ghost Count", Category.VISUAL, 4, 48, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
+						.child(ModuleDef.choice("Color Preset", Category.VISUAL,
+								() -> c.targetEspSettings.colorPreset,
+								List.of("Cyan", "Pink", "Purple", "Green", "Orange", "Red", "Blue", "Yellow"),
+								v -> c.targetEspSettings.colorPreset = v.toUpperCase(java.util.Locale.ROOT))
+								.visibleWhen(() -> "PRESET".equalsIgnoreCase(c.targetEspSettings.colorMode)))
+						.child(ModuleDef.slider("Ghost Length", Category.VISUAL, 4, 32, 0, () -> c.targetEspSettings.ghostLength, v -> c.targetEspSettings.ghostLength = (int) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Ghost Layers", Category.VISUAL, 1, 3, 0, () -> c.targetEspSettings.ghostLayers, v -> c.targetEspSettings.ghostLayers = (int) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Orbit Radius", Category.VISUAL, 0.1, 2.5, 2, () -> c.targetEspSettings.ghostRadius, v -> c.targetEspSettings.ghostRadius = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Particle Size", Category.VISUAL, 0.04, 0.6, 2, () -> c.targetEspSettings.ghostSize, v -> c.targetEspSettings.ghostSize = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Ghost Speed", Category.VISUAL, 0.1, 8.0, 1, () -> c.targetEspSettings.ghostSpeed, v -> c.targetEspSettings.ghostSpeed = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Orbit Factor", Category.VISUAL, 1, 24, 1, () -> c.targetEspSettings.ghostFactor, v -> c.targetEspSettings.ghostFactor = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Vertical Motion", Category.VISUAL, 0.1, 8.0, 1, () -> c.targetEspSettings.ghostAmplitude, v -> c.targetEspSettings.ghostAmplitude = (float) v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.toggle("Alpha Animation", Category.VISUAL, () -> c.targetEspSettings.enableAlphaAnimation, v -> c.targetEspSettings.enableAlphaAnimation = v)
+								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Alpha Period (ms)", Category.VISUAL, 80, 3000, 0, () -> c.targetEspSettings.alphaAnimationMs, v -> c.targetEspSettings.alphaAnimationMs = (int) v)
+								.visibleWhen(() -> c.targetEspSettings.enableAlphaAnimation && com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
+						.child(ModuleDef.slider("Max Particle Alpha", Category.VISUAL, 32, 255, 0, () -> c.targetEspSettings.maxAlpha, v -> c.targetEspSettings.maxAlpha = (int) v)
 								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
 						.child(ModuleDef.slider("Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
 						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 4.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
@@ -176,6 +199,7 @@ public final class ModuleRegistry {
 			case "STATIC" -> "Static";
 			case "DISTANCE" -> "Distance";
 			case "RAINBOW" -> "Rainbow";
+			case "PRESET" -> "Preset";
 			default -> "Health";
 		};
 	}
