@@ -10,6 +10,7 @@ import com.pvpvisuals.gui.menu.EchoWorldStyle;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Checkbox;
 
 /**
  * Кнопки на экранах выбора/создания мира рисуются в стиле Echo Visual. Кнопки, у которых свой renderWidget
@@ -24,7 +25,12 @@ public abstract class AbstractButtonMixin {
 			return;
 		}
 		try {
-			EchoWorldStyle.button(graphics, (AbstractWidget) (Object) this);
+			AbstractWidget widget = (AbstractWidget) (Object) this;
+			if (widget instanceof Checkbox checkbox) {
+				EchoWorldStyle.checkbox(graphics, checkbox);
+			} else {
+				EchoWorldStyle.button(graphics, widget);
+			}
 			ci.cancel();
 		} catch (Throwable t) {
 			EchoWorldStyle.fail("button", t);

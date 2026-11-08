@@ -12,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Checkbox;
 import net.minecraft.client.gui.screens.GenericMessageScreen;
 import net.minecraft.client.gui.screens.LevelLoadingScreen;
 import net.minecraft.client.gui.screens.ProgressScreen;
@@ -33,6 +34,7 @@ import net.minecraft.util.Util;
  */
 public final class EchoWorldStyle {
 	private static final Map<AbstractWidget, float[]> STATE = new WeakHashMap<>(); // {hover, lastMs}
+	private static final Map<Object, float[]> ROW_STATE = new WeakHashMap<>();
 
 	private EchoWorldStyle() { }
 
@@ -154,6 +156,89 @@ public final class EchoWorldStyle {
 		if (REPORTED.add(where)) {
 			LOG.error("Echo style failed in " + where + " (vanilla widget is used instead)", t);
 		}
+	}
+
+
+	/** Frosted card surface behind a world/server/language/resource-pack row. No blur pass is used here. */
+	public static void listEntry(GuiGraphics g, AbstractSelectionList.Entry<?> entry, int mouseX, int mouseY,
+			boolean selected) {
+		long now = Util.getMillis();
+		float[] state = ROW_STATE.computeIfAbsent(entry, key -> new float[] {0f, now});
+		float dt = Math.min(0.1f, Math.max(0f, (now - state[1]) / 1000f));
+		state[1] = now;
+		float x = entry.getX() + 2f;
+		float y = entry.getY() + 1f;
+		float width = Math.max(1f, entry.getWidth() - 4f);
+		float height = Math.max(1f, entry.getHeight() - 2f);
+		boolean hovered = mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + height;
+		state[0] += ((hovered ? 1f : 0f) - state[0]) * (1f - (float) Math.exp(-dt * 13f));
+		float h = Gfx.ease(state[0]);
+		int fillTop = selected ? alpha(EchoTheme.accent(), 0.24f) : alpha(0xFF252B37, 0.44f + h * 0.14f);
+		int fillBottom = selected ? alpha(EchoTheme.accent2(), 0.16f) : alpha(0xFF10151F, 0.42f + h * 0.12f);
+		int border = selected ? alpha(EchoTheme.accent(), 0.9f) : alpha(0xFFFFFFFF, 0.035f + h * 0.12f);
+		float previous = Gfx.alpha;
+		try {
+			Gfx.alpha = previous;
+			Gfx.rrect(g, x, y, width, height, 8f, fillTop, fillBottom, border, selected ? 1f : 0.65f);
+			if (selected) {
+				Gfx.glow(g, x, y + 5f, 2.2f, Math.max(8f, height - 10f), 1f, EchoTheme.accent(), 2.2f);
+				Gfx.rrect(g, x + 1.5f, y + 7f, 2f, Math.max(6f, height - 14f), 1f,
+						EchoTheme.accent(), EchoTheme.accent2(), 0, 0f);
+			} else if (h > 0.04f) {
+				Gfx.rrect(g, x + 6f, y + height - 2f, Math.max(1f, width - 12f), 1f, 0.5f,
+						alpha(EchoTheme.accent(), 0.25f * h), alpha(EchoTheme.accent2(), 0.20f * h), 0, 0f);
+			}
+		} finally {
+			Gfx.alpha = previous;
+		}
+	}
+
+	/** Custom check control that keeps Checkbox's original click/change behavior. */
+	public static void checkbox(GuiGraphics g, Checkbox widget) {
+		float previous = Gfx.alpha;
+		try {
+			long now = Util.getMillis();
+			float[] state = STATE.computeIfAbsent(widget, key -> new float[] {0f, now});
+			float dt = Math.min(0.1f, Math.max(0f, (now - state[1]) / 1000f));
+			state[1] = now;
+			boolean hovered = widget.active && widget.isHoveredOrFocused();
+			state[0] += ((hovered ? 1f : 0f) - state[0]) * (1f - (float) Math.exp(-dt * 14f));
+			float h = Gfx.ease(state[0]);
+			Gfx.alpha = previous * widget.getAlpha();
+
+			float size = Math.min(14f, Math.max(11f, widget.getHeight() - 5f));
+			float x = widget.getX() + 3f;
+			float y = widget.getY() + (widget.getHeight() - size) / 2f;
+			boolean checked = widget.selected();
+			int fill = checked ? alpha(EchoTheme.accent(), 0.94f) : alpha(0xFF171D28, 0.92f);
+			int border = checked ? alpha(EchoTheme.accent2(), 0.95f) : alpha(0xFF8A93A6, 0.42f + h * 0.3f);
+			if (h > 0.02f || checked) {
+				Gfx.glow(g, x, y, size, size, 3.5f, EchoTheme.accent(),
+						(checked ? 2.8f : 1.8f) * Math.max(h, checked ? 0.75f : 0f));
+			}
+			Gfx.rrect(g, x, y, size, size, 3.5f, fill,
+					checked ? alpha(EchoTheme.accent2(), 0.82f) : 0xFF0D121B, border, 0.9f);
+			if (checked) {
+				Gfx.line(g, x + size * 0.22f, y + size * 0.54f, x + size * 0.43f, y + size * 0.75f, 1.6f, 0xFFFFFFFF);
+				Gfx.line(g, x + size * 0.42f, y + size * 0.74f, x + size * 0.82f, y + size * 0.25f, 1.6f, 0xFFFFFFFF);
+			}
+
+			Font font = Minecraft.getInstance().font;
+			String text = widget.getMessage().getString();
+			float available = Math.max(12f, widget.getWidth() - size - 12f);
+			float textWidth = Gfx.width(font, text);
+			float scale = textWidth > available && textWidth > 0f ? available / textWidth : 1f;
+			int textColor = widget.active ? EchoButton.lerp(0xFFD1D6E2, 0xFFFFFFFF, h) : 0xFF737B8D;
+			Gfx.textScaled(g, font, text, x + size + 7f,
+					widget.getY() + (widget.getHeight() - 9f * scale) / 2f, scale, textColor, false);
+		} finally {
+			Gfx.alpha = previous;
+		}
+	}
+
+	private static int alpha(int color, float factor) {
+		int a = Math.max(0, Math.min(255, Math.round(((color >>> 24) & 255) * Math.max(0f, Math.min(1f, factor)))));
+		return (a << 24) | (color & 0x00FFFFFF);
 	}
 
 	/** Ползунок: тёмная дорожка с фиолетовой заливкой до ручки, светящаяся ручка, подпись по центру. */
