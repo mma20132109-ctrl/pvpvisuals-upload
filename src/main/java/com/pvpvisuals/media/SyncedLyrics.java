@@ -62,8 +62,13 @@ public final class SyncedLyrics {
 
 	private SyncedLyrics() { }
 
-	/** Запрашивает субтитры не чаще одного раза на трек; сеть никогда не блокирует рендер. */
+	/** Запрашивает текст не чаще одного раза на трек; сеть никогда не блокирует рендер. */
 	public static void ensure(String key, String artist, String title) {
+		ensure(key, artist, title, 0);
+	}
+
+	/** Длительность помогает LRCLIB точнее выбрать версию трека и распределить обычный текст по времени. */
+	public static void ensure(String key, String artist, String title, int durationSeconds) {
 		if (key == null || key.isBlank() || title == null || title.isBlank()) {
 			return;
 		}
@@ -75,7 +80,7 @@ public final class SyncedLyrics {
 		lines = List.of();
 
 		Thread worker = new Thread(() -> {
-			List<Line> result = fetch(artist == null ? "" : artist, title);
+			List<Line> result = fetch(artist == null ? "" : artist, title, durationSeconds);
 			if (key.equals(activeKey)) {
 				lines = result;
 			}
@@ -176,24 +181,31 @@ public final class SyncedLyrics {
 		lines = List.of();
 	}
 
-	private static List<Line> fetch(String artist, String title) {
+	private static List<Line> fetch(String artist, String title, int durationSeconds) {
 		String cleanTitle = clean(title);
-		List<Line> exact = request("https://lrclib.net/api/get?artist_name=" + encode(artist)
-				+ "&track_name=" + encode(cleanTitle));
+		String exactUrl = "https://lrclib.net/api/get?artist_name=" + encode(artist)
+				+ "&track_name=" + encode(cleanTitle);
+		if (durationSeconds > 0 && durationSeconds <= 3600) {
+			exactUrl += "&duration=" + durationSeconds;
+		}
+		List<Line> exact = request(exactUrl, durationSeconds);
 		if (!exact.isEmpty()) {
 			return exact;
 		}
+
 		List<Line> result = search("https://lrclib.net/api/search?q=" + encode(artist + " " + cleanTitle),
-				artist, cleanTitle);
-		return result.isEmpty()
-				? search("https://lrclib.net/api/search?q=" + encode(cleanTitle), artist, cleanTitle)
-				: result;
+				artist, cleanTitle, durationSeconds);
+		if (!result.isEmpty()) {
+			return result;
+		}
+		return search("https://lrclib.net/api/search?q=" + encode(cleanTitle),
+				artist, cleanTitle, durationSeconds);
 	}
 
-	private static List<Line> request(String url) {
+	private static List<Line> request(String url, int durationSeconds) {
 		try {
 			HttpRequest request = HttpRequest.newBuilder(URI.create(url))
-					.header("User-Agent", "PvPVisuals (Minecraft client)")
+					.header("User-Agent", "PvPVisuals/1.0.0 (https://github.com/mma20132109-ctrl/pvpvisuals-upload)")
 					.timeout(Duration.ofSeconds(6))
 					.GET()
 					.build();
@@ -206,13 +218,13 @@ public final class SyncedLyrics {
 			if (!root.isJsonObject()) {
 				return List.of();
 			}
-			return parseRecord(root.getAsJsonObject());
+			return parseRecord(root.getAsJsonObject(), durationSeconds);
 		} catch (Exception ignored) {
 			return List.of();
 		}
 	}
 
-	private static List<Line> search(String url, String artist, String title) {
+	private static List<Line> search(String url, String artist, String title, int durationSeconds) {
 		try {
 			HttpRequest request = HttpRequest.newBuilder(URI.create(url))
 					.header("User-Agent", "PvPVisuals (Minecraft client)")
@@ -245,7 +257,7 @@ public final class SyncedLyrics {
 								.contains(artist.toLowerCase(java.util.Locale.ROOT))) {
 					continue;
 				}
-				List<Line> parsed = parseRecord(object);
+				List<Line> parsed = parseRecord(object, durationSeconds);
 				if (!parsed.isEmpty()) {
 					return parsed;
 				}
@@ -256,13 +268,48 @@ public final class SyncedLyrics {
 		return List.of();
 	}
 
-	private static List<Line> parseRecord(JsonObject object) {
+	private static List<Line> parseRecord(JsonObject object, int fallbackDurationSeconds) {
 		String lyricsfile = string(object, "lyricsfile");
 		List<Line> wordSynced = parseLyricsfile(lyricsfile);
 		if (wordSynced.stream().anyMatch(line -> !line.words().isEmpty())) {
 			return wordSynced;
 		}
-		return parse(string(object, "syncedLyrics"));
+
+		List<Line> lineSynced = parse(string(object, "syncedLyrics"));
+		if (!lineSynced.isEmpty()) {
+			return lineSynced;
+		}
+
+		// Many LRCLIB entries contain plainLyrics but no timestamps. Do not discard them:
+		// spread their lines across the known track duration and render them as an approximate karaoke.
+		int recordDuration = (int) Math.round(number(object, "duration", fallbackDurationSeconds));
+		return parsePlainLyrics(string(object, "plainLyrics"), recordDuration);
+	}
+
+	private static List<Line> parsePlainLyrics(String plainLyrics, int durationSeconds) {
+		if (plainLyrics == null || plainLyrics.isBlank()) {
+			return List.of();
+		}
+		List<String> textLines = new ArrayList<>();
+		for (String raw : plainLyrics.replace("\\r", "").split("\\n")) {
+			String line = raw.trim();
+			if (!line.isEmpty()) {
+				textLines.add(line);
+			}
+		}
+		if (textLines.isEmpty()) {
+			return List.of();
+		}
+
+		long totalMs = durationSeconds > 0 && durationSeconds <= 3600
+				? durationSeconds * 1000L : textLines.size() * 4000L;
+		List<Line> result = new ArrayList<>(textLines.size());
+		for (int i = 0; i < textLines.size(); i++) {
+			long start = totalMs * i / textLines.size();
+			long end = totalMs * (i + 1L) / textLines.size();
+			result.add(new Line(start, end, textLines.get(i), List.of()));
+		}
+		return List.copyOf(result);
 	}
 
 	/**
@@ -381,6 +428,15 @@ public final class SyncedLyrics {
 	private static String string(JsonObject object, String key) {
 		JsonElement value = object == null ? null : object.get(key);
 		return value == null || value.isJsonNull() ? "" : value.getAsString();
+	}
+
+	private static double number(JsonObject object, String key, double fallback) {
+		JsonElement value = object == null ? null : object.get(key);
+		try {
+			return value == null || value.isJsonNull() ? fallback : value.getAsDouble();
+		} catch (RuntimeException ignored) {
+			return fallback;
+		}
 	}
 
 	private static boolean matches(String first, String second) {
