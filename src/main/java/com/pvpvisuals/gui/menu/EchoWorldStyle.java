@@ -62,7 +62,8 @@ public final class EchoWorldStyle {
 			return true;
 		}
 		return PvpConfig.get().menu.styleWorldMenus
-				&& (screen instanceof SelectWorldScreen || screen instanceof CreateWorldScreen
+				&& (screen instanceof SelectWorldScreen || screen instanceof JoinMultiplayerScreen
+						|| screen instanceof CreateWorldScreen
 						|| screen instanceof EditWorldScreen || screen instanceof LevelLoadingScreen
 						|| screen instanceof GenericMessageScreen || screen instanceof ProgressScreen
 						|| screen instanceof LanguageSelectScreen
