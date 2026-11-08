@@ -33,6 +33,8 @@ public final class TargetEspSettings {
     public float ghostAmplitude = 0.55f;
     public float ghostSize = 0.20f;
     public float ghostRadius = 0.75f;
+    /** Original Ghosts orbit radius multiplier. */
+    public float ghostOrbitRadius = 1.5f;
     /** Original Ring/Krug radius. */
     public float ringRadius = 0.50f;
     public float ghostSpeed = 1.0f;
