@@ -128,7 +128,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 worldIndex = 0;
                 worldPosition = 0f;
             }
-        } catch (RuntimeException exception) {
+        } catch (ReflectiveOperationException | RuntimeException exception) {
             worldList = null;
             worldEntries.clear();
             System.err.println("[pvpvisuals] Не удалось подключить карусель миров: " + exception);
