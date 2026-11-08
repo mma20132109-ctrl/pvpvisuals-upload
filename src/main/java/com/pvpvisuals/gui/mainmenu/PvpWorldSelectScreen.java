@@ -202,7 +202,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
         List<WorldSelectionList.WorldListEntry> latest = new ArrayList<>();
         for (WorldSelectionList.Entry entry : worldList.children()) {
             if (entry instanceof WorldSelectionList.WorldListEntry world
-                    && !world.getLevelSummary().isUnavailable()) {
+                    && !world.getLevelSummary().isDisabled()) {
                 latest.add(world);
             }
         }
@@ -245,7 +245,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
 
     private void playWorld(WorldSelectionList.WorldListEntry entry) {
         LevelSummary summary = entry.getLevelSummary();
-        if (summary.isLocked() || summary.requiresConversion() || summary.isUnavailable()) return;
+        if (summary.isLocked() || summary.requiresManualConversion() || summary.isDisabled()) return;
         entry.joinWorld();
     }
 
@@ -266,7 +266,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
         if (cached != null) return cached;
         if (!iconLoadAttempted.add(levelId)) return null;
 
-        Path iconPath = summary.getIconPath();
+        Path iconPath = summary.getIcon();
         if (iconPath == null || !Files.isRegularFile(iconPath)) return null;
 
         try (InputStream stream = Files.newInputStream(iconPath)) {
@@ -291,7 +291,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 : LAST_PLAYED.format(Instant.ofEpochMilli(summary.getLastPlayed()));
         if (summary.isHardcore()) mode = "Хардкор";
         if (summary.isLocked()) return "Мир занят другим процессом";
-        if (summary.requiresConversion()) return "Требуется обновление мира";
+        if (summary.requiresManualConversion()) return "Требуется обновление мира";
         return mode + "  •  " + lastPlayed;
     }
 
@@ -354,7 +354,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 boolean selected = index == selectedIndex;
                 boolean hovered = mouseX >= viewportX && mouseX <= viewportX + viewportWidth
                         && mouseY >= rowY && mouseY <= rowY + ROW_HEIGHT;
-                boolean unavailable = summary.isLocked() || summary.requiresConversion();
+                boolean unavailable = summary.isLocked() || summary.requiresManualConversion();
 
                 Gfx.alpha = entrance;
                 if (selected) Gfx.glow(graphics, viewportX, rowY, viewportWidth, ROW_HEIGHT,
