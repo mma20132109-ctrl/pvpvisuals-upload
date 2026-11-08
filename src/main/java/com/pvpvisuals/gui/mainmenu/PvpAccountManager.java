@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.User;
@@ -43,8 +44,10 @@ public final class PvpAccountManager {
         User current = Minecraft.getInstance().getUser();
         boolean present = PROFILES.stream().anyMatch(p -> p.uuid.equals(current.getProfileId().toString()));
         if (!present) {
-            PROFILES.add(new Profile(current.getName(), current.getProfileId().toString(),
-                    current.getAccessToken()));
+            Profile profile = new Profile(current.getName(), current.getProfileId().toString(),
+                    current.getAccessToken());
+            profile.type = "CURRENT";
+            PROFILES.add(profile);
             save();
         }
     }
@@ -66,24 +69,85 @@ public final class PvpAccountManager {
         if (!name.matches("[A-Za-z0-9_]{3,16}")) return false;
         if (PROFILES.stream().anyMatch(p -> p.name.equalsIgnoreCase(name))) return false;
         UUID uuid = UUID.nameUUIDFromBytes(("OfflinePlayer:" + name).getBytes(StandardCharsets.UTF_8));
-        PROFILES.add(new Profile(name, uuid.toString(), ""));
+        Profile profile = new Profile(name, uuid.toString(), "");
+        profile.type = "OFFLINE";
+        PROFILES.add(profile);
         save();
         return true;
     }
 
-    public static synchronized boolean select(int index) {
+    public static synchronized boolean addMicrosoft(PvpMicrosoftAuth.AuthenticatedProfile authenticated) {
+        if (authenticated == null || authenticated.name() == null || authenticated.uuid() == null) return false;
+        for (Profile existing : PROFILES) {
+            if (authenticated.uuid().toString().equals(existing.uuid)) {
+                existing.name = authenticated.name();
+                existing.accessToken = authenticated.minecraftAccessToken();
+                existing.refreshToken = authenticated.refreshToken();
+                existing.type = "MICROSOFT";
+                save();
+                return true;
+            }
+        }
+        Profile profile = new Profile(authenticated.name(), authenticated.uuid().toString(),
+                authenticated.minecraftAccessToken());
+        profile.refreshToken = authenticated.refreshToken();
+        profile.type = "MICROSOFT";
+        PROFILES.add(profile);
+        save();
+        return true;
+    }
+
+    public static synchronized boolean select(int index, Consumer<String> status) {
         if (index < 0 || index >= PROFILES.size()) return false;
         Profile profile = PROFILES.get(index);
+        if ("MICROSOFT".equals(profile.type) && profile.refreshToken != null && !profile.refreshToken.isBlank()) {
+            status.accept("Обновление Microsoft-аккаунта...");
+            PvpMicrosoftAuth.refresh(profile.refreshToken,
+                    message -> Minecraft.getInstance().execute(() -> status.accept(message)),
+                    () -> false).whenComplete((authenticated, error) -> Minecraft.getInstance().execute(() -> {
+                        if (error != null || authenticated == null) {
+                            status.accept("Не удалось обновить аккаунт: " + PvpAccountManager.rootMessage(error));
+                            return;
+                        }
+                        synchronized (PvpAccountManager.class) {
+                            profile.name = authenticated.name();
+                            profile.uuid = authenticated.uuid().toString();
+                            profile.accessToken = authenticated.minecraftAccessToken();
+                            profile.refreshToken = authenticated.refreshToken();
+                            applyUser(profile);
+                            save();
+                        }
+                        status.accept("Выбран аккаунт: " + authenticated.name());
+                    }));
+            return true;
+        }
         try {
-            User user = new User(profile.name, UUID.fromString(profile.uuid),
-                    profile.accessToken == null ? "" : profile.accessToken,
-                    Optional.empty(), Optional.empty());
-            ((MinecraftUserAccessor) (Object) Minecraft.getInstance()).pvpvisuals$setUser(user);
+            applyUser(profile);
+            status.accept("Выбран аккаунт: " + profile.name);
             return true;
         } catch (RuntimeException error) {
-            System.err.println("[pvpvisuals] Не удалось переключить аккаунт: " + error);
+            status.accept("Не удалось переключить аккаунт: " + rootMessage(error));
             return false;
         }
+    }
+
+    public static synchronized boolean select(int index) {
+        return select(index, ignored -> { });
+    }
+
+    private static void applyUser(Profile profile) {
+        User user = new User(profile.name, UUID.fromString(profile.uuid),
+                profile.accessToken == null ? "" : profile.accessToken,
+                Optional.empty(), Optional.empty());
+        ((MinecraftUserAccessor) (Object) Minecraft.getInstance()).pvpvisuals$setUser(user);
+    }
+
+    public static String rootMessage(Throwable error) {
+        Throwable cause = error;
+        while (cause != null && cause.getCause() != null) cause = cause.getCause();
+        if (cause == null) return "неизвестная ошибка";
+        String message = cause.getMessage();
+        return message == null || message.isBlank() ? cause.getClass().getSimpleName() : message;
     }
 
     public static synchronized void remove(int index) {
@@ -105,6 +169,7 @@ public final class PvpAccountManager {
         if (profile == null || profile.name == null || profile.uuid == null) return false;
         try {
             UUID.fromString(profile.uuid);
+            if (profile.type == null || profile.type.isBlank()) profile.type = "OFFLINE";
             return profile.name.matches("[A-Za-z0-9_]{3,16}");
         } catch (IllegalArgumentException error) {
             return false;
@@ -124,6 +189,8 @@ public final class PvpAccountManager {
         public String name;
         public String uuid;
         public String accessToken;
+        public String refreshToken;
+        public String type;
 
         public Profile() { }
 
@@ -131,6 +198,7 @@ public final class PvpAccountManager {
             this.name = name;
             this.uuid = uuid;
             this.accessToken = accessToken;
+            this.type = "OFFLINE";
         }
     }
 }
