@@ -197,7 +197,7 @@ public final class GhostEspRenderer {
                             cameraUpX, cameraUpY, cameraUpZ,
                             -cameraX, -cameraY, -cameraZ,
                             red, green, blue, frame.fade * (0.32f - spark * 0.06f),
-                            SPARK_LAT, SPARK_LON, false);
+                            -cameraX, -cameraY, -cameraZ, SPARK_LAT, SPARK_LON);
                 }
             }
 
@@ -269,8 +269,17 @@ public final class GhostEspRenderer {
         if (alpha <= 0.002f) {
             return;
         }
-        appendBody(center, o, scale, alpha * (inner ? 0.86f : 0.42f),
+        float bodyAlpha = alpha * (inner ? 0.86f : 0.42f);
+        appendBody(center, o, scale, bodyAlpha,
                 red, green, blue, cameraX, cameraY, cameraZ, 1.7f);
+        float tailX = center[0] - o.tx * (0.415f * scale);
+        float tailY = center[1] - o.ty * (0.415f * scale);
+        float tailZ = center[2] - o.tz * (0.415f * scale);
+        appendEllipsoid(tailX, tailY, tailZ,
+                0.052f * scale, 0.046f * scale, 0.052f * scale,
+                o.sx, o.sy, o.sz, o.tx, o.ty, o.tz, o.fx, o.fy, o.fz,
+                red, green, blue, bodyAlpha * 0.72f,
+                -cameraX, -cameraY, -cameraZ, SPARK_LAT, SPARK_LON);
         float headX = center[0] + o.tx * (0.12f * scale);
         float headY = center[1] + o.ty * (0.12f * scale);
         float headZ = center[2] + o.tz * (0.12f * scale);
@@ -278,7 +287,8 @@ public final class GhostEspRenderer {
         appendEllipsoid(headX, headY, headZ,
                 0.145f * scale, 0.158f * scale, 0.132f * scale,
                 o.sx, o.sy, o.sz, o.tx, o.ty, o.tz, o.fx, o.fy, o.fz,
-                red, green, blue, headAlpha, HEAD_LAT, HEAD_LON, true);
+                red, green, blue, headAlpha,
+                -cameraX, -cameraY, -cameraZ, HEAD_LAT, HEAD_LON);
 
         if (includeEyes) {
             float eyeBaseX = headX + o.fx * (0.123f * scale) + o.tx * (0.01f * scale);
@@ -292,7 +302,7 @@ public final class GhostEspRenderer {
                         0.018f * scale, 0.025f * scale, 0.009f * scale,
                         o.sx, o.sy, o.sz, o.tx, o.ty, o.tz, o.fx, o.fy, o.fz,
                         0.045f, 0.075f, 0.12f, alpha * 0.90f,
-                        3, 8, false);
+                        -cameraX, -cameraY, -cameraZ, 3, 8);
             }
         }
     }
@@ -365,7 +375,8 @@ public final class GhostEspRenderer {
             float sx, float sy, float sz, float tx, float ty, float tz,
             float fx, float fy, float fz,
             float red, float green, float blue, float alpha,
-            int latSegments, int lonSegments, boolean glow) {
+            float cameraX, float cameraY, float cameraZ,
+            int latSegments, int lonSegments) {
         for (int lat = 0; lat < latSegments; lat++) {
             float lat0 = (float) (-Math.PI * 0.5 + Math.PI * lat / latSegments);
             float lat1 = (float) (-Math.PI * 0.5 + Math.PI * (lat + 1) / latSegments);
@@ -408,7 +419,7 @@ public final class GhostEspRenderer {
                         (float) (lon+1) / lonSegments, (float) lat / latSegments,
                         (float) (lon+1) / lonSegments, (float) (lat+1) / latSegments,
                         (float) lon / lonSegments, (float) (lat+1) / latSegments,
-                        red, green, blue, alpha, alpha, alpha, alpha, 0f, 0f, 0f);
+                        red, green, blue, alpha, alpha, alpha, alpha, cameraX, cameraY, cameraZ);
             }
         }
     }
