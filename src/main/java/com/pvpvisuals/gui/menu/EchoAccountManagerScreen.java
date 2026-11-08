@@ -137,10 +137,16 @@ public final class EchoAccountManagerScreen extends Screen {
     }
 
     private void removeProfile(String name) {
+        User currentUser = Minecraft.getInstance().getUser();
+        boolean wasActive = currentUser.getAccessToken().isBlank()
+            && currentUser.getName().equalsIgnoreCase(name);
         accounts.removeIf(existing -> existing.equalsIgnoreCase(name));
         if (preferred.equalsIgnoreCase(name)) preferred = accounts.isEmpty() ? "" : accounts.get(0);
+        if (wasActive && originalUser != null) {
+            ((MinecraftUserAccessor) (Object) Minecraft.getInstance()).pvpvisuals$setUser(originalUser);
+        }
         page = Math.min(page, Math.max(0, pageCount() - 1));
-        if (save()) setStatus("Removed " + name, false);
+        if (save()) setStatus(wasActive ? "Removed " + name + " and restored the original account" : "Removed " + name, false);
         init();
     }
 
