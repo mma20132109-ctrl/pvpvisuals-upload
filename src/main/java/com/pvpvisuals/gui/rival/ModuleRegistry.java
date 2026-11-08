@@ -39,6 +39,14 @@ public final class ModuleRegistry {
 						.child(ModuleDef.toggle("Mobs", Category.VISUAL, () -> c.targetEspSettings.showMobs, v -> c.targetEspSettings.showMobs = v))
 						.child(ModuleDef.slider("Max Distance", Category.VISUAL, 8, 128, 0, () -> c.targetEspSettings.maxDistance, v -> c.targetEspSettings.maxDistance = (float) v))
 						.child(ModuleDef.toggle("Through Walls", Category.VISUAL, () -> c.targetEspSettings.throughWalls, v -> c.targetEspSettings.throughWalls = v))
+						.child(ModuleDef.choice("Color Mode", Category.VISUAL,
+								() -> targetEspColorTitle(c.targetEspSettings.colorMode),
+								List.of("Health", "Static", "Distance", "Rainbow"),
+								v -> c.targetEspSettings.colorMode = v.toUpperCase(java.util.Locale.ROOT)))
+						.child(ModuleDef.slider("Aura Size", Category.VISUAL, 0.65, 1.8, 2, () -> c.targetEspSettings.auraSize, v -> c.targetEspSettings.auraSize = (float) v))
+						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.7, 3.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
+						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 3.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
+						.child(ModuleDef.toggle("Glow", Category.VISUAL, () -> c.targetEspSettings.auraGlow, v -> c.targetEspSettings.auraGlow = v))
 						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0))),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
@@ -153,6 +161,15 @@ public final class ModuleRegistry {
 					c.hud.clear();
 					c.save();
 				}));
+	}
+
+	private static String targetEspColorTitle(String value) {
+		return switch (value == null ? "HEALTH" : value.toUpperCase(java.util.Locale.ROOT)) {
+			case "STATIC" -> "Static";
+			case "DISTANCE" -> "Distance";
+			case "RAINBOW" -> "Rainbow";
+			default -> "Health";
+		};
 	}
 
 	private static String splashBackgroundTitle(String v) {

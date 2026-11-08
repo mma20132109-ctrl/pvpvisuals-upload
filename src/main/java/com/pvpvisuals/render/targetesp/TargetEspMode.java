@@ -1,11 +1,7 @@
 package com.pvpvisuals.render.targetesp;
 
-/** Визуальные стили Target ESP, доступные в GUI. */
+/** Единственный актуальный стиль Target ESP. */
 public enum TargetEspMode {
-    GHOSTS("Ghosts"),
-    CIRCLE("Circle"),
-    SQUARE("Square"),
-    BOX_3D("3D Box"),
     AURA("Aura");
 
     public final String title;
@@ -14,14 +10,8 @@ public enum TargetEspMode {
         this.title = title;
     }
 
+    /** Старые сохранённые значения (Ghosts/Circle/Square/3D Box) переходят на Aura. */
     public static TargetEspMode byName(String value) {
-        if (value != null) {
-            for (TargetEspMode mode : values()) {
-                if (mode.name().equalsIgnoreCase(value) || mode.title.equalsIgnoreCase(value)) {
-                    return mode;
-                }
-            }
-        }
-        return GHOSTS;
+        return AURA;
     }
 }

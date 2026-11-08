@@ -3,7 +3,7 @@ package com.pvpvisuals.config;
 /** Настройки Target ESP. Поля имеют безопасные значения для старых конфигов. */
 public final class TargetEspSettings {
     /** Reserved for the replacement renderer; old saved style values remain compatible. */
-    public String mode = "NONE";
+    public String mode = "AURA";
 
     public boolean showPlayers = true;
     public boolean showMobs = true;
@@ -17,7 +17,9 @@ public final class TargetEspSettings {
     public int invisibleColor = 0xB58AFF;
     public boolean useInvisibleColor = true;
 
-    public float lineThickness = 1.6f;
+    public float lineThickness = 1.4f;
+    public boolean auraGlow = true;
+    public float auraSize = 1.0f;
     public boolean fillBox = true;
     public float fillAlpha = 0.10f;
 
