@@ -185,12 +185,12 @@ public final class GhostEspRenderer {
                 // Outer volume is deliberately faint and wider, giving the edge a smoky falloff.
                 appendWispTube(centerX, centerZ, waistY, radiusX, radiusZ, phase,
                         2.20f, 0.105f, frame.fade * 0.16f,
-                        red, green, blue, cameraX, cameraZ, 0.52f);
+                        red, green, blue, cameraX, cameraZ, 0.16f);
 
                 // The bright inner core is a smaller, tapered volumetric strand.
                 appendWispTube(centerX, centerZ, waistY, radiusX, radiusZ, phase,
                         2.20f, 0.044f, frame.fade * 0.76f,
-                        red, green, blue, cameraX, cameraZ, 0.24f);
+                        red, green, blue, cameraX, cameraZ, 0.10f);
 
                 // A bright moving head anchors each wisp; it is a small glowing mote, not a ghost model.
                 Vec3 head = sampleWisp(centerX, centerZ, waistY, radiusX, radiusZ, phase, 1.0, 0.52f);
