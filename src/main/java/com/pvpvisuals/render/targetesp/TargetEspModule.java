@@ -63,7 +63,7 @@ public final class TargetEspModule {
                 && entity == trackedScanTarget
                 && fade > 0.001f
                 && config.targetEsp
-                && TargetEspMode.byName(config.targetEspSettings.mode) == TargetEspMode.SCAN;
+                ;
     }
 
     public static float scanAnimation() {
@@ -72,7 +72,6 @@ public final class TargetEspModule {
 
     public static void register() {
         WorldRenderEvents.END_EXTRACTION.register(TargetEspModule::extract);
-        WorldRenderEvents.END_MAIN.register(TargetEspRenderer::render);
     }
 
     private static void extract(WorldExtractionContext context) {
