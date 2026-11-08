@@ -144,7 +144,8 @@ public final class PvpMainMenuScreen extends Screen {
         accountsTransition = spring(accountsTransition, transitionTarget, Math.min(1f, dt / 16f) * 0.22f);
         menuEntrance = Math.min(1f, menuEntrance + dt / 520f);
         drawBackdrop(graphics, now);
-        LiquidGlassRenderer.captureBackground();
+        LiquidGlassRenderer.scheduleBackgroundCapture();
+        graphics.blurBeforeThisStratum();
 
         Gfx.alpha = 1f;
         if (accountsPage || accountsTransition > 0.005f) {
