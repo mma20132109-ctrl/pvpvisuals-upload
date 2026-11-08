@@ -241,6 +241,7 @@ public final class GhostEspRenderer {
             float cameraX, float cameraZ, float wave) {
         Vec3[] previous = null;
         Vec3[] previousNormals = null;
+        float previousAlpha = 0.0f;
 
         for (int segment = 0; segment <= ARC_SEGMENTS; segment++) {
             float t = segment / (float) ARC_SEGMENTS;
@@ -262,8 +263,8 @@ public final class GhostEspRenderer {
             // Rounded ends are tapered smoothly instead of being cut off by a quad boundary.
             float envelope = (float) Math.pow(Math.sin(Math.PI * t), 0.62);
             float pulse = 0.88f + 0.12f * (float) Math.sin(angle * 2.0 + phase);
-            float radius = tubeRadius * (0.10f + 0.90f * envelope) * pulse;
-            float alpha = baseAlpha * (0.08f + 0.92f * envelope);
+            float radius = tubeRadius * (0.015f + 0.985f * envelope) * pulse;
+            float alpha = baseAlpha * envelope;
 
             Vec3[] ring = new Vec3[TUBE_SIDES + 1];
             Vec3[] normals = new Vec3[TUBE_SIDES + 1];
@@ -292,13 +293,14 @@ public final class GhostEspRenderer {
                             (sideIndex + 1) / (float) TUBE_SIDES, u1,
                             sideIndex / (float) TUBE_SIDES, u1,
                             red, green, blue,
-                            alpha, alpha, baseAlpha * (0.08f + 0.92f * (float) Math.pow(Math.sin(Math.PI * Math.max(0, t - 1.0f / ARC_SEGMENTS)), 0.62)) * pulse,
+                            previousAlpha, previousAlpha, alpha, alpha,
                             cameraX, 0.0f, cameraZ);
                 }
             }
 
             previous = ring;
             previousNormals = normals;
+            previousAlpha = alpha;
         }
     }
 
