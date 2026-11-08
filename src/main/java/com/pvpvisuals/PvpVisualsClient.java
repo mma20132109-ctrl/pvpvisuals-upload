@@ -23,6 +23,7 @@ public class PvpVisualsClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		PvpConfig.load();
 		SvintusRenderEngine.initialize();
+		com.pvpvisuals.render.targetesp.TargetScanRenderTypes.initialize();
 		com.pvpvisuals.keybind.KeybindManager.register();
 
 		// Регистрируется до обработчика CLIENT_STOPPING конфига: гамма восстанавливается раньше, чем пишется конфиг.
