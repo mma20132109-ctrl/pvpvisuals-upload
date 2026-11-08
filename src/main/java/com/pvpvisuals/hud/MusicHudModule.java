@@ -137,7 +137,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		// Keep the card and its text visible while the media bridge is waiting for a track.
 		// The previous early return made the card completely blank outside editor preview,
 		// even though the title fallback below was intended to display an idle state.
-		TrackInfo track = MediaManager.available() ? MediaManager.track() : null;
+		TrackInfo track = MediaManager.track();
 
 		if (track != null && !track.key.equals(shownKey)) {
 			shownKey = track.key;
