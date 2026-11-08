@@ -706,6 +706,29 @@ public final class PvpMainMenuScreen extends Screen {
         double mx = event.x();
         double my = event.y();
 
+        // Keep the bottom dock interactive while the accounts overlay is open.
+        float dockW = 271f;
+        float dockX = (width - dockW) / 2f;
+        float dockY = height - 58f;
+        float dockItemX = dockX + 7f;
+        for (int i = 0; i < 4; i++) {
+            if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 46, 28)) {
+                activateDock(i);
+                return true;
+            }
+            dockItemX += 48f;
+        }
+        dockItemX += 11f;
+        if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 26, 28)) {
+            activateDock(4);
+            return true;
+        }
+        dockItemX += 28f;
+        if (Gfx.hit(mx, my, Math.round(dockItemX), Math.round(dockY + 4f), 26, 28)) {
+            activateDock(5);
+            return true;
+        }
+
         if (accountsPage) {
             float w = Math.min(402f, width - 36f);
             float h = Math.min(270f, height - 24f);
