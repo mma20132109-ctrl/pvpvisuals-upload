@@ -29,7 +29,7 @@ public final class LiquidGlassRenderer {
         capturePending = true;
     }
 
-    /** Called by GuiRendererMixin between the background and glass render passes. */
+    /** Called by GameRendererLiquidGlassMixin between the background and glass render passes. */
     public static boolean capturePendingBackground() {
         if (!capturePending) return false;
         capturePending = false;
