@@ -49,6 +49,12 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     }
 
     @Override
+    public void removed() {
+        super.removed();
+        menu.setWorldSelectPage(false);
+    }
+
+    @Override
     public boolean isPauseScreen() {
         return false;
     }
