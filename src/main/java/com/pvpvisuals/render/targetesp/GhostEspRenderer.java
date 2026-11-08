@@ -134,8 +134,7 @@ public final class GhostEspRenderer {
                 float red = ((color >> 16) & 255) / 255.0f;
                 float green = ((color >> 8) & 255) / 255.0f;
                 float blue = (color & 255) / 255.0f;
-                double headPhase = time * speed * (Math.PI * 2.0 / 3.0)
-                        + wisp * (Math.PI * 2.0 / 3.0);
+                double headPhase = time * speed * (Math.PI * 2.0 / 3.0);
                 appendRibbon(wisp, headPhase, centerX, centerZ, minY, width, depth, height,
                         frame.fade, red, green, blue, forwardX, forwardY, forwardZ);
                 float[] head = samplePath(wisp, headPhase, centerX, centerZ, minY, width, depth, height);
@@ -171,17 +170,15 @@ public final class GhostEspRenderer {
             float centerX, float centerZ, float minY, float width, float depth, float height,
             float fade, float red, float green, float blue,
             double viewX, double viewY, double viewZ) {
-        float radiusX = Math.max(0.48f, width * 0.68f + 0.20f);
-        float radiusZ = Math.max(0.48f, depth * 0.68f + 0.20f);
         float[] previous = samplePath(wisp, headPhase, centerX, centerZ, minY,
-                radiusX, radiusZ, height);
+                width, depth, height);
 
         for (int segment = 0; segment < TRAIL_SEGMENTS; segment++) {
             float age0 = segment / (float) TRAIL_SEGMENTS;
             float age1 = (segment + 1) / (float) TRAIL_SEGMENTS;
             double tailPhase = headPhase - age1 * 1.65;
             float[] next = samplePath(wisp, tailPhase, centerX, centerZ, minY,
-                    radiusX, radiusZ, height);
+                    width, depth, height);
 
             float dx = next[0] - previous[0];
             float dy = next[1] - previous[1];
@@ -210,7 +207,7 @@ public final class GhostEspRenderer {
                     previous[0] + sideX * halfWidth0, previous[1] + sideY * halfWidth0, previous[2] + sideZ * halfWidth0,
                     next[0] + sideX * halfWidth1, next[1] + sideY * halfWidth1, next[2] + sideZ * halfWidth1,
                     next[0] - sideX * halfWidth1, next[1] - sideY * halfWidth1, next[2] - sideZ * halfWidth1,
-                    age0, alpha0, age0, alpha0, age1, alpha1, age1, alpha1, red, green, blue);
+                    alpha0, alpha0, alpha1, alpha1, red, green, blue, 0.0f, 1.0f);
             previous = next;
         }
     }
@@ -246,23 +243,13 @@ public final class GhostEspRenderer {
                 cx + lx - ux, cy - uy, cz + lz - uz,
                 cx + lx + ux, cy + uy, cz + lz + uz,
                 cx - lx + ux, cy + uy, cz - lz + uz,
-                0.0f, alpha, 1.0f, alpha, 1.0f, alpha, 0.0f, alpha,
-                red, green, blue, 2.0f, 3.0f);
+                alpha, alpha, alpha, alpha, red, green, blue, 2.0f, 3.0f);
     }
 
     private static void appendQuad(
             float x0, float y0, float z0, float x1, float y1, float z1,
             float x2, float y2, float z2, float x3, float y3, float z3,
-            float v0, float a0, float v1, float a1, float v2, float a2, float v3, float a3,
-            float red, float green, float blue) {
-        appendQuad(x0,y0,z0,x1,y1,z1,x2,y2,z2,x3,y3,z3,
-                v0,a0,v1,a1,v2,a2,v3,a3,red,green,blue,0.0f,1.0f);
-    }
-
-    private static void appendQuad(
-            float x0, float y0, float z0, float x1, float y1, float z1,
-            float x2, float y2, float z2, float x3, float y3, float z3,
-            float v0, float a0, float v1, float a1, float v2, float a2, float v3, float a3,
+            float a0, float a1, float a2, float a3,
             float red, float green, float blue, float uvBottom, float uvTop) {
         if (DATA.remaining() < 4 * VERTEX_BYTES) {
             return;
