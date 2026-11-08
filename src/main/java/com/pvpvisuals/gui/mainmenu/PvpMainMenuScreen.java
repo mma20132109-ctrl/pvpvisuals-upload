@@ -93,6 +93,8 @@ public final class PvpMainMenuScreen extends Screen {
     private int accountCarouselIndex;
     private float accountCarouselPosition;
     private long lastFrameNs;
+    private float accountsTransition;
+    private float menuEntrance;
 
     // Keep the custom Inter typeface, but enlarge it for clearer reading.
     private static final float MENU_TEXT_BOOST = 1.25f;
@@ -136,19 +138,55 @@ public final class PvpMainMenuScreen extends Screen {
         lastFrameNs = now;
 
         updateParallax(mouseX, mouseY, dt);
+        // iOS-inspired spring easing: quick response, gentle settle, no abrupt page swap.
+        float transitionTarget = accountsPage ? 1f : 0f;
+        accountsTransition = spring(accountsTransition, transitionTarget, Math.min(1f, dt / 16f) * 0.22f);
+        menuEntrance = Math.min(1f, menuEntrance + dt / 520f);
         drawBackdrop(graphics, now);
         LiquidGlassRenderer.captureBackground();
 
         Gfx.alpha = 1f;
-        if (accountsPage) {
+        if (accountsPage || accountsTransition > 0.005f) {
+            graphics.pose().pushPose();
+            graphics.pose().translate(0f, (1f - accountsTransition) * 9f, 0f);
+            Gfx.alpha = accountsTransition;
             drawAccountsPage(graphics, mouseX, mouseY, dt);
-        } else {
-            drawBrand(graphics);
+            graphics.pose().popPose();
         }
+        if (!accountsPage || accountsTransition < 0.995f) {
+            graphics.pose().pushPose();
+            graphics.pose().translate(0f, accountsTransition * -5f, 0f);
+            Gfx.alpha = 1f - accountsTransition;
+            drawBrand(graphics);
+            graphics.pose().popPose();
+        }
+        Gfx.alpha = 1f;
         drawUserBadge(graphics);
         drawSidebar(graphics, mouseX, mouseY, dt, now);
+        graphics.pose().pushPose();
+        graphics.pose().translate(0f, (1f - easeOutBack(menuEntrance)) * 18f, 0f);
+        Gfx.alpha = easeOutCubic(menuEntrance);
         drawDock(graphics, mouseX, mouseY, dt);
+        graphics.pose().popPose();
         Gfx.alpha = 1f;
+    }
+
+    private static float spring(float current, float target, float response) {
+        float delta = target - current;
+        float next = current + delta * Math.max(0.01f, Math.min(0.45f, response));
+        return Math.abs(target - next) < 0.001f ? target : next;
+    }
+
+    private static float easeOutCubic(float value) {
+        float t = Math.max(0f, Math.min(1f, value));
+        return 1f - (float) Math.pow(1f - t, 3);
+    }
+
+    private static float easeOutBack(float value) {
+        float t = Math.max(0f, Math.min(1f, value));
+        float c1 = 1.70158f;
+        return 1f + (c1 + 1f) * (float) Math.pow(t - 1f, 3)
+                + c1 * (float) Math.pow(t - 1f, 2);
     }
 
     private void updateParallax(float mouseX, float mouseY, float dt) {
