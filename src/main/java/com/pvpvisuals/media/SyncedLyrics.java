@@ -198,8 +198,41 @@ public final class SyncedLyrics {
 		if (!result.isEmpty()) {
 			return result;
 		}
-		return search("https://lrclib.net/api/search?q=" + encode(cleanTitle),
+		result = search("https://lrclib.net/api/search?q=" + encode(cleanTitle),
 				artist, cleanTitle, durationSeconds);
+		if (!result.isEmpty()) {
+			return result;
+		}
+
+		// Last-resort plain lyrics provider. It is queried only after LRCLIB has no usable record.
+		return fetchLyricsOvh(artist, cleanTitle, durationSeconds);
+	}
+
+	private static List<Line> fetchLyricsOvh(String artist, String title, int durationSeconds) {
+		if (artist == null || artist.isBlank() || title == null || title.isBlank()) {
+			return List.of();
+		}
+		String url = "https://api.lyrics.ovh/v1/" + encode(artist).replace("+", "%20")
+				+ "/" + encode(title).replace("+", "%20");
+		try {
+			HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+					.header("User-Agent", "PvPVisuals/1.0.0 (https://github.com/mma20132109-ctrl/pvpvisuals-upload)")
+					.timeout(Duration.ofSeconds(8))
+					.GET()
+					.build();
+			HttpResponse<String> response = CLIENT.send(request,
+					HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+			if (response.statusCode() != 200) {
+				return List.of();
+			}
+			JsonElement root = JsonParser.parseString(response.body());
+			if (!root.isJsonObject()) {
+				return List.of();
+			}
+			return parsePlainLyrics(string(root.getAsJsonObject(), "lyrics"), durationSeconds);
+		} catch (Exception ignored) {
+			return List.of();
+		}
 	}
 
 	private static List<Line> request(String url, int durationSeconds) {
