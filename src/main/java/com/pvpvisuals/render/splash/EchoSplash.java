@@ -148,65 +148,121 @@ public final class EchoSplash {
 	// ---------- фон ----------
 
 	public static void drawBackground(GuiGraphics g, int w, int h, float t, String mode) {
-		boolean dark = "DARK".equalsIgnoreCase(mode);
-		boolean animated = "SHADER".equalsIgnoreCase(mode);
-		int top = dark ? 0xFF07090F : 0xFF080A14;
-		int bottom = dark ? 0xFF090B12 : 0xFF100B20;
+		String scene = mode == null ? "NEBULA" : mode.trim().toUpperCase(java.util.Locale.ROOT);
+		boolean obsidian = "DARK".equals(scene) || "OBSIDIAN".equals(scene);
+		boolean aurora = "AURORA".equals(scene);
+		boolean cyberpunk = "CYBERPUNK".equals(scene);
+		boolean sunset = "SUNSET".equals(scene);
+		boolean theme = "THEME".equals(scene) || "GRADIENT".equals(scene);
+		boolean nebula = "SHADER".equals(scene) || "NEBULA".equals(scene) || !obsidian && !aurora && !cyberpunk && !sunset && !theme;
+
+		int top = obsidian ? 0xFF080B12 : 0xFF080A14;
+		int bottom = obsidian ? 0xFF0D111A : sunset ? 0xFF1B101A : 0xFF100D1D;
 		Gfx.rrect(g, 0, 0, w, h, 0, top, bottom, 0, 0f);
-		if (dark) {
+
+		if (obsidian) {
+			// Minimal dark glass scene: soft graphite reflections, no busy particles.
+			float pulse = 0.5f + 0.5f * (float) Math.sin(t * 0.22f);
+			Gfx.glow(g, -w * 0.10f, h * 0.12f, w * 0.55f, h * 0.55f, h * 0.18f,
+					withAlpha(0xFF40506D, 0.10f + pulse * 0.035f), 28f);
+			Gfx.glow(g, w * 0.62f, h * 0.56f, w * 0.55f, h * 0.40f, h * 0.15f,
+					withAlpha(0xFF29364E, 0.10f), 24f);
 			return;
 		}
 
-		// Layered, slow-moving color fields create depth without invoking Minecraft's global blur pass.
-		float breathe = 0.78f + 0.22f * (float) Math.sin(t * 0.34f);
 		int primary = EchoTheme.accent();
 		int secondary = EchoTheme.accent2();
-		int violet = 0xFF6541C8;
+		if (aurora) {
+			primary = 0xFF43E0B4;
+			secondary = 0xFF38AEEA;
+		} else if (cyberpunk) {
+			primary = 0xFFFF43B5;
+			secondary = 0xFF32DDF2;
+		} else if (sunset) {
+			primary = 0xFFFFB35B;
+			secondary = 0xFFEF5B79;
+		}
+
+		float breathe = 0.76f + 0.24f * (float) Math.sin(t * 0.34f);
 		Gfx.glow(g, -w * 0.14f, h * 0.12f, w * 0.62f, h * 0.34f, h * 0.12f,
-				withAlpha(primary, 0.16f * breathe), 28f);
+				withAlpha(primary, (theme ? 0.17f : 0.15f) * breathe), 28f);
 		Gfx.glow(g, w * 0.57f, h * 0.18f, w * 0.62f, h * 0.38f, h * 0.15f,
 				withAlpha(secondary, 0.13f), 30f);
 		Gfx.glow(g, w * 0.18f, h * 0.76f, w * 0.66f, h * 0.18f, h * 0.08f,
-				withAlpha(violet, 0.18f * breathe), 24f);
+				withAlpha(primary, 0.10f * breathe), 24f);
 
-		if (!animated) {
-			return;
-		}
-
-		// Four independent nebula lights drift on long, non-repeating-looking paths.
-		for (int i = 0; i < 4; i++) {
-			float phase = i * 1.71f;
-			float px = w * (0.5f + 0.39f * (float) Math.sin(t * (0.075f + i * 0.013f) + phase));
-			float py = h * (0.48f + 0.34f * (float) Math.cos(t * (0.061f + i * 0.009f) + phase * 1.23f));
-			float radius = h * (0.075f + 0.018f * (i % 3));
-			int col = (i % 2 == 0) ? primary : secondary;
-			Gfx.glow(g, px - radius, py - radius, radius * 2f, radius * 2f, radius,
-					withAlpha(col, 0.12f + 0.035f * (i % 2)), 22f);
-		}
-
-		// Deterministic fine stars with subtle independent twinkle; no random allocation per frame.
-		for (int i = 0; i < 34; i++) {
-			float sx = ((i * 0.6180339f) % 1f) * w;
-			float sy = ((i * 0.7548776f + 0.13f) % 1f) * h;
-			float twinkle = 0.35f + 0.65f * (0.5f + 0.5f * (float) Math.sin(t * (0.7f + (i % 5) * 0.19f) + i * 2.3f));
-			float size = (i % 9 == 0) ? 1.35f : 0.65f + (i % 3) * 0.18f;
-			int star = withAlpha(0xFFE4E9FF, twinkle * (i % 9 == 0 ? 0.72f : 0.36f));
-			Gfx.circle(g, sx, sy, size, star);
-			if (i % 9 == 0) {
-				Gfx.line(g, sx - 3f, sy, sx + 3f, sy, 0.7f, withAlpha(secondary, twinkle * 0.35f));
-				Gfx.line(g, sx, sy - 3f, sx, sy + 3f, 0.7f, withAlpha(secondary, twinkle * 0.35f));
+		if (aurora) {
+			// Three aurora ribbons move horizontally with independent wave phases.
+			for (int band = 0; band < 4; band++) {
+				float previousX = 0f;
+				float phase = band * 1.37f;
+				float previousY = h * (0.30f + band * 0.10f)
+						+ (float) Math.sin(phase + t * 0.26f) * h * 0.045f;
+				for (int step = 1; step <= 42; step++) {
+					float x = w * step / 42f;
+					float nx = x / Math.max(1f, w);
+					float y = h * (0.28f + band * 0.105f)
+						+ (float) Math.sin(nx * 5.3f + phase + t * 0.26f) * h * 0.075f
+						+ (float) Math.sin(nx * 9.1f - phase * 0.7f - t * 0.17f) * h * 0.025f;
+					Gfx.line(g, previousX, previousY, x, y, 1.4f + (band % 2) * 0.5f,
+							withAlpha(band % 2 == 0 ? primary : secondary, 0.13f));
+					previousX = x;
+					previousY = y;
+				}
+			}
+		} else if (cyberpunk) {
+			// Thin perspective grid and neon diagonals, kept faint behind the controls.
+			for (int i = 0; i <= 12; i++) {
+				float x = w * i / 12f;
+				Gfx.line(g, w * 0.5f + (x - w * 0.5f) * 0.48f, h * 0.58f,
+						x, h, 0.7f, withAlpha(secondary, 0.075f));
+			}
+			for (int i = 0; i < 7; i++) {
+				float p = i / 6f;
+				float y = h * (0.60f + p * p * 0.38f);
+				Gfx.line(g, 0f, y, w, y, 0.65f, withAlpha(primary, 0.06f + p * 0.025f));
+			}
+			for (int i = 0; i < 4; i++) {
+				float x = w * (0.12f + i * 0.25f) + (float) Math.sin(t * 0.17f + i) * 18f;
+				Gfx.glow(g, x, h * 0.08f, 2f, h * 0.55f, 1f,
+						withAlpha(i % 2 == 0 ? primary : secondary, 0.22f), 12f);
+			}
+		} else if (sunset) {
+			float sunX = w * (0.70f + 0.025f * (float) Math.sin(t * 0.12f));
+			float sunY = h * 0.50f;
+			float sunR = h * 0.18f;
+			Gfx.glow(g, sunX - sunR, sunY - sunR, sunR * 2f, sunR * 2f, sunR,
+					withAlpha(primary, 0.17f), 28f);
+			for (int i = 0; i < 6; i++) {
+				float y = sunY + sunR * (0.35f + i * 0.20f);
+				Gfx.line(g, sunX - sunR * 0.8f, y, sunX + sunR * 0.8f, y, 1f,
+						withAlpha(secondary, 0.08f));
+			}
+		} else {
+			// Nebula / theme scenes share the star field; theme uses the active GUI palette.
+			for (int i = 0; i < 4; i++) {
+				float phase = i * 1.71f;
+				float px = w * (0.5f + 0.39f * (float) Math.sin(t * (0.075f + i * 0.013f) + phase));
+				float py = h * (0.48f + 0.34f * (float) Math.cos(t * (0.061f + i * 0.009f) + phase * 1.23f));
+				float radius = h * (0.075f + 0.018f * (i % 3));
+				int col = (i % 2 == 0) ? primary : secondary;
+				Gfx.glow(g, px - radius, py - radius, radius * 2f, radius * 2f, radius,
+						withAlpha(col, 0.12f + 0.035f * (i % 2)), 22f);
+			}
+			for (int i = 0; i < 34; i++) {
+				float sx = ((i * 0.6180339f) % 1f) * w;
+				float sy = ((i * 0.7548776f + 0.13f) % 1f) * h;
+				float twinkle = 0.35f + 0.65f * (0.5f + 0.5f * (float) Math.sin(t * (0.7f + (i % 5) * 0.19f) + i * 2.3f));
+				float size = (i % 9 == 0) ? 1.35f : 0.65f + (i % 3) * 0.18f;
+				int star = withAlpha(0xFFE4E9FF, twinkle * (i % 9 == 0 ? 0.72f : 0.36f));
+				Gfx.circle(g, sx, sy, size, star);
+				if (i % 9 == 0) {
+					Gfx.line(g, sx - 3f, sy, sx + 3f, sy, 0.7f, withAlpha(secondary, twinkle * 0.35f));
+					Gfx.line(g, sx, sy - 3f, sx, sy + 3f, 0.7f, withAlpha(secondary, twinkle * 0.35f));
+				}
 			}
 		}
-
-		// Soft diagonal light streaks are deliberately faint, so the center stays readable.
-		for (int i = 0; i < 3; i++) {
-			float drift = (float) Math.sin(t * 0.11f + i * 1.9f) * 22f;
-			float x = w * (0.18f + i * 0.30f) + drift;
-			Gfx.line(g, x, h * 0.04f, x + w * 0.16f, h * 0.96f, 0.8f,
-					withAlpha(i == 1 ? secondary : primary, 0.055f));
-		}
 	}
-
 	// ---------- логотип ----------
 
 	/** Дуга-«C» (открыта вправо) толстой линией со скруглёнными концами. */
