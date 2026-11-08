@@ -100,7 +100,7 @@ public final class EchoButton {
                     Math.max(1f, radius - 2f), alpha(0xFFFFFFFF, 0.075f + h * 0.06f),
                     alpha(0xFFFFFFFF, 0f), 0, 0f);
 
-            boolean compact = drawW <= drawH + 8f;
+            boolean compact = w < 112 || drawW <= drawH + 8f;
             if (compact) {
                 drawIcon(g, cx, cy, Math.min(7.4f, drawH * 0.27f), text);
                 if (h > 0.10f && label != null && !label.isBlank()) {
