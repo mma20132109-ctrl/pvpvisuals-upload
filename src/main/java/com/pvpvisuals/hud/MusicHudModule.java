@@ -22,22 +22,33 @@ import net.minecraft.resources.Identifier;
 
 /** Отдельная карточка Music HUD: обложка, трек, исполнитель, эквалайзер, субтитры и таймлайн. */
 public final class MusicHudModule extends AbstractHudModule {
-	private static final int W = 178;
-	private static final float PAD = 8f;
-	private static final float COVER = 34f;
-	private static final float LYRIC_SIZE = 7f;
-	private static final float LYRIC_ROW = 10f;
+	private static final int W = 164;
+	private static final float PAD = 6f;
+	private static final float COVER = 33f;
+	private static final float LYRIC_SIZE = 8.5f;
+	private static final float LYRIC_ROW = 11f;
 
 	private record LyricLayout(float size, List<String> lines) {
 		static LyricLayout empty() {
 			return new LyricLayout(LYRIC_SIZE, List.of());
 		}
+
+		float rows() {
+			return lines.size();
+		}
 	}
 
 	private String shownKey = "";
+	private String lastLineShown = "";
+	private String previousLine = "";
 	private float progress;
 	private float beat;
 	private float trackFade = 1f;
+	private float coverFade;
+	private float lineFade = 1f;
+	private float lyricsRoom;
+	private float lyricRows = 1f;
+	private float sungWidth;
 
 	@Override public String id() { return "music"; }
 	@Override public String label() { return "Music HUD"; }
@@ -71,43 +82,55 @@ public final class MusicHudModule extends AbstractHudModule {
 	private LyricLayout wrap(String raw, float maxWidth) {
 		Minecraft mc = Minecraft.getInstance();
 		String text = raw == null ? "" : raw.replace('\n', ' ').replace('\r', ' ').trim();
-		if (text.isEmpty()) {
+		if (text.isEmpty() || maxWidth <= 0f) {
 			return LyricLayout.empty();
 		}
+
+		// First try to keep the lyric on one line. Shrink only slightly before wrapping,
+		// so two readable rows are preferred over a tiny single row.
+		for (float size = LYRIC_SIZE; size >= LYRIC_SIZE - 0.5f; size -= 0.5f) {
+			if (Gfx.widthAtSize(mc.font, text, size) <= maxWidth) {
+				return new LyricLayout(size, List.of(text));
+			}
+		}
+
+		float size = LYRIC_SIZE - 0.5f;
 		StringBuilder first = new StringBuilder();
 		StringBuilder second = new StringBuilder();
 		for (String word : text.split("\\s+")) {
-			String candidate = first.isEmpty() ? word : first + " " + word;
-			if (second.isEmpty() && Gfx.widthAtSize(mc.font, candidate, LYRIC_SIZE) <= maxWidth) {
-				first.setLength(0);
-				first.append(candidate);
+			if (first.isEmpty()) {
+				first.append(word);
 				continue;
 			}
-			String next = second.isEmpty() ? word : second + " " + word;
-			second.setLength(0);
-			second.append(next);
+			String candidate = first + " " + word;
+			if (Gfx.widthAtSize(mc.font, candidate, size) <= maxWidth) {
+				first.setLength(0);
+				first.append(candidate);
+			} else {
+				if (!second.isEmpty()) second.append(' ');
+				second.append(word);
+			}
 		}
+
 		if (second.isEmpty()) {
-			return new LyricLayout(LYRIC_SIZE, List.of(first.toString()));
+			// A single unusually long word still gets a chance to fit without being cut off.
+			while (size > 4f && Gfx.widthAtSize(mc.font, first.toString(), size) > maxWidth) {
+				size -= 0.25f;
+			}
+			return new LyricLayout(size, List.of(first.toString()));
 		}
-		String firstLine = first.isEmpty()
-				? Gfx.trimAtSize(mc.font, second.toString(), Math.round(maxWidth), LYRIC_SIZE)
-				: first.toString();
-		String secondLine = first.isEmpty() ? "" :
-				Gfx.trimAtSize(mc.font, second.toString(), Math.round(maxWidth), LYRIC_SIZE);
-		List<String> rows = secondLine.isEmpty() ? List.of(firstLine) : List.of(firstLine, secondLine);
-		return new LyricLayout(LYRIC_SIZE, rows);
+		while (size > 4f && Gfx.widthAtSize(mc.font, second.toString(), size) > maxWidth) {
+			size -= 0.25f;
+		}
+		return new LyricLayout(size, List.of(first.toString(), second.toString()));
 	}
 
 	@Override
 	protected int contentHeight() {
-		TrackInfo track = MediaManager.track();
-		int rows = lyricLayout(track).lines().size();
-		float y = PAD + COVER;
-		if (rows > 0) {
-			y += 5f + rows * LYRIC_ROW + 3f;
-		}
-		return Math.round(y + 13f + PAD);
+		float lyricHeight = lyricsRoom > 0.01f
+				? (LYRIC_ROW * Math.max(1f, lyricRows) + 3f) * lyricsRoom
+				: 0f;
+		return Math.round(PAD * 2f + COVER + lyricHeight + 13f);
 	}
 
 	@Override
@@ -122,11 +145,22 @@ public final class MusicHudModule extends AbstractHudModule {
 			shownKey = track.key;
 			progress = 0f;
 			trackFade = 0f;
+			coverFade = 0f;
+			lastLineShown = "";
+			previousLine = "";
+			lineFade = 1f;
+			sungWidth = 0f;
 		}
-		trackFade = Math.min(1f, trackFade + 0.16f);
+		trackFade += (1f - trackFade) * 0.2f;
 
 		LyricLayout lyrics = lyricLayout(track);
-		int height = contentHeight();
+		boolean lyricsKnown = track != null && settings().showLyrics && SyncedLyrics.has(track.key);
+		float wantedRows = lyrics.lines().isEmpty() ? (lyricsKnown ? 1f : 0f) : lyrics.rows();
+		lyricRows += (wantedRows - lyricRows) * 0.22f;
+		lyricsRoom += ((lyricsKnown ? 1f : 0f) - lyricsRoom) * 0.22f;
+		float lyricHeight = (LYRIC_ROW * Math.max(1f, lyricRows) + 3f) * lyricsRoom;
+		int height = Math.round(PAD * 2f + COVER + lyricHeight + 13f);
+
 		float alpha = HudAlpha.current;
 		HudStyle.panel(g, 0, 0, W, height, 8, alpha);
 		HudStyle.accentWash(g, 0, 0, Math.min(48, W), height, 8, alpha);
@@ -137,6 +171,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		if (settings().showSource && !source.isEmpty()) {
 			artist = artist.isEmpty() ? source : artist + "  ·  " + source;
 		}
+		float trackAlpha = 0.25f + 0.75f * trackFade;
 
 		float textX = PAD;
 		if (settings().showCover) {
@@ -145,21 +180,23 @@ public final class MusicHudModule extends AbstractHudModule {
 		}
 		float eqRight = W - PAD;
 		float textMax = Math.max(12f, eqRight - textX - 18f);
-		drawMarquee(g, mc.font, title, textX, PAD + 2f, textMax, 8f,
-				HudAlpha.mul(HudStyle.TEXT));
+		drawMarquee(g, mc.font, title, textX, PAD + 1.5f, textMax, 9f,
+				HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), trackAlpha));
 		if (!artist.isBlank()) {
-			drawMarquee(g, mc.font, artist, textX, PAD + 16f, textMax, 6.2f,
-					HudAlpha.mul(HudStyle.MUTED));
+			drawMarquee(g, mc.font, artist, textX, PAD + 14f, textMax, 7f,
+					HudStyle.opacity(HudAlpha.mul(HudStyle.MUTED), trackAlpha * 0.72f));
 		}
 		drawEqualizer(g, eqRight, PAD + 1f);
 
 		float rowY = PAD + COVER;
-		if (!lyrics.lines().isEmpty() && track != null) {
-			rowY += 5f;
-			drawLyrics(g, mc.font, track, lyrics, PAD, rowY, MediaManager.positionSeconds() * 1000L);
-			rowY += lyrics.lines().size() * LYRIC_ROW + 3f;
+		if (lyricsRoom > 0.01f) {
+			rowY += 2f;
+			if (!lyrics.lines().isEmpty() && track != null) {
+				drawLyrics(g, mc.font, track, lyrics, PAD, rowY, MediaManager.positionSeconds() * 1000L);
+			}
+			rowY += lyricHeight;
 		}
-		drawProgress(g, mc.font, track, PAD, rowY, W - PAD * 2f);
+		drawProgress(g, mc.font, track, PAD, rowY + 3f, W - PAD * 2f);
 	}
 
 	private void drawMarquee(GuiGraphics g, Font font, String value, float x, float y, float maxWidth,
@@ -185,32 +222,37 @@ public final class MusicHudModule extends AbstractHudModule {
 
 	private void drawCover(GuiGraphics g, TrackInfo track, float x, float y) {
 		Identifier texture = track == null ? null : CoverArtCache.get(track);
-		int px = Math.round(x);
-		int py = Math.round(y);
-		if (texture != null) {
-			int tint = HudAlpha.mul(0xFFFFFFFF);
+		coverFade += ((texture != null ? 1f : 0f) - coverFade) * 0.18f;
+
+		// Keep the animated music-note tile underneath while the artwork fades in.
+		float pulse = MediaManager.playing()
+				? 1f + 0.08f * (float) Math.sin(System.currentTimeMillis() / 320.0)
+				: 1f;
+		float wave = (float) (0.5 + 0.5 * Math.sin(System.currentTimeMillis() / 1600.0));
+		int first = RoundedRender.lerp(EchoTheme.ACCENT_A, EchoTheme.ACCENT_B, wave);
+		int second = RoundedRender.lerp(EchoTheme.ACCENT_B, EchoTheme.ACCENT_A, wave);
+		Gfx.rrect(g, x, y, COVER, COVER, 6f,
+				HudStyle.opacity(first, alpha(0.98f)),
+				HudStyle.opacity(second, alpha(0.92f)), 0x00000000, 0f);
+		int ink = HudStyle.opacity(HudStyle.TEXT, alpha(0.92f));
+		float cx = x + COVER / 2f;
+		float cy = y + COVER / 2f;
+		float head = 5.5f * pulse;
+		Gfx.circle(g, cx - 5f, cy + 3f, head / 2.7f, ink);
+		Gfx.circle(g, cx + 3.2f, cy + 1f, head / 2.7f, ink);
+		Gfx.line(g, cx - 3.4f, cy + 3f, cx - 3.4f, cy - 7f, 1.3f, ink);
+		Gfx.line(g, cx + 4.8f, cy + 1f, cx + 4.8f, cy - 8f, 1.3f, ink);
+		Gfx.line(g, cx - 3.4f, cy - 7f, cx + 4.8f, cy - 8f, 1.3f, ink);
+
+		if (texture != null && coverFade > 0.001f) {
+			int tint = HudStyle.opacity(0xFFFFFFFF, alpha(coverFade));
+			int px = Math.round(x);
+			int py = Math.round(y);
 			g.blit(RenderPipelines.GUI_TEXTURED, texture, px, py, 0f, 0f,
 					Math.round(COVER), Math.round(COVER), 96, 96, 96, 96, tint);
 			Gfx.ring(g, px, py, Math.round(COVER), Math.round(COVER), 5, 1,
 					HudAlpha.mul(0x38FFFFFF));
-			return;
 		}
-
-		float pulse = MediaManager.playing()
-				? 1f + 0.06f * (float) Math.sin(System.currentTimeMillis() / 320.0)
-				: 1f;
-		Gfx.rrect(g, x, y, COVER, COVER, 6f,
-				HudStyle.opacity(EchoTheme.ACCENT_A, alpha(0.95f)),
-				HudStyle.opacity(EchoTheme.ACCENT_B, alpha(0.88f)), 0x00000000, 0f);
-		int ink = HudStyle.opacity(HudStyle.TEXT, alpha(0.95f));
-		float cx = x + COVER / 2f;
-		float cy = y + COVER / 2f;
-		float head = 5.2f * pulse;
-		Gfx.circle(g, cx - 5f, cy + 4f, head / 2.7f, ink);
-		Gfx.circle(g, cx + 3.2f, cy + 1.5f, head / 2.7f, ink);
-		Gfx.line(g, cx - 3.4f, cy + 4f, cx - 3.4f, cy - 6f, 1.3f, ink);
-		Gfx.line(g, cx + 4.8f, cy + 1.5f, cx + 4.8f, cy - 8f, 1.3f, ink);
-		Gfx.line(g, cx - 3.4f, cy - 6f, cx + 4.8f, cy - 8f, 1.3f, ink);
 	}
 
 	private static float alpha(float factor) {
@@ -241,16 +283,36 @@ public final class MusicHudModule extends AbstractHudModule {
 
 	private void drawLyrics(GuiGraphics g, Font font, TrackInfo track, LyricLayout layout,
 			float x, float y, long positionMs) {
-		float totalWidth = 0f;
-		for (String line : layout.lines()) {
-			totalWidth += Gfx.widthAtSize(font, line, layout.size());
+		if (layout.lines().isEmpty()) {
+			return;
 		}
-		float sung = SyncedLyrics.progress(track.key, positionMs) * totalWidth;
+		String key = String.join("\\n", layout.lines());
+		float totalWidth = totalWidth(font, layout);
+		float lyricProgress = Math.max(0f, Math.min(1f, SyncedLyrics.progress(track.key, positionMs)));
+		if (!key.equals(lastLineShown)) {
+			previousLine = lastLineShown;
+			lastLineShown = key;
+			lineFade = 0f;
+			sungWidth = lyricProgress * totalWidth;
+		}
+		lineFade += (1f - lineFade) * 0.16f;
+		float eased = lineFade * lineFade * (3f - 2f * lineFade);
+
+		if (!previousLine.isEmpty() && eased < 0.999f) {
+			String leaving = previousLine.split("\\n", 2)[0];
+			Gfx.textAtSize(g, font, leaving, x, y - 2f * eased, layout.size(),
+					HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), 0.3f * (1f - eased)), false);
+		}
+
+		float targetWidth = lyricProgress * totalWidth;
+		sungWidth += (targetWidth - sungWidth) * 0.9f;
+		float lift = (1f - eased) * 2.5f;
+		float textAlpha = eased * lyricsRoom;
 		float consumed = 0f;
 		for (int row = 0; row < layout.lines().size(); row++) {
 			String line = layout.lines().get(row);
 			float lineWidth = Gfx.widthAtSize(font, line, layout.size());
-			float lit = Math.max(0f, Math.min(lineWidth, sung - consumed));
+			float lit = Math.max(0f, Math.min(lineWidth, sungWidth - consumed));
 			int cut = 0;
 			while (cut < line.length()
 					&& Gfx.widthAtSize(font, line.substring(0, cut + 1), layout.size()) <= lit) {
@@ -258,12 +320,31 @@ public final class MusicHudModule extends AbstractHudModule {
 			}
 			String done = line.substring(0, cut);
 			String rest = line.substring(cut);
-			float rowY = y + row * LYRIC_ROW;
-			Gfx.textAtSize(g, font, done, x, rowY, layout.size(), HudAlpha.mul(HudStyle.ACCENT), false);
 			float doneWidth = Gfx.widthAtSize(font, done, layout.size());
+			float rowY = y + row * LYRIC_ROW + lift;
+			Gfx.textAtSize(g, font, done, x, rowY, layout.size(),
+					HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), textAlpha), false);
 			Gfx.textAtSize(g, font, rest, x + doneWidth, rowY, layout.size(),
-					HudAlpha.mul(HudStyle.MUTED), false);
+					HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), textAlpha * 0.35f), false);
+
+			// Fade the character currently being sung instead of snapping at a letter boundary.
+			if (cut < line.length() && lit > 0f) {
+				String next = String.valueOf(line.charAt(cut));
+				float nextWidth = Math.max(0.5f, Gfx.widthAtSize(font, next, layout.size()));
+				float within = Math.max(0f, Math.min(1f, (lit - doneWidth) / nextWidth));
+				Gfx.textAtSize(g, font, next, x + doneWidth, rowY, layout.size(),
+					HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), textAlpha * within), false);
+			}
+			consumed += lineWidth;
 		}
+	}
+
+	private static float totalWidth(Font font, LyricLayout layout) {
+		float width = 0f;
+		for (String line : layout.lines()) {
+			width += Gfx.widthAtSize(font, line, layout.size());
+		}
+		return Math.max(1f, width);
 	}
 
 	private void drawProgress(GuiGraphics g, Font font, TrackInfo track, float x, float y, float width) {
