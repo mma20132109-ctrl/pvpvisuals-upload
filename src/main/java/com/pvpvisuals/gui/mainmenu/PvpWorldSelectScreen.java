@@ -308,6 +308,20 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
         if (event.button() == 0 && menu.handleDockClick(event.x(), event.y())) return true;
+
+        // These widgets are rendered by our custom glass layer, so dispatch their
+        // clicks explicitly instead of relying on Screen's vanilla renderable routing.
+        if (event.button() == 0) {
+            for (AbstractWidget widget : actionButtons) {
+                if (widget.active && widget.visible
+                        && event.x() >= widget.getX() && event.x() < widget.getX() + widget.getWidth()
+                        && event.y() >= widget.getY() && event.y() < widget.getY() + widget.getHeight()
+                        && widget.mouseClicked(event, doubleClick)) {
+                    return true;
+                }
+            }
+        }
+
         if (event.button() == 0 && !worldEntries.isEmpty()) {
             float centerX = width / 2f;
             float centerY = Math.min(height * 0.48f, height - 185f);
