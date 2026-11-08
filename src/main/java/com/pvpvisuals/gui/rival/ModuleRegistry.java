@@ -35,37 +35,11 @@ public final class ModuleRegistry {
 					c.targetEsp = v;
 					if (v) com.pvpvisuals.render.targetesp.TargetEspRenderer.reset();
 				})
-						.child(ModuleDef.choice("Style", Category.VISUAL,
-								() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode).title,
-								List.of("Ghosts", "Circle", "Square", "3D Box", "Aura"),
-								v -> c.targetEspSettings.mode = com.pvpvisuals.render.targetesp.TargetEspMode.byName(v).name()))
-						.child(ModuleDef.choice("Color Mode", Category.VISUAL,
-								() -> targetEspColorTitle(c.targetEspSettings.colorMode),
-								List.of("Static", "Health", "Distance", "Rainbow"),
-								v -> c.targetEspSettings.colorMode = v.toUpperCase(java.util.Locale.ROOT)))
 						.child(ModuleDef.toggle("Players", Category.VISUAL, () -> c.targetEspSettings.showPlayers, v -> c.targetEspSettings.showPlayers = v))
 						.child(ModuleDef.toggle("Mobs", Category.VISUAL, () -> c.targetEspSettings.showMobs, v -> c.targetEspSettings.showMobs = v))
 						.child(ModuleDef.slider("Max Distance", Category.VISUAL, 8, 128, 0, () -> c.targetEspSettings.maxDistance, v -> c.targetEspSettings.maxDistance = (float) v))
 						.child(ModuleDef.toggle("Through Walls", Category.VISUAL, () -> c.targetEspSettings.throughWalls, v -> c.targetEspSettings.throughWalls = v))
-						.child(ModuleDef.slider("Line Thickness", Category.VISUAL, 0.5, 5.0, 1, () -> c.targetEspSettings.lineThickness, v -> c.targetEspSettings.lineThickness = (float) v))
-						.child(ModuleDef.toggle("3D Box Fill", Category.VISUAL, () -> c.targetEspSettings.fillBox, v -> c.targetEspSettings.fillBox = v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.BOX_3D))
-						.child(ModuleDef.slider("Fill Alpha", Category.VISUAL, 0.02, 0.35, 2, () -> c.targetEspSettings.fillAlpha, v -> c.targetEspSettings.fillAlpha = (float) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.BOX_3D))
-						.child(ModuleDef.slider("Ghost Count", Category.VISUAL, 4, 48, 0, () -> c.targetEspSettings.ghostCount, v -> c.targetEspSettings.ghostCount = (int) v)
-								.visibleWhen(() -> com.pvpvisuals.render.targetesp.TargetEspMode.byName(c.targetEspSettings.mode) == com.pvpvisuals.render.targetesp.TargetEspMode.GHOSTS))
-						.child(ModuleDef.slider("Animation Speed", Category.VISUAL, 0.1, 4.0, 1, () -> c.targetEspSettings.animationSpeed, v -> c.targetEspSettings.animationSpeed = (float) v))
-						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0)))
-						.child(ModuleDef.slider("Color R", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 16) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0x00FFFF) | ((int) v << 16)))
-						.child(ModuleDef.slider("Color G", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.color >> 8) & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFF00FF) | ((int) v << 8)))
-						.child(ModuleDef.slider("Color B", Category.VISUAL, 0, 255, 0, () -> c.targetEspSettings.color & 255, v -> c.targetEspSettings.color = (c.targetEspSettings.color & 0xFFFF00) | (int) v))
-						.child(ModuleDef.toggle("Use Invisible Color", Category.VISUAL, () -> c.targetEspSettings.useInvisibleColor, v -> c.targetEspSettings.useInvisibleColor = v))
-						.child(ModuleDef.slider("Friend R", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.friendColor >> 16) & 255, v -> c.targetEspSettings.friendColor = (c.targetEspSettings.friendColor & 0x00FFFF) | ((int) v << 16)))
-						.child(ModuleDef.slider("Friend G", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.friendColor >> 8) & 255, v -> c.targetEspSettings.friendColor = (c.targetEspSettings.friendColor & 0xFF00FF) | ((int) v << 8)))
-						.child(ModuleDef.slider("Friend B", Category.VISUAL, 0, 255, 0, () -> c.targetEspSettings.friendColor & 255, v -> c.targetEspSettings.friendColor = (c.targetEspSettings.friendColor & 0xFFFF00) | (int) v))
-						.child(ModuleDef.slider("Invisible R", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.invisibleColor >> 16) & 255, v -> c.targetEspSettings.invisibleColor = (c.targetEspSettings.invisibleColor & 0x00FFFF) | ((int) v << 16)))
-						.child(ModuleDef.slider("Invisible G", Category.VISUAL, 0, 255, 0, () -> (c.targetEspSettings.invisibleColor >> 8) & 255, v -> c.targetEspSettings.invisibleColor = (c.targetEspSettings.invisibleColor & 0xFF00FF) | ((int) v << 8)))
-						.child(ModuleDef.slider("Invisible B", Category.VISUAL, 0, 255, 0, () -> c.targetEspSettings.invisibleColor & 255, v -> c.targetEspSettings.invisibleColor = (c.targetEspSettings.invisibleColor & 0xFFFF00) | (int) v)),
+						.child(ModuleDef.slider("Fade-out (ms)", Category.VISUAL, 100, 1200, 0, () -> c.targetEspSettings.fadeOutSeconds * 1000.0, v -> c.targetEspSettings.fadeOutSeconds = (float) (v / 1000.0))),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
 				com.pvpvisuals.render.radial.RadialMenuModule.def(c),
@@ -179,15 +153,6 @@ public final class ModuleRegistry {
 					c.hud.clear();
 					c.save();
 				}));
-	}
-
-	private static String targetEspColorTitle(String value) {
-		return switch (value == null ? "HEALTH" : value.toUpperCase(java.util.Locale.ROOT)) {
-			case "STATIC" -> "Static";
-			case "DISTANCE" -> "Distance";
-			case "RAINBOW" -> "Rainbow";
-			default -> "Health";
-		};
 	}
 
 	private static String splashBackgroundTitle(String v) {

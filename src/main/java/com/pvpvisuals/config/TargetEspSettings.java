@@ -2,8 +2,8 @@ package com.pvpvisuals.config;
 
 /** Настройки Target ESP. Поля имеют безопасные значения для старых конфигов. */
 public final class TargetEspSettings {
-    /** Значение хранится как имя enum, чтобы старые/будущие конфиги переживали переименование отображаемых названий. */
-    public String mode = "GHOSTS";
+    /** Reserved for the replacement renderer; old saved style values remain compatible. */
+    public String mode = "NONE";
 
     public boolean showPlayers = true;
     public boolean showMobs = true;
