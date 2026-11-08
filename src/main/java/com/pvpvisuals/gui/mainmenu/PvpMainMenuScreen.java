@@ -589,7 +589,8 @@ public final class PvpMainMenuScreen extends Screen {
     void renderWorldSelectBackground(GuiGraphics graphics, int mouseX, int mouseY) {
         updateParallax(mouseX, mouseY, 16f);
         drawBackdrop(graphics, System.nanoTime());
-        LiquidGlassRenderer.captureBackground();
+        LiquidGlassRenderer.scheduleBackgroundCapture();
+        graphics.blurBeforeThisStratum();
         Gfx.glass(graphics, width * 0.13f, 18f, width * 0.74f,
                 Math.max(120f, height - 92f), 14f,
                 0x401C202B, 0x3010141D, 0x20FFFFFF);
