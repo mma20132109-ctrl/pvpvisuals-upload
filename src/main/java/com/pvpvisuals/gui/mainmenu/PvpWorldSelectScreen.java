@@ -70,24 +70,26 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
     private void bindWorldList() {
         try {
             worldList = null;
-            for (Field field : SelectWorldScreen.class.getDeclaredFields()) {
-                if (WorldSelectionList.class.isAssignableFrom(field.getType())) {
-                    field.setAccessible(true);
-                    Object value = field.get(this);
-                    if (value instanceof WorldSelectionList found) {
-                        worldList = found;
-                        break;
-                    }
+            // Screen.children() is the event hierarchy and keeps the vanilla list
+            // available even after it is removed from the render pass.
+            for (var child : children()) {
+                if (child instanceof WorldSelectionList found) {
+                    worldList = found;
+                    break;
                 }
             }
-            if (worldList == null) return;
+            if (worldList == null) {
+                System.err.println("[pvpvisuals] WorldSelectionList не найден среди элементов экрана");
+                return;
+            }
+
             worldList.setAlpha(0f);
             try {
                 hideVanillaWorldList();
             } catch (ReflectiveOperationException | RuntimeException exception) {
-                // A failed attempt to hide vanilla controls must never disable the custom carousel.
                 System.err.println("[pvpvisuals] Не удалось скрыть ванильные элементы: " + exception);
             }
+
             worldEntries.clear();
             for (WorldSelectionList.Entry entry : worldList.children()) {
                 if (entry instanceof WorldSelectionList.WorldListEntry world) {
@@ -104,7 +106,7 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 worldIndex = 0;
                 worldPosition = 0f;
             }
-        } catch (ReflectiveOperationException | RuntimeException exception) {
+        } catch (RuntimeException exception) {
             worldList = null;
             worldEntries.clear();
             System.err.println("[pvpvisuals] Не удалось подключить карусель миров: " + exception);
