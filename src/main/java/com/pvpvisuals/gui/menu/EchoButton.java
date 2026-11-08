@@ -14,7 +14,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * Анимации: наведение — плавная заливка и масштаб до 1.02 (ease-out), нажатие — «проседание» до 0.95.
  */
 public final class EchoButton {
-	public enum Icon { NONE, EXIT, GLOBE }
+	public enum Icon { NONE, EXIT, GLOBE, VISUALS }
 
 	public int x, y, w, h;
 	public final String label;
@@ -103,6 +103,10 @@ public final class EchoButton {
 			float d = r * 0.62f;
 			Gfx.line(g, cx - d, cy - d, cx + d, cy + d, 1.6f, col);
 			Gfx.line(g, cx + d, cy - d, cx - d, cy + d, 1.6f, col);
+		} else if (icon == Icon.VISUALS) {
+			Gfx.circle(g, cx, cy, r * 0.72f, col);
+			Gfx.ringCircle(g, cx, cy, r, 1.1f, col);
+			Gfx.line(g, cx - r * 0.7f, cy, cx + r * 0.7f, cy, 1.0f, col);
 		} else if (icon == Icon.GLOBE) {
 			Gfx.ringCircle(g, cx, cy, r, 1.2f, col);
 			Gfx.line(g, cx - r, cy, cx + r, cy, 1.1f, col);
