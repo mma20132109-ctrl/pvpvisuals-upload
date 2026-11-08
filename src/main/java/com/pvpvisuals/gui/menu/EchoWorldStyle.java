@@ -55,6 +55,11 @@ public final class EchoWorldStyle {
 
 	/** Стилизовать ли этот экран. Проверка через instanceof (имена классов в релизе обфусцированы). */
 	public static boolean isStyled(Object screen) {
+		// The account screen must never use Minecraft's global background blur: it can already be active
+		// in the title-menu frame and the blur post-chain is limited to one execution per frame.
+		if (screen instanceof EchoAccountManagerScreen) {
+			return true;
+		}
 		return PvpConfig.get().menu.styleWorldMenus
 				&& (screen instanceof SelectWorldScreen || screen instanceof CreateWorldScreen
 						|| screen instanceof EditWorldScreen || screen instanceof LevelLoadingScreen
@@ -222,7 +227,10 @@ public final class EchoWorldStyle {
 
 	/** Нужно ли заменить фон этого экрана: стилизованный экран и (нет мира под ним или это служебный экран). */
 	public static boolean wantsBackground(Object screen) {
-		return isStyled(screen) && (Minecraft.getInstance().level == null || isTransient(screen));
+		// Account manager is also opened from the title screen; skip vanilla renderBlurredBackground
+		// unconditionally, including if another screen later opens it while a world is still attached.
+		return screen instanceof EchoAccountManagerScreen
+				|| isStyled(screen) && (Minecraft.getInstance().level == null || isTransient(screen));
 	}
 
 	/** Панель с сообщением по центру («Saving level...» и т.п.): тёмная плашка с фиолетовой рамкой и бегущей полосой. */
