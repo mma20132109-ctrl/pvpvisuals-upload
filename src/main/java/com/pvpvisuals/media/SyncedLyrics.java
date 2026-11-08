@@ -368,7 +368,7 @@ public final class SyncedLyrics {
 		if (scalar.startsWith("'") && scalar.endsWith("'") && scalar.length() >= 2) {
 			return scalar.substring(1, scalar.length() - 1).replace("''", "'");
 		}
-		if (scalar.startsWith("\\\"") && scalar.endsWith("\\\"") && scalar.length() >= 2) {
+		if (scalar.startsWith("\"") && scalar.endsWith("\"") && scalar.length() >= 2) {
 			try {
 				return JsonParser.parseString(scalar).getAsString();
 			} catch (RuntimeException ignored) {
