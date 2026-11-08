@@ -47,6 +47,8 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
                 widget.setHeight(ACTION_HEIGHT);
                 widget.setX(startX + i * (ACTION_WIDTH + ACTION_GAP));
                 widget.setY(rowY);
+                // Keep the vanilla click handlers, but hide their vanilla rendering.
+                widget.setAlpha(0.0f);
             }
         }
     }
