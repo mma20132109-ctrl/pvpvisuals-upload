@@ -284,7 +284,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		if (layout.lines().isEmpty()) {
 			return;
 		}
-		String key = String.join("\\n", layout.lines());
+		String key = String.join("\n", layout.lines());
 		float totalWidth = totalWidth(font, layout);
 		float lyricProgress = Math.max(0f, Math.min(1f, SyncedLyrics.progress(track.key, positionMs)));
 		if (!key.equals(lastLineShown)) {
@@ -297,7 +297,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		float eased = lineFade * lineFade * (3f - 2f * lineFade);
 
 		if (!previousLine.isEmpty() && eased < 0.999f) {
-			String leaving = previousLine.split("\\n", 2)[0];
+			String leaving = previousLine.split("\n", 2)[0];
 			Gfx.textAtSize(g, font, leaving, x, y - 2f * eased, layout.size(),
 					HudStyle.opacity(HudAlpha.mul(HudStyle.TEXT), 0.3f * (1f - eased)), false);
 		}
