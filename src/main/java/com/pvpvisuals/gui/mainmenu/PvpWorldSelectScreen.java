@@ -82,7 +82,12 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
             }
             if (worldList == null) return;
             worldList.setAlpha(0f);
-            hideVanillaWorldList();
+            try {
+                hideVanillaWorldList();
+            } catch (ReflectiveOperationException | RuntimeException exception) {
+                // A failed attempt to hide vanilla controls must never disable the custom carousel.
+                System.err.println("[pvpvisuals] Не удалось скрыть ванильные элементы: " + exception);
+            }
             worldEntries.clear();
             for (WorldSelectionList.Entry entry : worldList.children()) {
                 if (entry instanceof WorldSelectionList.WorldListEntry world) {
@@ -116,25 +121,23 @@ public final class PvpWorldSelectScreen extends SelectWorldScreen {
         for (Class<?> type = getClass(); type != null && renderables == null; type = type.getSuperclass()) {
             for (Field field : type.getDeclaredFields()) {
                 if (!List.class.isAssignableFrom(field.getType())) continue;
-                Type generic = field.getGenericType();
-                if (!(generic instanceof ParameterizedType parameterized)) continue;
-                Type[] arguments = parameterized.getActualTypeArguments();
-                if (arguments.length != 1 || arguments[0] != Renderable.class) continue;
+                String signature = field.getGenericType().getTypeName();
+                if (!signature.contains(Renderable.class.getSimpleName())) continue;
                 field.setAccessible(true);
                 Object value = field.get(this);
-                if (value instanceof List<?> list) {
+                if (value instanceof List<?> list && list.contains(worldList)) {
                     renderables = (List<Renderable>) list;
                     break;
                 }
             }
         }
-        if (renderables == null) {
-            throw new IllegalStateException("Не найден список отрисовки Screen");
+
+        if (renderables != null) {
+            renderables.remove(worldList);
+            renderables.removeIf(renderable -> renderable instanceof EditBox
+                    || renderable.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("search"));
         }
-        renderables.removeIf(renderable -> renderable == worldList
-                || renderable instanceof EditBox
-                || renderable.getClass().getSimpleName().toLowerCase(java.util.Locale.ROOT).contains("search"));
-        if (worldList != null) worldList.setAlpha(0f);
+        worldList.setAlpha(0f);
     }
 
     private void refreshWorldEntries() {
