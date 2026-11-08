@@ -1,6 +1,22 @@
 package com.pvpvisuals.gui.mainmenu;
 
 import com.pvpvisuals.PvpVisualsClient;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.Identifier;
+import java.io.ByteArrayInputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import com.pvpvisuals.gui.echo.EchoScreen;
 import com.pvpvisuals.gui.echo.EchoTheme;
 import com.pvpvisuals.gui.echo.Gfx;
@@ -35,6 +51,18 @@ public final class PvpMainMenuScreen extends Screen {
     private static final String[] MAIN_LABELS = {"Одиночная", "Сетевая игра", "Аккаунты", "Моды"};
     private static final String[] MAIN_GLYPHS = {"◈", "⌁", "♙", "▦"};
     private static final String[] ACTION_GLYPHS = {"⚙", "⏻"};
+    private static final String SOURCE_ASSET_BASE =
+            "https://raw.githubusercontent.com/mma20132109-ctrl/pvpvisuals-mainmenu-source/72f5841359a6c47d4d254d1accda8c5e80da4fe2/assets/menu/";
+    private static final String[] IMAGE_BACKGROUNDS = {"sadnes.png", "sky.png"};
+    private static final Identifier[] LOADED_BACKGROUNDS = new Identifier[IMAGE_BACKGROUNDS.length];
+    private static final boolean[] BACKGROUND_REQUESTED = new boolean[IMAGE_BACKGROUNDS.length];
+    private static final ExecutorService ASSET_EXECUTOR = Executors.newFixedThreadPool(2, task -> {
+        Thread thread = new Thread(task, "pvpvisuals-menu-assets");
+        thread.setDaemon(true);
+        return thread;
+    });
+    private static final HttpClient ASSET_HTTP = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(10)).followRedirects(HttpClient.Redirect.NORMAL).build();
     private static final int GLASS_TOP = 0x751C202B;
     private static final int GLASS_BOTTOM = 0x6810141D;
     private static final int GLASS_BORDER = 0x28FFFFFF;
@@ -91,12 +119,99 @@ public final class PvpMainMenuScreen extends Screen {
         parallaxY += (ty - parallaxY) * speed;
     }
 
-    /**
-     * Procedural fallback backdrop. The source repository's PNG files are binary assets
-     * and are not readable through the connected GitHub text-file API, so this keeps the
-     * screen valid rather than referencing missing textures.
-     */
+    private static void ensureBackgroundDownloads() {
+        for (int i = 0; i < IMAGE_BACKGROUNDS.length; i++) {
+            final int index = i;
+            synchronized (BACKGROUND_REQUESTED) {
+                if (BACKGROUND_REQUESTED[index] || LOADED_BACKGROUNDS[index] != null) continue;
+                BACKGROUND_REQUESTED[index] = true;
+            }
+            ASSET_EXECUTOR.execute(() -> loadBackground(index));
+        }
+    }
+
+    private static void loadBackground(int index) {
+        String fileName = IMAGE_BACKGROUNDS[index];
+        Path cache = FabricLoader.getInstance().getConfigDir()
+                .resolve("pvpvisuals").resolve("menu-assets").resolve(fileName);
+        try {
+            byte[] bytes;
+            if (Files.isRegularFile(cache) && Files.size(cache) > 8L) {
+                bytes = Files.readAllBytes(cache);
+            } else {
+                HttpRequest request = HttpRequest.newBuilder(URI.create(SOURCE_ASSET_BASE + fileName))
+                        .timeout(Duration.ofSeconds(25)).header("User-Agent", "PvPVisuals/1.0").GET().build();
+                HttpResponse<byte[]> response = ASSET_HTTP.send(request, HttpResponse.BodyHandlers.ofByteArray());
+                if (response.statusCode() != 200 || response.body().length < 8 || response.body().length > 12_000_000) {
+                    throw new IllegalStateException("Unexpected HTTP response for " + fileName + ": " + response.statusCode());
+                }
+                bytes = response.body();
+                if (bytes[0] != (byte) 0x89 || bytes[1] != 0x50 || bytes[2] != 0x4E || bytes[3] != 0x47) {
+                    throw new IllegalStateException("Downloaded background is not a PNG: " + fileName);
+                }
+                try {
+                    Files.createDirectories(cache.getParent());
+                    Files.write(cache, bytes);
+                } catch (Exception ignored) {
+                    // A cache write failure must not prevent this session from showing the image.
+                }
+            }
+
+            byte[] imageBytes = bytes;
+            Minecraft.getInstance().execute(() -> {
+                try {
+                    NativeImage image = NativeImage.read(new ByteArrayInputStream(imageBytes));
+                    DynamicTexture texture = new DynamicTexture(() -> "pvpvisuals_mainmenu_" + fileName, image);
+                    texture.upload();
+                    Identifier id = Identifier.fromNamespaceAndPath(PvpVisualsClient.MOD_ID, "menu_runtime/" + fileName);
+                    Minecraft.getInstance().getTextureManager().register(id, texture);
+                    LOADED_BACKGROUNDS[index] = id;
+                } catch (Throwable error) {
+                    synchronized (BACKGROUND_REQUESTED) {
+                        BACKGROUND_REQUESTED[index] = false;
+                    }
+                    System.err.println("[pvpvisuals] Не удалось загрузить фон меню " + fileName + ": " + error);
+                }
+            });
+        } catch (Throwable error) {
+            synchronized (BACKGROUND_REQUESTED) {
+                BACKGROUND_REQUESTED[index] = false;
+            }
+            System.err.println("[pvpvisuals] Не удалось скачать фон меню " + fileName + ": " + error);
+        }
+    }
+
+    /** Uses the exact background PNGs from the supplied source repository when available. */
     private void drawBackdrop(GuiGraphics g, long now) {
+        ensureBackgroundDownloads();
+        if (backdropIndex < LOADED_BACKGROUNDS.length && LOADED_BACKGROUNDS[backdropIndex] != null) {
+            float maxOffset = 22f;
+            float extra = maxOffset * 2f + 12f;
+            float targetW = width + extra;
+            float targetH = height + extra;
+            float imageAspect = 1920f / 1080f;
+            float screenAspect = targetW / Math.max(1f, targetH);
+            float drawW;
+            float drawH;
+            if (screenAspect > imageAspect) {
+                drawW = targetW;
+                drawH = targetW / imageAspect;
+            } else {
+                drawH = targetH;
+                drawW = targetH * imageAspect;
+            }
+            float offsetX = -parallaxX * maxOffset;
+            float offsetY = -parallaxY * maxOffset;
+            int x = Math.round((width - drawW) / 2f + offsetX);
+            int y = Math.round((height - drawH) / 2f + offsetY);
+            int w = Math.round(drawW);
+            int h = Math.round(drawH);
+            g.blit(RenderPipelines.GUI_TEXTURED, LOADED_BACKGROUNDS[backdropIndex],
+                    x, y, 0f, 0f, w, h, 1920, 1080, 1920, 1080, 0xFFFFFFFF);
+            g.fill(0, 0, width, height, 0x1E000000);
+            return;
+        }
+
         float t = now / 1_000_000_000f;
         g.fill(0, 0, width, height, 0xFF080B16);
         float drift = (float) Math.sin(t * 0.12f) * 10f;
