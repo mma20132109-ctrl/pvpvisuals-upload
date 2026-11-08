@@ -35,7 +35,7 @@ public final class TargetEspSettings {
     public float ghostRadius = 0.75f;
     /** Original Ring/Krug radius. */
     public float ringRadius = 0.50f;
-    public float ghostSpeed = 2.0f;
+    public float ghostSpeed = 1.0f;
     public boolean enableAlphaAnimation = false;
     public int alphaAnimationMs = 350;
     public int maxAlpha = 255;
