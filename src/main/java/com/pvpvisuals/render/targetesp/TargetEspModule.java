@@ -4,6 +4,7 @@ import org.joml.Matrix4f;
 
 import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.config.TargetEspSettings;
+import com.pvpvisuals.state.CombatState;
 
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldExtractionContext;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
@@ -14,16 +15,18 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 
 /**
  * Target ESP extraction for Minecraft 1.21.11.
  *
- * Entity/world reads happen in END_EXTRACTION. END_MAIN only consumes this immutable frame
- * and submits GPU geometry. The last target bounds are kept briefly for a smooth fade-out.
+ * Mirrors the reference mod's attack-target tracking: the last attacked living entity
+ * remains selected for six seconds. Entity/world reads happen in END_EXTRACTION;
+ * END_MAIN only consumes this immutable frame and submits GPU geometry.
  */
 public final class TargetEspModule {
+    private static final long TARGET_TTL_TICKS = 120L;
+
     public static final class Frame {
         public boolean visible;
         /** Camera-relative minX,minY,minZ,maxX,maxY,maxZ. */
@@ -73,10 +76,11 @@ public final class TargetEspModule {
             return;
         }
 
-        Entity hit = mc.hitResult instanceof EntityHitResult result ? result.getEntity() : null;
-        if (hit instanceof LivingEntity target && target != mc.player && target.isAlive()
-                && !target.isInvisible()
-                && isAllowed(target, settings)
+        LivingEntity target = CombatState.lastTarget;
+        boolean recentlyAttacked = target != null
+                && CombatState.now - CombatState.lastTargetTime <= TARGET_TTL_TICKS;
+        if (recentlyAttacked && target.level() == mc.level && target != mc.player && target.isAlive()
+                && !target.isInvisible() && isAllowed(target, settings)
                 && target.distanceToSqr(mc.player) <= (double) settings.maxDistance * settings.maxDistance) {
             AABB box = interpolatedBox(target, mc.getDeltaTracker().getGameTimeDeltaPartialTick(false));
             Frustum frustum = context.frustum();
