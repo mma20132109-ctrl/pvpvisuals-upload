@@ -186,7 +186,7 @@ public final class PvpMicrosoftAuth {
                 .header("User-Agent", "PvPVisuals/1.0")
                 .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
-        return send(request, url, false);
+        return send(request, url, false, false);
     }
 
     private static JsonObject getJson(String url, String bearer) {
