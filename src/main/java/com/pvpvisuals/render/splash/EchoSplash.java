@@ -280,6 +280,15 @@ public final class EchoSplash {
 		Gfx.rrect(g, ex, ey + eh - th, ew, th, 0f, white, white, 0, 0f);
 	}
 
+	private static int mixColor(int from, int to, float amount) {
+		float t = clamp01(amount);
+		int a = (from >>> 24) + Math.round(((to >>> 24) - (from >>> 24)) * t);
+		int r = ((from >>> 16) & 255) + Math.round((((to >>> 16) & 255) - ((from >>> 16) & 255)) * t);
+		int g = ((from >>> 8) & 255) + Math.round((((to >>> 8) & 255) - ((from >>> 8) & 255)) * t);
+		int b = (from & 255) + Math.round(((to & 255) - (from & 255)) * t);
+		return (a << 24) | (r << 16) | (g << 8) | b;
+	}
+
 	private static int withAlpha(int argb, float a) {
 		int al = Math.round(((argb >>> 24) & 0xFF) * a);
 		return (al << 24) | (argb & 0xFFFFFF);
