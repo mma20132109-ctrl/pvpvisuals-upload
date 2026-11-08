@@ -73,7 +73,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		if (!SyncedLyrics.has(track.key)) {
 			return LyricLayout.empty();
 		}
-		long positionMs = MediaManager.positionSeconds() * 1000L;
+		long positionMs = MediaManager.positionMillis();
 		SyncedLyrics.Line line = SyncedLyrics.current(track.key, positionMs);
 		String raw = line == null ? "♫" : line.text();
 		return wrap(raw, W - PAD * 2f);
@@ -190,7 +190,7 @@ public final class MusicHudModule extends AbstractHudModule {
 		if (lyricsRoom > 0.01f) {
 			rowY += 2f;
 			if (!lyrics.lines().isEmpty() && track != null) {
-				drawLyrics(g, mc.font, track, lyrics, PAD, rowY, MediaManager.positionSeconds() * 1000L);
+				drawLyrics(g, mc.font, track, lyrics, PAD, rowY, MediaManager.positionMillis());
 			}
 			rowY += lyricHeight;
 		}
