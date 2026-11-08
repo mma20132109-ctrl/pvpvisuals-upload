@@ -29,6 +29,7 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -56,6 +57,7 @@ public final class PvpMainMenuScreen extends Screen {
     private static final String[] IMAGE_BACKGROUNDS = {"sadnes.png", "sky.png"};
     private static final Identifier[] LOADED_BACKGROUNDS = new Identifier[IMAGE_BACKGROUNDS.length];
     private static final boolean[] BACKGROUND_REQUESTED = new boolean[IMAGE_BACKGROUNDS.length];
+    private static final long[] BACKGROUND_RETRY_AFTER = new long[IMAGE_BACKGROUNDS.length];
     private static final ExecutorService ASSET_EXECUTOR = Executors.newFixedThreadPool(2, task -> {
         Thread thread = new Thread(task, "pvpvisuals-menu-assets");
         thread.setDaemon(true);
@@ -74,6 +76,8 @@ public final class PvpMainMenuScreen extends Screen {
     private float parallaxX;
     private float parallaxY;
     private boolean accountsPage;
+    private boolean accountInputFocused = true;
+    private String accountInput = "";
     private long lastFrameNs;
 
     public PvpMainMenuScreen() {
@@ -82,6 +86,7 @@ public final class PvpMainMenuScreen extends Screen {
 
     /** Replaces only the vanilla title screen; all other Minecraft screens remain untouched. */
     public static void register() {
+        PvpAccountManager.load();
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (screen instanceof TitleScreen) {
                 client.setScreen(new PvpMainMenuScreen());
@@ -123,7 +128,8 @@ public final class PvpMainMenuScreen extends Screen {
         for (int i = 0; i < IMAGE_BACKGROUNDS.length; i++) {
             final int index = i;
             synchronized (BACKGROUND_REQUESTED) {
-                if (BACKGROUND_REQUESTED[index] || LOADED_BACKGROUNDS[index] != null) continue;
+                if (BACKGROUND_REQUESTED[index] || LOADED_BACKGROUNDS[index] != null
+                        || System.nanoTime() < BACKGROUND_RETRY_AFTER[index]) continue;
                 BACKGROUND_REQUESTED[index] = true;
             }
             ASSET_EXECUTOR.execute(() -> loadBackground(index));
@@ -169,6 +175,7 @@ public final class PvpMainMenuScreen extends Screen {
                 } catch (Throwable error) {
                     synchronized (BACKGROUND_REQUESTED) {
                         BACKGROUND_REQUESTED[index] = false;
+                        BACKGROUND_RETRY_AFTER[index] = System.nanoTime() + 60_000_000_000L;
                     }
                     System.err.println("[pvpvisuals] Не удалось загрузить фон меню " + fileName + ": " + error);
                 }
@@ -176,6 +183,7 @@ public final class PvpMainMenuScreen extends Screen {
         } catch (Throwable error) {
             synchronized (BACKGROUND_REQUESTED) {
                 BACKGROUND_REQUESTED[index] = false;
+                BACKGROUND_RETRY_AFTER[index] = System.nanoTime() + 60_000_000_000L;
             }
             System.err.println("[pvpvisuals] Не удалось скачать фон меню " + fileName + ": " + error);
         }
@@ -349,41 +357,75 @@ public final class PvpMainMenuScreen extends Screen {
 
     private void drawAccountsPage(GuiGraphics g, int mouseX, int mouseY, float dt) {
         float w = Math.min(402f, width - 36f);
-        float h = 206f;
+        float h = Math.min(250f, height - 24f);
         float x = (width - w) / 2f;
         float y = (height - h) / 2f - 8f;
         Gfx.glass(g, x, y, w, h, 12f, 0x85202634, 0x7610141D, 0x37FFFFFF);
-        Gfx.textAtSize(g, font, "Аккаунты", x + 18f, y + 16f, 15f, 0xFFF0F2FA, false);
-        Gfx.textAtSize(g, font, "Текущий профиль Minecraft", x + 18f, y + 43f,
-                7.4f, 0xFFAEB5C8, false);
+        Gfx.textAtSize(g, font, "Аккаунты", x + 18f, y + 15f, 15f, 0xFFF0F2FA, false);
+        Gfx.textAtSize(g, font, "Оффлайн-профили Minecraft", x + 18f, y + 39f,
+                7.2f, 0xFFAEB5C8, false);
 
-        float rowY = y + 66f;
-        Gfx.glass(g, x + 14f, rowY, w - 28f, 52f, 8f, 0x522B3342, 0x40131822, 0x24FFFFFF);
-        String username = Minecraft.getInstance().getUser().getName();
-        Gfx.circle(g, x + 34f, rowY + 26f, 10f, 0x558C9EFF);
-        Gfx.textAtSize(g, font, "♙", x + 30f, rowY + 20f, 10f, 0xFFE7EAFA, false);
-        Gfx.textAtSize(g, font, username, x + 52f, rowY + 13f, 8f, 0xFFF0F2FA, false);
-        Gfx.textAtSize(g, font, "Активная игровая сессия", x + 52f, rowY + 29f,
-                6.2f, 0xFF9CA4B7, false);
+        float inputX = x + 14f;
+        float inputY = y + 56f;
+        float inputW = w - 118f;
+        Gfx.glass(g, inputX, inputY, inputW, 28f, 7f,
+                accountInputFocused ? 0xAA303B51 : 0x63242B39, 0x53151B27,
+                accountInputFocused ? 0x668C9EFF : 0x32FFFFFF);
+        String shownInput = accountInput.isEmpty() ? "Введите ник (3–16 символов)" : accountInput;
+        Gfx.textAtSize(g, font, shownInput, inputX + 9f, inputY + 9f, 6.3f,
+                accountInput.isEmpty() ? 0xFF858DA1 : 0xFFF0F2FA, false);
+        if (accountInputFocused && System.currentTimeMillis() % 1000L < 500L) {
+            float caretX = inputX + 9f + Gfx.widthAtSize(font, accountInput, 6.3f) + 1f;
+            g.fill(Math.round(caretX), Math.round(inputY + 8f), Math.round(caretX + 1f),
+                    Math.round(inputY + 20f), 0xFFB8C4FF);
+        }
 
-        float buttonW = 120f;
-        float buttonH = 27f;
-        float by = y + h - 42f;
-        float bx = x + 16f;
-        boolean over = Gfx.hit(mouseX, mouseY, Math.round(bx), Math.round(by), Math.round(buttonW), Math.round(buttonH));
-        Gfx.glass(g, bx, by, buttonW, buttonH, 7f, over ? 0xAA39445A : 0x63242B39,
-                0x53151B27, 0x32FFFFFF);
-        String copy = "Скопировать ник";
-        Gfx.textAtSize(g, font, copy, bx + 11f, by + 9f, 6.5f, 0xFFE8EAF5, false);
+        float addX = x + w - 96f;
+        boolean addHover = Gfx.hit(mouseX, mouseY, Math.round(addX), Math.round(inputY), 82, 28);
+        Gfx.glass(g, addX, inputY, 82f, 28f, 7f,
+                addHover ? 0xAA39445A : 0x63242B39, 0x53151B27, 0x32FFFFFF);
+        Gfx.textAtSize(g, font, "Добавить", addX + 20f, inputY + 9f, 6.5f, 0xFFE8EAF5, false);
 
-        float backW = 72f;
-        float backX = x + w - backW - 16f;
-        boolean backOver = Gfx.hit(mouseX, mouseY, Math.round(backX), Math.round(by), Math.round(backW), Math.round(buttonH));
-        Gfx.glass(g, backX, by, backW, buttonH, 7f, backOver ? 0xAA39445A : 0x63242B39,
-                0x53151B27, 0x32FFFFFF);
-        Gfx.textAtSize(g, font, "Назад", backX + 23f, by + 9f, 6.5f, 0xFFE8EAF5, false);
-        Gfx.textAtSize(g, font, "Управление Microsoft-аккаунтами требует отдельной OAuth-настройки клиента.",
-                x + 18f, y + h - 57f, 5.5f, 0xFF858DA1, false);
+        java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
+        float rowY = y + 94f;
+        int visible = Math.min(4, profiles.size());
+        for (int i = 0; i < visible; i++) {
+            PvpAccountManager.Profile profile = profiles.get(i);
+            boolean active = PvpAccountManager.isActive(profile);
+            Gfx.glass(g, x + 14f, rowY, w - 28f, 29f, 7f,
+                    active ? 0x6C34405A : 0x492B3342, 0x36131822,
+                    active ? 0x558C9EFF : 0x24FFFFFF);
+            Gfx.circle(g, x + 28f, rowY + 14.5f, 4.2f, active ? EchoTheme.ACCENT_TEXT : 0xFF8790A4);
+            Gfx.textAtSize(g, font, profile.name, x + 40f, rowY + 9f, 7f,
+                    0xFFF0F2FA, false);
+            Gfx.textAtSize(g, font, active ? "Текущий профиль" : "Оффлайн-профиль",
+                    x + 40f, rowY + 19f, 5.4f, 0xFF929BAD, false);
+            float selectX = x + w - 104f;
+            float deleteX = x + w - 51f;
+            boolean selectHover = Gfx.hit(mouseX, mouseY, Math.round(selectX), Math.round(rowY + 4f), 44, 21);
+            Gfx.glass(g, selectX, rowY + 4f, 44f, 21f, 5f,
+                    active ? 0x66343C50 : (selectHover ? 0xAA39445A : 0x53242B39),
+                    0x40151B27, 0x28FFFFFF);
+            Gfx.textAtSize(g, font, active ? "Активен" : "Выбрать",
+                    selectX + (active ? 8f : 9f), rowY + 11f, 5.4f,
+                    active ? EchoTheme.ACCENT_TEXT : 0xFFE8EAF5, false);
+            boolean deleteHover = Gfx.hit(mouseX, mouseY, Math.round(deleteX), Math.round(rowY + 4f), 30, 21);
+            Gfx.glass(g, deleteX, rowY + 4f, 30f, 21f, 5f,
+                    deleteHover ? 0x88984B55 : 0x533B2730, 0x40151B27, 0x28FFFFFF);
+            Gfx.textAtSize(g, font, "×", deleteX + 11f, rowY + 8f, 10f, 0xFFFFA5AA, false);
+            rowY += 33f;
+        }
+        if (profiles.isEmpty()) {
+            Gfx.textAtSize(g, font, "Список пуст. Добавь оффлайн-профиль выше.",
+                    x + 18f, y + 105f, 6.2f, 0xFF9CA4B7, false);
+        } else if (profiles.size() > visible) {
+            Gfx.textAtSize(g, font, "+" + (profiles.size() - visible) + " ещё",
+                    x + 18f, y + h - 31f, 5.6f, 0xFF858DA1, false);
+        }
+        Gfx.textAtSize(g, font, "Оффлайн-профили подходят для одиночной игры и серверов без online-mode.",
+                x + 18f, y + h - 18f, 5.4f, 0xFF858DA1, false);
+        float backX = x + w - 62f;
+        Gfx.textAtSize(g, font, "Назад  ‹", backX, y + h - 18f, 5.8f, 0xFFD6DCEC, false);
     }
 
     private void activateDock(int index) {
@@ -391,7 +433,7 @@ public final class PvpMainMenuScreen extends Screen {
         switch (index) {
             case 0 -> minecraft.setScreen(new SelectWorldScreen(this));
             case 1 -> minecraft.setScreen(new JoinMultiplayerScreen(this));
-            case 2 -> accountsPage = !accountsPage;
+            case 2 -> { accountsPage = !accountsPage; accountInputFocused = accountsPage; accountInput = ""; }
             case 3 -> minecraft.setScreen(new EchoScreen());
             case 4 -> minecraft.setScreen(new OptionsScreen(this, minecraft.options));
             case 5 -> minecraft.stop();
@@ -407,18 +449,48 @@ public final class PvpMainMenuScreen extends Screen {
 
         if (accountsPage) {
             float w = Math.min(402f, width - 36f);
-            float h = 206f;
+            float h = Math.min(250f, height - 24f);
             float x = (width - w) / 2f;
             float y = (height - h) / 2f - 8f;
-            float by = y + h - 42f;
-            if (Gfx.hit(mx, my, Math.round(x + 16f), Math.round(by), 120, 27)) {
-                Minecraft.getInstance().keyboardHandler.setClipboard(Minecraft.getInstance().getUser().getName());
+            float inputX = x + 14f;
+            float inputY = y + 56f;
+            float inputW = w - 118f;
+            if (Gfx.hit(mx, my, Math.round(inputX), Math.round(inputY), Math.round(inputW), 28)) {
+                accountInputFocused = true;
                 return true;
             }
-            if (Gfx.hit(mx, my, Math.round(x + w - 88f), Math.round(by), 72, 27)) {
+            float addX = x + w - 96f;
+            if (Gfx.hit(mx, my, Math.round(addX), Math.round(inputY), 82, 28)) {
+                PvpAccountManager.addOffline(accountInput);
+                accountInput = "";
+                accountInputFocused = true;
+                return true;
+            }
+            java.util.List<PvpAccountManager.Profile> profiles = PvpAccountManager.profiles();
+            float rowY = y + 94f;
+            int visible = Math.min(4, profiles.size());
+            for (int i = 0; i < visible; i++) {
+                float selectX = x + w - 104f;
+                float deleteX = x + w - 51f;
+                if (Gfx.hit(mx, my, Math.round(selectX), Math.round(rowY + 4f), 44, 21)) {
+                    PvpAccountManager.select(i);
+                    accountInputFocused = false;
+                    return true;
+                }
+                if (Gfx.hit(mx, my, Math.round(deleteX), Math.round(rowY + 4f), 30, 21)) {
+                    PvpAccountManager.remove(i);
+                    accountInputFocused = false;
+                    return true;
+                }
+                rowY += 33f;
+            }
+            float backX = x + w - 70f;
+            if (Gfx.hit(mx, my, Math.round(backX), Math.round(y + h - 26f), 64, 22)) {
                 accountsPage = false;
+                accountInputFocused = false;
                 return true;
             }
+            accountInputFocused = false;
             return true;
         }
 
@@ -433,7 +505,7 @@ public final class PvpMainMenuScreen extends Screen {
             }
             x += 48f;
         }
-        x += 4f;
+        x += 11f;
         if (Gfx.hit(mx, my, Math.round(x), Math.round(dockY + 4f), 26, 28)) {
             activateDock(4);
             return true;
@@ -455,13 +527,45 @@ public final class PvpMainMenuScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (accountsPage && accountInputFocused) {
+            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+                if (!accountInput.isEmpty()) accountInput = accountInput.substring(0, accountInput.length() - 1);
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_ENTER || event.key() == GLFW.GLFW_KEY_KP_ENTER) {
+                PvpAccountManager.addOffline(accountInput);
+                accountInput = "";
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+                accountInputFocused = false;
+                return true;
+            }
+            return true;
+        }
         if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
             if (accountsPage) {
                 accountsPage = false;
+                accountInputFocused = false;
             }
             return true;
         }
         return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        if (accountsPage && accountInputFocused) {
+            int codepoint = event.codepoint();
+            if (accountInput.length() < 16 && (codepoint == '_' ||
+                    (codepoint >= 'a' && codepoint <= 'z') ||
+                    (codepoint >= 'A' && codepoint <= 'Z') ||
+                    (codepoint >= '0' && codepoint <= '9'))) {
+                accountInput += Character.toString(codepoint);
+            }
+            return true;
+        }
+        return super.charTyped(event);
     }
 
     @Override
