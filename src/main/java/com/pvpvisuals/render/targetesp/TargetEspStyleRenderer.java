@@ -92,6 +92,7 @@ public final class TargetEspStyleRenderer {
         if (!frame.visible || failed) return;
         try {
             TargetEspSettings s = PvpConfig.get().targetEspSettings;
+            if (TargetEspMode.byName(s.mode) == TargetEspMode.SCAN) return;
             Minecraft mc = Minecraft.getInstance();
             RenderTarget target = mc.getMainRenderTarget();
             if (target == null || target.height <= 0) return;
@@ -123,6 +124,7 @@ public final class TargetEspStyleRenderer {
                     case KVADRAT -> CAPTURE;
                     case GHOSTS -> ORIGINAL_BLOOM;
                     case GHOSTS_2 -> ORIGINAL_CUBE_BLOOM;
+                    case SCAN -> FIREFLY;
                     default -> FIREFLY;
                 };
                 flushTexture(frame.view,target,mc,texture);
