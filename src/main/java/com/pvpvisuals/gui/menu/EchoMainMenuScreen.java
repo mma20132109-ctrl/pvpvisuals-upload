@@ -155,6 +155,23 @@ public class EchoMainMenuScreen extends TitleScreen {
 		EchoSplash.drawLogo(g, this.width / 2f, logoCy() + slide, logoSize(), t, 1f);
 		Gfx.alpha = 1f;
 
+		// Compact active-player card, inspired by the source menu's account header.
+		String playerName = mc.getUser().getName();
+		String playerLabel = "PLAYER";
+		int nameWidth = this.font.width(playerName);
+		int labelWidth = this.font.width(playerLabel);
+		float profileW = Math.max(112f, nameWidth + labelWidth + 38f);
+		float profileX = this.width - profileW - 14f;
+		float profileY = 14f;
+		float profileAlpha = Gfx.ease(el / 550f);
+		Gfx.alpha = profileAlpha;
+		Gfx.glass(g, profileX, profileY, profileW, 34f, 10f,
+				0xA91B1E2B, 0x9410121C, 0x55FFFFFF);
+		Gfx.circle(g, profileX + 17f, profileY + 17f, 5f, EchoTheme.shift(0xFF9B5CFF));
+		Gfx.text(g, this.font, playerLabel, profileX + 29f, profileY + 6f, 0xFF9B8ABF);
+		Gfx.text(g, this.font, playerName, profileX + 29f, profileY + 18f, 0xFFFFFFFF);
+		Gfx.alpha = 1f;
+
 		// Frosted-glass dock backing, matching the source menu's bottom navigation.
 		float dockAlpha = Gfx.ease((el - 280f) / 450f);
 		if (dockAlpha > 0.003f && !main.isEmpty()) {
