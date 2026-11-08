@@ -34,6 +34,8 @@ public final class TargetEspStyleRenderer {
     private static final String NS = "pvpvisuals";
     private static final Identifier FIREFLY = Identifier.fromNamespaceAndPath(NS, "textures/targetesp/firefly.png");
     private static final Identifier CAPTURE = Identifier.fromNamespaceAndPath(NS, "textures/targetesp/capture.png");
+    private static final Identifier ORIGINAL_BLOOM = Identifier.fromNamespaceAndPath(NS, "textures/targetesp/original/bloom.png");
+    private static final Identifier ORIGINAL_CUBE_BLOOM = Identifier.fromNamespaceAndPath(NS, "textures/targetesp/original/wonderful_bloom.png");
     private static final int SEGMENTS = 30, COLOR_VERTEX_BYTES = 16, TEX_VERTEX_BYTES = 24;
     private static final int COLOR_BYTES = 262_144, TEX_BYTES = 32_768;
     private static final double TAU = Math.PI * 2.0;
@@ -109,13 +111,19 @@ public final class TargetEspStyleRenderer {
 
             COLOR_DATA.clear(); TEX_DATA.clear(); colorVertices=0; texVertices=0;
             switch (TargetEspMode.byName(s.mode)) {
-                case GHOSTS -> drawGhosts(cx,cz,y0,height,width,depth,s,frame,ghostTime,fade,size,right,up);
+                case GHOSTS -> drawGhosts(cx,cz,y0,height,width,s,frame,time,fade,size,right,up);
+                case GHOSTS_2 -> drawGhosts2(cx,cz,y0,height,s,frame,ghostTime,fade,size,right,up);
                 case KVADRAT -> drawKvadrat(cx,cz,y0,height,s,frame,time,fade,size,right,up);
-                case KRUG -> drawKrug(cx,cz,y0,height,width,depth,s,frame,time,fade,size,worldPerPixel);
+                case KRUG -> drawKrug(cx,cz,y0,height,s,frame,time,fade,worldPerPixel);
             }
             flushColor(frame.view,target);
             if (texVertices>0) {
-                Identifier texture = TargetEspMode.byName(s.mode)==TargetEspMode.KVADRAT ? CAPTURE : FIREFLY;
+                Identifier texture = switch (TargetEspMode.byName(s.mode)) {
+                    case KVADRAT -> CAPTURE;
+                    case GHOSTS -> ORIGINAL_BLOOM;
+                    case GHOSTS_2 -> ORIGINAL_CUBE_BLOOM;
+                    default -> FIREFLY;
+                };
                 flushTexture(frame.view,target,mc,texture);
             }
         } catch (Throwable error) {
@@ -124,37 +132,50 @@ public final class TargetEspStyleRenderer {
         }
     }
 
-    /** Textured firefly sprites follow the original multi-orbit path, with a per-layer phase offset. */
-    private static void drawGhosts(float cx,float cz,float y0,float height,float width,float depth,
+    /** Original Ghosts: evenly spaced bloom particles orbit the target with a soft pulse. */
+    private static void drawGhosts(float cx,float cz,float y0,float height,float width,
             TargetEspSettings s,Frame frame,double time,float fade,float size,Vector3f right,Vector3f up) {
-        int layers=clamp(s.ghostLayers,1,3), length=clamp(s.ghostLength,4,32);
-        float radius=clamp(s.ghostRadius,0.1f,2.5f)*size;
-        float rx=Math.max(radius,width*0.52f+0.10f), rz=Math.max(radius,depth*0.52f+0.10f);
-        float shaking=clamp(s.ghostShaking,0.2f,8f), amplitude=clamp(s.ghostAmplitude,0.1f,8f);
-        float factor=clamp(s.ghostFactor,1f,24f), speed=clamp(s.ghostSpeed,0.1f,8f);
-
-        // Original Ghosts mode pulses max alpha between 70% and 100%, then multiplies
-        // each particle alpha by its normalized position in the orbit trail.
-        float peakAlpha=clamp(s.maxAlpha,100,255);
-        if(s.enableAlphaAnimation) {
-            double periodMs=clamp(s.alphaAnimationMs,80,3000);
-            double phase=(System.currentTimeMillis()%periodMs)/periodMs;
-            float pulse=0.7f+0.3f*(float)Math.sin(phase*Math.PI*clamp(s.alphaFactor,0.25f,8f)*0.5);
-            peakAlpha=clamp(peakAlpha*pulse,100f,255f);
+        int amount=clamp(s.ghostCount,12,96);
+        float radius=width*clamp(s.ghostRadius,0.5f,2.5f)*Math.max(0.5f,1.2f-0.5f*fade);
+        double orbitDegrees=time*60.0;
+        double waveDegrees=time*12.0;
+        for(int i=0;i<amount;i++) {
+            double degrees=360.0*i/amount;
+            double theta=Math.toRadians(degrees+orbitDegrees);
+            float pulse=0.5f+0.5f*(float)Math.sin(Math.toRadians(degrees*3.0));
+            float coreSize=(0.13f+0.12f*pulse)*size;
+            float glowSize=(0.7f+0.25f*pulse)*size;
+            float x=cx+(float)Math.sin(theta)*radius;
+            float y=y0+height/1.5f+height/3.0f*(float)Math.sin(Math.toRadians(degrees/2.0+waveDegrees));
+            float z=cz+(float)Math.cos(theta)*radius;
+            int color=resolveColor(s,frame,i/(float)amount);
+            billboard(x,y,z,glowSize*0.5f,right,up,color,clampByte(Math.round(255.0f*0.06f*fade)));
+            billboard(x,y,z,coreSize*0.5f,right,up,color,clampByte(Math.round(255.0f*fade)));
         }
+    }
 
-        for(int layer=0;layer<layers;layer++) {
-            for(int j=0;j<=length;j++) {
-                float progress=j/(float)length;
-                double angle=Math.toRadians((((j/1.5+time*speed)*factor+layer*120.0)%(factor*360.0)));
-                double bobPhase=Math.toRadians(time*speed*(j*(layer+1.0))*amplitude);
-                float bob=(float)Math.sin(bobPhase)/shaking;
-                float x=cx+(float)Math.cos(angle)*rx, z=cz+(float)Math.sin(angle)*rz, y=y0+1.0f+bob;
-                float sizeFactor=Math.max(clamp(s.minSizeFactor,0.05f,1f),progress);
-                float sprite=clamp(s.ghostSize,0.04f,0.6f)*size*sizeFactor;
-                int alpha=clampByte(Math.round(peakAlpha*progress*fade));
-                int rgb=resolveColor(s,frame,progress);
-                billboard(x,y,z,sprite,right,up,rgb,alpha);
+    /** Original Ghosts 2: one to three animated arms with a fading particle trail. */
+    private static void drawGhosts2(float cx,float cz,float y0,float height,TargetEspSettings s,
+            Frame frame,double ageSpeedTicks,float fade,float size,Vector3f right,Vector3f up) {
+        int arms=clamp(s.ghostLayers,1,3);
+        int trailLength=clamp(s.ghostLength,4,28);
+        float baseSize=clamp(s.ghostSize,0.05f,0.4f)*size;
+        float radius=clamp(s.ghostRadius,0.25f,1.5f);
+        float waveHeight=clamp(s.ghostAmplitude,0.0f,1.0f);
+        float centerHeight=Math.max(waveHeight+0.05f,height*0.55f);
+        for(int arm=0;arm<arms;arm++) {
+            double armOffset=360.0*arm/arms;
+            for(int sample=0;sample<=trailLength;sample++) {
+                float offset=sample/(float)trailLength;
+                double thetaDegrees=(sample/1.5+ageSpeedTicks)*8.0+armOffset;
+                double theta=Math.toRadians(thetaDegrees);
+                double waveDegrees=(ageSpeedTicks+sample*(arm+1.0))*3.0;
+                float x=cx+(float)Math.cos(theta)*radius;
+                float y=y0+centerHeight+(float)Math.sin(Math.toRadians(waveDegrees))*waveHeight;
+                float z=cz+(float)Math.sin(theta)*radius;
+                float halfSize=Math.max(baseSize*offset,baseSize*0.3f);
+                int color=resolveColor(s,frame,offset);
+                billboard(x,y,z,halfSize,right,up,color,clampByte(Math.round(255.0f*offset*fade)));
             }
         }
     }
@@ -174,38 +195,34 @@ public final class TargetEspStyleRenderer {
                 resolveColor(s,frame,0.75f),alpha);
     }
 
-    /** Krug is a travelling, vertical ribbon (two sinusoidal edges), not a flat ground circle. */
-    private static void drawKrug(float cx,float cz,float y0,float height,float width,float depth,
-            TargetEspSettings s,Frame frame,double time,float fade,float size,float worldPerPixel) {
-        // Original TargetESP draws a TRIANGLE_STRIP between two concentric loops.
-        // The two heights pulse together; they do not oscillate around the azimuth.
-        float radius=Math.max(0.15f,width*0.80f);
-        float phase=(float)(time*1.7);
-        float upperY=y0+(float)Math.abs(Math.sin(phase))*height;
-        float lowerY=y0+(float)Math.abs(Math.sin(phase-0.45f))*height;
-        int edgeAlpha=clampByte(Math.round(170.0f*fade));
-        int transparentAlpha=0;
-
-        float previousX=cx+radius;
-        float previousZ=cz;
-        int previousColor=resolveColor(s,frame,0.0f);
-        for(int i=1;i<=SEGMENTS;i++) {
-            double angle=TAU*i/SEGMENTS;
+    /** Original Ring/Krug: a 96-segment ring travels vertically with an eased translucent tail. */
+    private static void drawKrug(float cx,float cz,float y0,float height,TargetEspSettings s,
+            Frame frame,double time,float fade,float worldPerPixel) {
+        double elapsed=time%2.0;
+        boolean descending=elapsed>1.0;
+        double progress=descending?elapsed-1.0:1.0-elapsed;
+        progress=progress<0.5?2.0*progress*progress:1.0-Math.pow(-2.0*progress+2.0,2.0)*0.5;
+        double trail=height/1.2*(progress>0.5?1.0-progress:progress)*(descending?-1.0:1.0);
+        int color=resolveColor(s,frame,(float)progress);
+        int strongAlpha=clampByte(Math.round(255.0f*0.88235295f*fade));
+        int transparentAlpha=clampByte(Math.round(255.0f*0.003921569f*fade));
+        int lineAlpha=clampByte(Math.round(255.0f*fade));
+        float radius=clamp(s.ringRadius,0.25f,1.25f);
+        float ringY=y0+height*(float)progress;
+        float previousX=cx+radius, previousZ=cz;
+        for(int i=1;i<=96;i++) {
+            double angle=TAU*i/96.0;
             float x=cx+(float)Math.cos(angle)*radius;
             float z=cz+(float)Math.sin(angle)*radius;
-            int color=resolveColor(s,frame,i/(float)SEGMENTS);
-
-            // Top ring has alpha 170*fade, lower ring fades to fully transparent.
-            triangle(previousX,upperY,previousZ,previousColor,edgeAlpha,
-                    x,upperY,z,color,edgeAlpha,
-                    x,lowerY,z,color,transparentAlpha);
-            triangle(previousX,upperY,previousZ,previousColor,edgeAlpha,
-                    x,lowerY,z,color,transparentAlpha,
-                    previousX,lowerY,previousZ,previousColor,transparentAlpha);
-
+            triangle(previousX,ringY,previousZ,color,strongAlpha,
+                    x,ringY+(float)trail,z,color,transparentAlpha,
+                    x,ringY,z,color,strongAlpha);
+            triangle(previousX,ringY,previousZ,color,strongAlpha,
+                    previousX,ringY+(float)trail,previousZ,color,transparentAlpha,
+                    x,ringY+(float)trail,z,color,transparentAlpha);
+            segment(previousX,ringY,previousZ,x,ringY,z,1.5f,worldPerPixel,color,lineAlpha);
             previousX=x;
             previousZ=z;
-            previousColor=color;
         }
     }
 
