@@ -147,27 +147,27 @@ public final class PvpMainMenuScreen extends Screen {
 
         Gfx.alpha = 1f;
         if (accountsPage || accountsTransition > 0.005f) {
-            graphics.pose().pushPose();
-            graphics.pose().translate(0f, (1f - accountsTransition) * 9f, 0f);
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(0f, (1f - accountsTransition) * 9f);
             Gfx.alpha = accountsTransition;
             drawAccountsPage(graphics, mouseX, mouseY, dt);
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
         }
         if (!accountsPage || accountsTransition < 0.995f) {
-            graphics.pose().pushPose();
-            graphics.pose().translate(0f, accountsTransition * -5f, 0f);
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(0f, accountsTransition * -5f);
             Gfx.alpha = 1f - accountsTransition;
             drawBrand(graphics);
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
         }
         Gfx.alpha = 1f;
         drawUserBadge(graphics);
         drawSidebar(graphics, mouseX, mouseY, dt, now);
-        graphics.pose().pushPose();
-        graphics.pose().translate(0f, (1f - easeOutBack(menuEntrance)) * 18f, 0f);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(0f, (1f - easeOutBack(menuEntrance)) * 18f);
         Gfx.alpha = easeOutCubic(menuEntrance);
         drawDock(graphics, mouseX, mouseY, dt);
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
         Gfx.alpha = 1f;
     }
 
