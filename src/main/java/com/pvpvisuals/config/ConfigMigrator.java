@@ -80,7 +80,6 @@ public final class ConfigMigrator {
 		c.shaderSky.colorSaturation = Mth.clamp(c.shaderSky.colorSaturation, 0.0f, 2.0f);
 		if (c.gui != null) c.gui.palette = com.pvpvisuals.gui.echo.EchoPalette.byName(c.gui.palette).name();
 		if (c.splash == null) c.splash = new SplashSettings();
-		if (c.menu == null) c.menu = new MenuSettings();
 		if (c.handShader == null) c.handShader = new HandShaderSettings();
 		c.handShader.shaderType = com.pvpvisuals.render.handshader.HandShaderStyle.byName(c.handShader.shaderType).name();
 		c.handShader.colorPrimary &= 0xFFFFFF;
