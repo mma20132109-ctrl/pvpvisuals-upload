@@ -16,7 +16,7 @@ import net.minecraft.util.Util;
 
 /**
  * Верхняя («музыкальная») строка Island HUD: слева [обложка 16×16] + название (белое, жирное), по центру таймкод
- * (фиолетовый #8A2BE2), справа автор (серый, alpha 0.7, scale 0.9). Анимация: высота острова растёт за 350 мс
+ * (акцентный цвет темы), справа автор (серый, alpha 0.7, scale 0.9). Анимация: высота острова растёт за 350 мс
  * (ease-out-cubic), текст выезжает снизу вверх с лёгким bounce (ease-out-back) и появляется fade-in.
  * Саму плашку и нижнюю строку рисует TopBar, здесь — состояние, размеры и содержимое строки.
  */
@@ -27,9 +27,7 @@ public final class NowPlayingWidgetRenderer {
 	private static final int COVER = 16;
 	private static final float ARTIST_SCALE = 0.9f;
 	private static final float ANIM_MS = 350f;
-	private static final int TIME_COLOR = 0xFF8A2BE2;
-
-	private float anim;
+		private float anim;
 	private float fade;
 	private long lastMs;
 	private TrackInfo shown;
@@ -198,7 +196,7 @@ public final class NowPlayingWidgetRenderer {
 				Math.round(cy - 4), EchoTheme.TEXT, false);
 
 		if (s.showTrackTime) {
-			Gfx.text(g, font, timeStr, x + (w - timeW) / 2, Math.round(cy - 4), EchoTheme.shift(TIME_COLOR));
+			Gfx.text(g, font, timeStr, x + (w - timeW) / 2, Math.round(cy - 4), EchoTheme.ACCENT_TEXT);
 		}
 		if (s.showTrackArtist && !artistShown.isEmpty()) {
 			Gfx.textScaled(g, font, artistShown, x + w - PAD - artistW, cy - 4f * ARTIST_SCALE - 0.5f, ARTIST_SCALE,

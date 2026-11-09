@@ -45,7 +45,8 @@ public final class WatermarkModule extends AbstractHudModule {
 	@Override
 	protected void drawContent(GuiGraphics g, boolean preview) {
 		if (logo()) {
-			// Альфа модуля умножается на альфу текстуры внутри renderLogo (цвет a<<24 | 0xFFFFFF).
+			// Keep the mark crisp while placing it on the same translucent glass tile as the text watermark.
+			HudStyle.panel(g, 0, 0, contentWidth(), contentHeight(), HudStyle.RADIUS, HudAlpha.current);
 			LogoRenderer.renderLogoAuto(g, mode(), 0, 0, LOGO_H, scale(), HudAlpha.current);
 			return;
 		}

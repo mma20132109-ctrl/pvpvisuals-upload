@@ -1,6 +1,7 @@
 package com.pvpvisuals.hud.inventory;
 
-import com.pvpvisuals.gui.rival.RoundedRender;
+import com.pvpvisuals.gui.echo.EchoTheme;
+import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.hud.HudAlpha;
 import com.pvpvisuals.hud.HudStyle;
 
@@ -49,25 +50,29 @@ public final class SlotRenderer {
 		return 0xFF000000 | ((int) (r * 255) << 16) | ((int) (g * 255) << 8);
 	}
 
-	/** Фон, рамка и подсветка слота (до предмета) в цветах темы меню. */
+	/** Translucent glass slot with a cyan rim for the selected hotbar item. */
 	public static void drawBackground(GuiGraphics g, InventoryHudConfig c, int x, int y, int s, boolean active) {
 		float op = HudAlpha.current;
 		if (active && c.highlightActive) {
-			RoundedRender.fill(g, x - 2, y - 2, s + 4, s + 4, 5, argb(HudStyle.ACCENT, 90, op));
+			Gfx.glow(g, x - 1, y - 1, s + 2, s + 2, 4, HudAlpha.mul(0x7058D8F3), 2f);
 		}
 		if (c.showBackground) {
-			RoundedRender.fill(g, x, y, s, s, 3, argb(0x000000, c.backgroundAlpha, op));
+			int a = Math.max(0, Math.min(180, c.backgroundAlpha));
+			int top = argb(active && c.highlightActive ? 0x245D79 : 0x24485A, a, op);
+			int bottom = argb(0x102A3A, Math.round(a * 0.82f), op);
+			Gfx.rrect(g, x, y, s, s, 3f, top, bottom, 0x557BC5D7, 0.7f);
+			Gfx.rrect(g, x + 1, y + 1, s - 2, Math.max(2, Math.min(5, s / 4)), 2f,
+					HudAlpha.mul(0x1EFFFFFF), 0x00FFFFFF, 0, 0f);
 		}
 		if (c.showBorder) {
-			int col = argb(HudStyle.MUTED, 130, op);
+			int col = argb(active ? 0xA4EDFF : 0x9BCAD8, active ? 230 : 145, op);
 			for (int i = 0; i < c.borderWidth; i++) {
-				g.renderOutline(x + i, y + i, s - 2 * i, s - 2 * i, col);
+				Gfx.ring(g, x + i, y + i, s - 2 * i, s - 2 * i, Math.max(1, 3 - i), 0.8f, col);
 			}
 		}
 		if (active && c.highlightActive) {
-			int col = argb(HudStyle.ACCENT, 255, op);
-			g.renderOutline(x, y, s, s, col);
-			g.renderOutline(x + 1, y + 1, s - 2, s - 2, col);
+			int col = HudAlpha.mul(0xFF58D8F3);
+			Gfx.ring(g, x, y, s, s, 3, 1f, col);
 		}
 	}
 

@@ -82,7 +82,7 @@ public final class TargetHudComponent extends AbstractHudModule {
 
 		int w = W;
 		int h = contentHeight();
-		glassPanel(g, w, h);
+		HudStyle.panel(g, 0, 0, w, h, HudStyle.RADIUS, HudAlpha.current);
 
 		// плитка с головой
 		int hx = PAD;
@@ -138,17 +138,6 @@ public final class TargetHudComponent extends AbstractHudModule {
 				ix = slot(g, target.getItemBySlot(s), ix, iy) + step;
 			}
 		}
-	}
-
-	/** Стеклянная панель как у HUD Svintus: тёмная заливка, блик сверху, тонкая белая обводка. */
-	private static void glassPanel(GuiGraphics g, int w, int h) {
-		float prev = Gfx.alpha;
-		Gfx.alpha = HudAlpha.current;
-		Gfx.glow(g, 0, 0, w, h, 8, 0x60000000, 3);
-		Gfx.rrect(g, 0, 0, w, h, 8f, EchoTheme.HUD_TOP, EchoTheme.HUD_BOTTOM, 0, 0f);
-		Gfx.rrect(g, 0, 0, w, Math.min(h, 14), 8f, 0x0AFFFFFF, 0x00FFFFFF, 0, 0f);
-		Gfx.ring(g, 0, 0, w, h, 8, 1, 0x24FFFFFF);
-		Gfx.alpha = prev;
 	}
 
 	/** Голова: у игрока — лицо скина, у остального моба — буква ника. */

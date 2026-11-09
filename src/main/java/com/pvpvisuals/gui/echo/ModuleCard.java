@@ -169,11 +169,11 @@ public final class ModuleCard {
 	public void render(GuiGraphics g, Font font, int sy) {
 		refreshText(font);
 		int base = RoundedRender.lerp(EchoTheme.CARD, EchoTheme.CARD_HOVER, hov);
-		int border = RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hov * 0.6f);
+		int border = RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hov * 0.75f);
 		if (on > 0.02f) {
-			border = RoundedRender.lerp(border, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.75f), on);
+			border = RoundedRender.lerp(border, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.88f), on);
 		}
-		Gfx.rrect(g, x, sy, w, H, R, base, base, border, on > 0.02f ? 1f : 0.8f);
+		LiquidGlassRenderer.surface(g, x, sy, w, H, R, base, border);
 		if (on > 0.02f) {
 			// акцентная подсветка включённого модуля: заливка сверху вниз
 			Gfx.rrect(g, x, sy, w, H, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f * on),
@@ -188,8 +188,8 @@ public final class ModuleCard {
 			boolean listening = def.name.equals(KeybindManager.listeningModule());
 			String label = listening ? ((Util.getMillis() / 400) % 2 == 0 ? "…" : "") : bindText;
 			int cx = chipX();
-			Gfx.rrect(g, cx, sy + (H - 12) / 2f, chipW, 12, 4f, EchoTheme.PILL, EchoTheme.PILL,
-					listening ? EchoTheme.NEON : 0, listening ? 1f : 0f);
+			LiquidGlassRenderer.surface(g, cx, sy + (H - 12) / 2f, chipW, 12, 4f, EchoTheme.PILL,
+					listening ? EchoTheme.NEON : EchoTheme.PILL_BORDER);
 			String shown = label;
 			while (shown.length() > 1 && Gfx.width(font, shown) > chipW - 6) {
 				shown = shown.substring(0, shown.length() - 1);
@@ -208,8 +208,8 @@ public final class ModuleCard {
 			String label = def.isGroup() ? "Open" : "Run";
 			int bw = rightButtonW();
 			int bx = switchX();
-			Gfx.rrect(g, bx, sy + (H - 14) / 2f, bw, 14, 5f, EchoTheme.TAB_TOP, EchoTheme.TAB_BOTTOM, EchoTheme.ACCENT_B,
-					1f);
+			LiquidGlassRenderer.surface(g, bx, sy + (H - 14) / 2f, bw, 14, 5f, EchoTheme.TAB_TOP,
+					EchoTheme.ACCENT_TEXT);
 			Gfx.text(g, font, label, bx + (bw - Gfx.width(font, label)) / 2, sy + (H - 8) / 2, EchoTheme.TEXT);
 		}
 	}

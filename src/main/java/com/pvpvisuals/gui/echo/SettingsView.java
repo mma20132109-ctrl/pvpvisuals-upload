@@ -114,8 +114,9 @@ public final class SettingsView {
 
 		// шапка
 		boolean backHover = allowHover && Gfx.hit(mx, my, x, y + 6, 22, 22);
-		Gfx.fill(g, x, y + 6, 22, 22, 6, backHover ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
-		Gfx.ring(g, x, y + 6, 22, 22, 6, 1, backHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
+		LiquidGlassRenderer.surface(g, x, y + 6, 22, 22, 6,
+				backHover ? EchoTheme.CARD_HOVER : EchoTheme.CARD,
+				backHover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
 		EchoIcons.chevron(g, x + 8, y + 10, 0, EchoTheme.TEXT);
 
 		Component title = Component.literal(card.def.title()).withStyle(ChatFormatting.BOLD);
@@ -142,14 +143,15 @@ public final class SettingsView {
 			pillW = Math.max(34, Gfx.width(font, label) + 12);
 			int px = right - pillW;
 			int py = y + 6 + 4;
-			Gfx.fill(g, px, py, pillW, PILL_H, 5, EchoTheme.PILL);
-			Gfx.ring(g, px, py, pillW, PILL_H, 5, 1, listening ? EchoTheme.NEON : EchoTheme.PILL_BORDER);
+			LiquidGlassRenderer.surface(g, px, py, pillW, PILL_H, 5, EchoTheme.PILL,
+					listening ? EchoTheme.NEON : EchoTheme.PILL_BORDER);
 			Gfx.text(g, font, label, px + (pillW - Gfx.width(font, label)) / 2, py + 3,
 					listening ? EchoTheme.TEXT : (bindText != null ? EchoTheme.ACCENT_TEXT : EchoTheme.DIM));
 			if (bindText != null && !listening) {
 				boolean hv = allowHover && Gfx.hit(mx, my, px - 18, py, 14, PILL_H);
-				Gfx.fill(g, px - 18, py, 14, PILL_H, 5, hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL);
-				Gfx.ring(g, px - 18, py, 14, PILL_H, 5, 1, hv ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER);
+				LiquidGlassRenderer.surface(g, px - 18, py, 14, PILL_H, 5,
+						hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL,
+						hv ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER);
 				EchoIcons.close(g, px - 15, py + 3, hv ? EchoTheme.TEXT : EchoTheme.MUTED);
 			}
 		}
@@ -184,8 +186,8 @@ public final class SettingsView {
 			Gfx.alpha = prev;
 			return;
 		}
-		Gfx.fill(g, x, ry, rw, rh, 7, hover ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
-		Gfx.ring(g, x, ry, rw, rh, 7, 1, hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
+		LiquidGlassRenderer.surface(g, x, ry, rw, rh, 7, hover ? EchoTheme.CARD_HOVER : EchoTheme.CARD,
+			hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
 
 		int tx = x + 10 + e.depth * 8 - 8;
 		boolean lit = d.enabled() || d.isGroup() || d.isSlider();
@@ -222,13 +224,13 @@ public final class SettingsView {
 
 	private void renderTextRow(GuiGraphics g, Font font, ModuleEntry e, int ry, int rh, int rw, boolean hover) {
 		boolean edit = e == editing;
-		Gfx.fill(g, x, ry, rw, rh, 7, hover || edit ? EchoTheme.CARD_HOVER : EchoTheme.CARD);
-		Gfx.ring(g, x, ry, rw, rh, 7, 1, edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
+		LiquidGlassRenderer.surface(g, x, ry, rw, rh, 7, hover || edit ? EchoTheme.CARD_HOVER : EchoTheme.CARD,
+			edit || hover ? EchoTheme.CARD_BORDER_HOT : EchoTheme.CARD_BORDER);
 		Gfx.text(g, font, e.def.title(), x + 10 + e.depth * 8 - 8, ry + (rh - 8) / 2, EchoTheme.TEXT);
 		int fx = x + (int) (rw * 0.36f);
 		int fw = rw - (fx - x) - 6;
-		Gfx.fill(g, fx, ry + 3, fw, rh - 6, 5, EchoTheme.CARD);
-		Gfx.ring(g, fx, ry + 3, fw, rh - 6, 5, 1, edit ? EchoTheme.ACCENT_TEXT : EchoTheme.CARD_BORDER);
+		LiquidGlassRenderer.surface(g, fx, ry + 3, fw, rh - 6, 5, EchoTheme.CARD,
+			edit ? EchoTheme.ACCENT_TEXT : EchoTheme.CARD_BORDER);
 		String s = edit ? buf.toString() : e.def.text();
 		boolean caret = edit && (System.currentTimeMillis() / 500) % 2 == 0;
 		String shown = caret ? s + "_" : s;

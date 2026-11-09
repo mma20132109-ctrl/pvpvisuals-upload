@@ -68,8 +68,8 @@ public final class EchoSearchBar {
 		if (focusAnim > 0.02f) {
 			Gfx.glow(g, x, y, w, h, h / 2, RoundedRender.scaleAlpha(EchoTheme.NEON, focusAnim * 0.7f), 2);
 		}
-		Gfx.fill(g, x, y, w, h, h / 2, RoundedRender.lerp(EchoTheme.FIELD, EchoTheme.FIELD_FOCUS, focusAnim));
-		Gfx.ring(g, x, y, w, h, h / 2, 1,
+		LiquidGlassRenderer.surface(g, x, y, w, h, h / 2f,
+				RoundedRender.lerp(EchoTheme.FIELD, EchoTheme.FIELD_FOCUS, focusAnim),
 				RoundedRender.lerp(EchoTheme.FIELD_BORDER, EchoTheme.NEON, focusAnim));
 		EchoIcons.magnifier(g, x + 8, y + (h - 10) / 2, focused ? EchoTheme.ACCENT_TEXT : EchoTheme.MUTED);
 
