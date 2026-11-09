@@ -225,6 +225,14 @@ public final class Gfx {
 
 	// ---------- текст (Inter, если включён) ----------
 
+	public static float widthAtSize(Font font, String s, float size) {
+		return width(font, s) * (size / 9f);
+	}
+
+	public static void textAtSize(GuiGraphics g, Font font, String s, float x, float y, float size, int color, boolean shadow) {
+		textScaled(g, font, s, x, y, size / 9f, color, shadow);
+	}
+
 	public static int width(Font font, String s) {
 		return Typo.width(font, s);
 	}
