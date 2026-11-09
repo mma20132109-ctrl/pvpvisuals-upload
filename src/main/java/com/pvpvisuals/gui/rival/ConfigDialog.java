@@ -9,6 +9,7 @@ import org.lwjgl.glfw.GLFW;
 import com.pvpvisuals.config.ConfigManager;
 import com.pvpvisuals.config.ExportEntry;
 import com.pvpvisuals.gui.echo.EchoTheme;
+import com.pvpvisuals.gui.echo.LiquidGlassRenderer;
 
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -115,9 +116,7 @@ public final class ConfigDialog {
 		int y = py(sh);
 		int h = ph();
 		com.pvpvisuals.gui.echo.Gfx.alpha = 1f;
-		com.pvpvisuals.gui.echo.Gfx.glow(g, x, y, PW, h, 12, EchoTheme.NEON, 6);
-		com.pvpvisuals.gui.echo.Gfx.fill(g, x, y, PW, h, 12, EchoTheme.WIN_TOP, EchoTheme.WIN_BOTTOM);
-		com.pvpvisuals.gui.echo.Gfx.ring(g, x, y, PW, h, 12, 1, EchoTheme.NEON_LINE);
+		LiquidGlassRenderer.window(g, x, y, PW, h, 12);
 
 		String title = switch (mode) {
 			case IMPORT -> "Import config";
@@ -130,7 +129,7 @@ public final class ConfigDialog {
 		switch (mode) {
 			case IMPORT -> {
 				int top = y + 26;
-				RoundedRender.fill(g, x + 10, top, PW - 20, ROWS * ROW_H, 4, 0x40000000);
+				LiquidGlassRenderer.surface(g, x + 10, top, PW - 20, ROWS * ROW_H, 4, 0x60294353, 0x487DC0D2);
 				g.enableScissor(x + 10, top, x + PW - 10, top + ROWS * ROW_H);
 				if (exports.isEmpty()) {
 					String s = "No exports yet";
@@ -140,7 +139,7 @@ public final class ConfigDialog {
 					ExportEntry e = exports.get(i + scroll);
 					int ry = top + i * ROW_H;
 					if (hit(mx, my, x + 10, ry, PW - 20, ROW_H)) {
-						RoundedRender.fill(g, x + 11, ry, PW - 22, ROW_H - 1, 3, 0x38FFFFFF);
+						LiquidGlassRenderer.surface(g, x + 11, ry, PW - 22, ROW_H - 1, 3, 0x74466C7D, 0x6AD7F4FF);
 					}
 					String when = e.when();
 					int maxName = PW - 20 - font.width(when) - 22;
@@ -158,7 +157,7 @@ public final class ConfigDialog {
 			case EXPORT -> {
 				g.drawString(font, "File name", x + 10, y + 26, EchoTheme.MUTED, false);
 				int fy = y + 38;
-				RoundedRender.fill(g, x + 10, fy, PW - 20, 16, 5, EchoTheme.FIELD_FOCUS);
+				LiquidGlassRenderer.surface(g, x + 10, fy, PW - 20, 16, 5, EchoTheme.FIELD_FOCUS, EchoTheme.ACCENT_TEXT);
 				boolean caret = (Util.getMillis() / 500) % 2 == 0;
 				g.drawString(font, name + (caret ? "_" : ""), x + 16, fy + 4, 0xFFFFFFFF, false);
 				int bw = (PW - 20 - 12) / 3;
@@ -179,8 +178,7 @@ public final class ConfigDialog {
 		boolean hover = enabled && hit(mx, my, x, y, w, BTN_H);
 		int a = hover ? RoundedRender.lerp(EchoTheme.TAB_TOP, 0xFFFFFFFF, 0.18f) : EchoTheme.TAB_TOP;
 		int b = hover ? RoundedRender.lerp(EchoTheme.TAB_BOTTOM, 0xFFFFFFFF, 0.18f) : EchoTheme.TAB_BOTTOM;
-		com.pvpvisuals.gui.echo.Gfx.fill(g, x, y, w, BTN_H, 7, a, b);
-		com.pvpvisuals.gui.echo.Gfx.ring(g, x, y, w, BTN_H, 7, 1, EchoTheme.ACCENT_B);
+		LiquidGlassRenderer.surface(g, x, y, w, BTN_H, 7, a, hover ? EchoTheme.ACCENT_TEXT : EchoTheme.ACCENT_B);
 		g.drawString(font, label, x + (w - font.width(label)) / 2, y + 4, 0xFFFFFFFF, false);
 	}
 
