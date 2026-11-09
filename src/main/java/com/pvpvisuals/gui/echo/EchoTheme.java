@@ -10,33 +10,33 @@ public final class EchoTheme {
 	private EchoTheme() { }
 
 	private static EchoPalette applied;
-	private static final int SURFACE_TOP = 0xE51B1E27;
-	private static final int SURFACE_BOTTOM = 0xE5101219;
-	private static final int CARD_BASE = 0xB5222630;
-	private static final int CARD_HOVER_BASE = 0xD52C303B;
-	private static final int BORDER_BASE = 0x55FFFFFF;
-	private static final int TEXT_BASE = 0xFFE9EAF1;
-	private static final int MUTED_BASE = 0xFF9DA2B0;
-	private static final int DIM_BASE = 0xFF737987;
+	private static final int SURFACE_TOP = 0xC32A4858;
+	private static final int SURFACE_BOTTOM = 0xC10D202C;
+	private static final int CARD_BASE = 0x78304F60;
+	private static final int CARD_HOVER_BASE = 0xA63D7188;
+	private static final int BORDER_BASE = 0x70D7F4FF;
+	private static final int TEXT_BASE = 0xFFF0FBFF;
+	private static final int MUTED_BASE = 0xFFAAC6D2;
+	private static final int DIM_BASE = 0xFF7896A4;
 
 	public static int WIN_TOP = SURFACE_TOP;
 	public static int WIN_BOTTOM = SURFACE_BOTTOM;
-	public static int HUD_TOP = 0xDC1B1E27;
-	public static int HUD_BOTTOM = 0xDC101219;
-	public static int NEON = 0xFF8C9EFF;
-	public static int NEON_LINE = 0xFF8C9EFF;
-	public static int ACCENT_A = 0xFF8C9EFF;
-	public static int ACCENT_B = 0xFFB69CFF;
-	public static int ACCENT_TEXT = 0xFFB8C4FF;
-	public static int TAB_TOP = 0xCC8C9EFF;
-	public static int TAB_BOTTOM = 0xAA8C9EFF;
+	public static int HUD_TOP = 0xB82C5364;
+	public static int HUD_BOTTOM = 0xA8112633;
+	public static int NEON = 0xFF58D8F3;
+	public static int NEON_LINE = 0xFFD5F7FF;
+	public static int ACCENT_A = 0xFF58D8F3;
+	public static int ACCENT_B = 0xFF719DFF;
+	public static int ACCENT_TEXT = 0xFFD1F5FF;
+	public static int TAB_TOP = 0xCC58D8F3;
+	public static int TAB_BOTTOM = 0xAA719DFF;
 	public static int CARD = CARD_BASE;
 	public static int CARD_HOVER = CARD_HOVER_BASE;
-	public static int CARD_BORDER = 0x55FFFFFF;
-	public static int CARD_BORDER_ON = 0x887FFFFFF;
-	public static int CARD_BORDER_HOT = 0xFF8C9EFF;
-	public static int TILE = 0x332F3542;
-	public static int TILE_ICON = 0xFFB8C4FF;
+	public static int CARD_BORDER = BORDER_BASE;
+	public static int CARD_BORDER_ON = 0xB8A5EEFF;
+	public static int CARD_BORDER_HOT = 0xFF58D8F3;
+	public static int TILE = 0x333F9BAF;
+	public static int TILE_ICON = 0xFFD1F5FF;
 	public static final int TEXT = TEXT_BASE;
 	public static int MUTED = MUTED_BASE;
 	public static int DIM = DIM_BASE;
@@ -65,8 +65,8 @@ public final class EchoTheme {
 		int secondary = palette.secondary;
 		WIN_TOP = SURFACE_TOP;
 		WIN_BOTTOM = SURFACE_BOTTOM;
-		HUD_TOP = 0xDC1B1E27;
-		HUD_BOTTOM = 0xDC101219;
+		HUD_TOP = 0xB82C5364;
+		HUD_BOTTOM = 0xA8112633;
 		NEON = primary;
 		NEON_LINE = withAlpha(primary, 0.92f);
 		ACCENT_A = primary;
@@ -76,22 +76,22 @@ public final class EchoTheme {
 		TAB_BOTTOM = withAlpha(secondary, 0.58f);
 		CARD = CARD_BASE;
 		CARD_HOVER = CARD_HOVER_BASE;
-		CARD_BORDER = 0x55FFFFFF;
-		CARD_BORDER_ON = withAlpha(primary, 0.62f);
+		CARD_BORDER = BORDER_BASE;
+		CARD_BORDER_ON = withAlpha(primary, 0.76f);
 		CARD_BORDER_HOT = primary;
 		TILE = 0x332F3542;
 		TILE_ICON = mix(primary, 0xFFFFFFFF, 0.22f);
 		MUTED = MUTED_BASE;
 		DIM = DIM_BASE;
-		FIELD = 0xAA222630;
-		FIELD_FOCUS = 0xCC2A303B;
-		FIELD_BORDER = 0x665E6574;
-		PILL = 0x77272C36;
-		PILL_BORDER = 0x665E6574;
+		FIELD = 0x8E29495A;
+		FIELD_FOCUS = 0xB5356678;
+		FIELD_BORDER = 0x7899DCEB;
+		PILL = 0x79294759;
+		PILL_BORDER = 0x668AC9DD;
 		TOGGLE_OFF = 0xFF414653;
 		TOGGLE_OFF_BOTTOM = 0xFF303541;
-		DIVIDER = withAlpha(primary, 0.24f);
-		HOVER_FILL = withAlpha(primary, 0.14f);
+		DIVIDER = withAlpha(primary, 0.34f);
+		HOVER_FILL = withAlpha(primary, 0.20f);
 	}
 
 	public static void sync() {
