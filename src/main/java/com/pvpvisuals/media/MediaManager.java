@@ -69,6 +69,10 @@ public final class MediaManager {
 		return provider != null && provider.isPlaying();
 	}
 
+	public static long positionMillis() {
+		return positionSeconds() * 1000L;
+	}
+
 	public static int positionSeconds() {
 		return provider == null ? 0 : provider.getPositionSeconds();
 	}

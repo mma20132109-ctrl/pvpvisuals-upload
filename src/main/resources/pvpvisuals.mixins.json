@@ -12,7 +12,13 @@
 		"ScreenDiagMixin",
 		"ItemInHandRendererMixin",
 		"GameRendererBobMixin",
-		"OptionInstanceAccessor"
+		"OptionInstanceAccessor",
+		"TargetScanEntityRenderStateMixin",
+		"TargetScanLivingEntityRendererMixin",
+		"TargetScanHumanoidArmorLayerMixin",
+		"TargetScanEquipmentLayerRendererAccessor",
+		"MinecraftUserAccessor",
+		"TitleScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

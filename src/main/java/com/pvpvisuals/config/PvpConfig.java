@@ -32,6 +32,12 @@ public final class PvpConfig {
 	public boolean hitParticles = true;
 	public boolean blockParticles = true;
 	public boolean targetHud = true;
+	public boolean targetEsp = false;
+	public TargetEspSettings targetEspSettings = new TargetEspSettings();
+	public MusicHudSettings musicHud = new MusicHudSettings();
+	public boolean coordinatesHud = true;
+	public boolean coordinatesDirection = true;
+	public boolean coordinatesNether = false;
 	public boolean damageNumbers = true;
 	public boolean critEffect = true;
 	public boolean trajectory = true;
