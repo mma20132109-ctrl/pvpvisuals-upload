@@ -29,6 +29,11 @@ public final class HudIcons {
 		}
 	}
 
+	public static void compass(GuiGraphics g, float cx, float cy, float r, int color) {
+		Gfx.polyline(g, 1f, color, cx, cy - r, cx + r * 0.55f, cy + r, cx, cy + r * 0.45f, cx - r * 0.55f, cy + r, cx, cy - r);
+		Gfx.line(g, cx, cy, cx, cy - r * 0.55f, 1f, color);
+	}
+
 	public static void heart(GuiGraphics g, float cx, float cy, float r, int color) {
 		Gfx.circle(g, cx - r * 0.5f, cy - r * 0.25f, r * 0.55f, color);
 		Gfx.circle(g, cx + r * 0.5f, cy - r * 0.25f, r * 0.55f, color);
