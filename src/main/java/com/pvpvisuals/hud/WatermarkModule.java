@@ -33,7 +33,7 @@ public final class WatermarkModule extends AbstractHudModule {
 
  private String playerName() {
   Minecraft mc = Minecraft.getInstance();
-  return mc.player == null ? "Player" : mc.player.getGameProfile().name();
+  return mc.player == null ? "Player" : mc.player.getName().getString();
  }
 
  private int ping() {
