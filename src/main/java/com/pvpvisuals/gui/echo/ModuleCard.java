@@ -169,11 +169,11 @@ public final class ModuleCard {
 	public void render(GuiGraphics g, Font font, int sy) {
 		refreshText(font);
 		int base = RoundedRender.lerp(EchoTheme.CARD, EchoTheme.CARD_HOVER, hov);
-		int border = RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hov * 0.6f);
+		int border = RoundedRender.lerp(EchoTheme.CARD_BORDER, EchoTheme.CARD_BORDER_HOT, hov * 0.75f);
 		if (on > 0.02f) {
-			border = RoundedRender.lerp(border, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.75f), on);
+			border = RoundedRender.lerp(border, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.88f), on);
 		}
-		Gfx.rrect(g, x, sy, w, H, R, base, base, border, on > 0.02f ? 1f : 0.8f);
+		LiquidGlassRenderer.surface(g, x, sy, w, H, R, base, border);
 		if (on > 0.02f) {
 			// акцентная подсветка включённого модуля: заливка сверху вниз
 			Gfx.rrect(g, x, sy, w, H, R, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.16f * on),
