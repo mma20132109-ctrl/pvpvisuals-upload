@@ -127,7 +127,7 @@ public final class MainMenuScreen extends Screen {
                 case 1 -> mc.setScreen(new JoinMultiplayerScreen(this));
                 case 2 -> mc.setScreen(new AltManagerScreen(this));
                 case 3 -> mc.setScreen(new OptionsScreen(this, mc.options));
-                case 4 -> mc.scheduleStop();
+                case 4 -> mc.stop();
                 default -> { }
             }
             return true;
