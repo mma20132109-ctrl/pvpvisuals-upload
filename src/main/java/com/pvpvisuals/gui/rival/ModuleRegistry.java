@@ -58,15 +58,6 @@ public final class ModuleRegistry {
 				com.pvpvisuals.hud.binds.HudBindsModule.def(c),
 
 				themeGroup(c),
-				ModuleDef.group(Category.CLIENT, () -> "Main Menu")
-						.child(ModuleDef.toggle("Custom Menu", Category.CLIENT,
-								() -> c.menu.customMainMenu, v -> c.menu.customMainMenu = v))
-						.child(ModuleDef.toggle("Menu Particles", Category.CLIENT,
-								() -> c.menu.showMenuParticles, v -> c.menu.showMenuParticles = v))
-						.child(ModuleDef.toggle("Version Text", Category.CLIENT,
-								() -> c.menu.showVersionText, v -> c.menu.showVersionText = v))
-						.child(ModuleDef.toggle("World Screens Style", Category.CLIENT,
-								() -> c.menu.styleWorldMenus, v -> c.menu.styleWorldMenus = v)),
 				ModuleDef.group(Category.CLIENT, () -> "Loading Screen")
 						.child(ModuleDef.toggle("Custom Splash", Category.CLIENT,
 								() -> c.splash.customSplashScreen, v -> c.splash.customSplashScreen = v))
