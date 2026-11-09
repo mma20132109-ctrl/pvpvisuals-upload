@@ -31,6 +31,7 @@ public final class ModuleRegistry {
 				ChinaHatModule.def(c),
 				com.pvpvisuals.render.blockoverlay.BlockOverlayModule.def(c),
 				com.pvpvisuals.render.hitbox.HitBoxModule.def(c),
+				ModuleDef.toggle("Target ESP", Category.VISUAL, () -> c.targetEsp, v -> c.targetEsp = v),
 				com.pvpvisuals.render.viewmodel.ViewModelModule.def(c),
 				com.pvpvisuals.render.handshader.HandShaderModule.def(c),
 				com.pvpvisuals.render.radial.RadialMenuModule.def(c),
@@ -54,6 +55,15 @@ public final class ModuleRegistry {
 						.child(HudModuleUi.layout(HudManager.COMBO, Category.UTILS)),
 				ModuleDef.toggle("Watermark", Category.UTILS, () -> c.watermark, v -> c.watermark = v)
 						.child(HudModuleUi.layout(HudManager.WATERMARK, Category.UTILS)),
+				ModuleDef.toggle("Coordinates", Category.UTILS, () -> c.coordinatesHud, v -> c.coordinatesHud = v)
+						.child(HudModuleUi.layout(HudManager.COORDINATES, Category.UTILS))
+						.child(ModuleDef.toggle("Direction", Category.UTILS, () -> c.coordinatesDirection, v -> c.coordinatesDirection = v))
+						.child(ModuleDef.toggle("Nether / Overworld", Category.UTILS, () -> c.coordinatesNether, v -> c.coordinatesNether = v)),
+				ModuleDef.toggle("Music HUD", Category.UTILS, () -> c.musicHud.enabled, v -> c.musicHud.enabled = v)
+						.child(HudModuleUi.layout(HudManager.MUSIC, Category.UTILS))
+						.child(ModuleDef.toggle("Lyrics", Category.UTILS, () -> c.musicHud.showLyrics, v -> c.musicHud.showLyrics = v))
+						.child(ModuleDef.toggle("Source", Category.UTILS, () -> c.musicHud.showSource, v -> c.musicHud.showSource = v))
+						.child(ModuleDef.toggle("Cover Art", Category.UTILS, () -> c.musicHud.showCover, v -> c.musicHud.showCover = v)),
 				InventoryHudModule.def(c),
 				com.pvpvisuals.hud.binds.HudBindsModule.def(c),
 
