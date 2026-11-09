@@ -4,6 +4,8 @@ import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.gui.echo.EchoScreen;
 import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.gui.echo.EchoTheme;
+import com.pvpvisuals.gui.echo.Gfx;
+import com.pvpvisuals.gui.echo.LiquidGlassRenderer;
 import com.pvpvisuals.gui.rival.Theme;
 
 import net.minecraft.client.Minecraft;
@@ -102,7 +104,8 @@ public final class HudEditorOverlay {
 		toolbar(g, font, t, cfg, mx, my, sw);
 
 		String hint = "ЛКМ — переместить  •  ПКМ — настройки  •  Угол — изменить размер  •  Shift+колесо — прозрачность  •  Esc — сохранить";
-		RoundedRender.fill(g, (sw - font.width(hint)) / 2 - 6, hintY - 4, font.width(hint) + 12, 16, 5, 0xB0101010);
+		LiquidGlassRenderer.surface(g, (sw - font.width(hint)) / 2f - 6f, hintY - 4f,
+				font.width(hint) + 12f, 16f, 5f, 0xB82C5364, 0x70D7F4FF);
 		g.drawString(font, hint, (sw - font.width(hint)) / 2, hintY, 0xFFFFFFFF, true);
 
 		if (resizing != null) {
@@ -118,11 +121,11 @@ public final class HudEditorOverlay {
 		int h = m.bounds.height;
 
 		int base = EchoTheme.FIELD_BORDER;
-		int col = active ? EchoTheme.shift(0xFFE0C8FF) : hover ? EchoTheme.ACCENT_TEXT : selected ? EchoTheme.NEON : base;
+		int col = active ? 0xFFD7F7FF : hover ? EchoTheme.ACCENT_TEXT : selected ? EchoTheme.NEON : base;
 
 		if (active) {
-			g.renderOutline(x - 3, y - 3, w + 6, h + 6, (EchoTheme.ACCENT_TEXT & 0xFFFFFF) | 0x66000000);
-			g.renderOutline(x - 2, y - 2, w + 4, h + 4, (EchoTheme.ACCENT_TEXT & 0xFFFFFF) | 0x99000000);
+			Gfx.glow(g, x - 2, y - 2, w + 4, h + 4, 7, 0xA858D8F3, 4f);
+			Gfx.ring(g, x - 2, y - 2, w + 4, h + 4, 7, 1f, 0xB8D7F7FF);
 		}
 		g.renderOutline(x - 1, y - 1, w + 2, h + 2, col);
 
@@ -138,7 +141,7 @@ public final class HudEditorOverlay {
 		String label = m.label();
 		int tw = font.width(label) + 8;
 		int ty = y - TITLE_H - 2 >= 0 ? y - TITLE_H - 2 : y + h + 3;
-		RoundedRender.fill(g, x, ty, tw, TITLE_H, 4, EchoTheme.HUD_TOP, EchoTheme.HUD_BOTTOM);
+		LiquidGlassRenderer.surface(g, x, ty, tw, TITLE_H, 4, EchoTheme.HUD_TOP, 0x70D7F4FF);
 		g.drawString(font, label, x + 4, ty + 2, EchoTheme.TEXT, false);
 	}
 
@@ -151,9 +154,10 @@ public final class HudEditorOverlay {
 			BTN_W[i] = w;
 			boolean on = (i == 2 && cfg.hudGrid) || (i == 3 && cfg.hudSnap) || (i == 4 && cfg.hudGuides);
 			boolean hov = mx >= x && mx < x + w && my >= 6 && my < 6 + BTN_H;
-			int top = on ? EchoTheme.TAB_TOP : EchoTheme.shift(0xC01B1030);
-			int bottom = on ? EchoTheme.TAB_BOTTOM : EchoTheme.shift(0xC0120A22);
-			RoundedRender.fill(g, x, 6, w, BTN_H, 5, top, bottom);
+			int top = on ? EchoTheme.TAB_TOP : 0xA62B5263;
+			int bottom = on ? EchoTheme.TAB_BOTTOM : 0x92203646;
+			LiquidGlassRenderer.surface(g, x, 6, w, BTN_H, 5, on ? top : bottom,
+				hov ? EchoTheme.ACCENT_TEXT : 0x668BC7D8);
 			if (hov) {
 				g.renderOutline(x, 6, w, BTN_H, EchoTheme.ACCENT_TEXT);
 			}
