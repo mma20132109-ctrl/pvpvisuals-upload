@@ -52,7 +52,12 @@ public final class WatermarkModule extends AbstractHudModule {
   int timeWidth = font.width("88:88");
   int fpsWidth = font.width(mc.getFps() + " fps");
   int pingWidth = font.width(ping() + " ms");
-  return 8 + brandWidth + 10 + nameWidth + 12 + timeWidth + 12 + fpsWidth + 12 + pingWidth + 8;
+
+  // Ширина повторяет реальные отступы и иконки в drawContent, чтобы пинг не выходил за край.
+  return 8 + brandWidth + 10 + nameWidth + 6 + 7 + 10
+      + timeWidth + 7 + 8 + 10
+      + fpsWidth + 7 + 8 + 10
+      + pingWidth + 8;
  }
 
  @Override
