@@ -2,7 +2,6 @@ package com.pvpvisuals.hud;
 
 import com.pvpvisuals.config.PvpConfig;
 import com.pvpvisuals.gui.echo.EchoScreen;
-import com.pvpvisuals.gui.rival.RoundedRender;
 import com.pvpvisuals.gui.echo.EchoTheme;
 import com.pvpvisuals.gui.echo.Gfx;
 import com.pvpvisuals.gui.echo.LiquidGlassRenderer;
