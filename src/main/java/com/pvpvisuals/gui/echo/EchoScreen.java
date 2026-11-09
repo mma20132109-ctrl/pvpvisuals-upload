@@ -350,8 +350,8 @@ public class EchoScreen extends Screen {
 		int logoW = cfg.logo.showInGui ? LogoRenderer.widthFor(LogoSizeMode.byName(cfg.logo.sizeGui), logoH, 1f) : 0;
 		int tileW = Math.max(LOGO, logoW + 12);
 		Gfx.glow(g, lx, ly, tileW, LOGO, 8, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.30f), 4);
-		Gfx.rrect(g, lx, ly, tileW, LOGO, 8, RoundedRender.scaleAlpha(EchoTheme.NEON, 0.32f),
-				RoundedRender.scaleAlpha(EchoTheme.NEON, 0.14f), RoundedRender.scaleAlpha(EchoTheme.NEON, 0.55f), 1f);
+		LiquidGlassRenderer.surface(g, lx, ly, tileW, LOGO, 8,
+				RoundedRender.scaleAlpha(EchoTheme.NEON, 0.30f), RoundedRender.scaleAlpha(EchoTheme.NEON, 0.78f));
 		if (logoW > 0) {
 			LogoRenderer.renderLogoAuto(g, LogoSizeMode.byName(cfg.logo.sizeGui), lx + (tileW - logoW) / 2, ly + 4, logoH,
 					1f, Gfx.alpha);
@@ -375,7 +375,7 @@ public class EchoScreen extends Screen {
 		int slot = tabSlot();
 		boolean searching = !search.isEmpty();
 
-		Gfx.rrect(g, x, y, cw0, TABS_H, TABS_H / 2f, 0x0AFFFFFF, 0x0AFFFFFF, 0x0CFFFFFF, 0.8f);
+		LiquidGlassRenderer.surface(g, x, y, cw0, TABS_H, TABS_H / 2f, 0x3A8DB0C2, 0x607FC7DA);
 
 		float target = x + 2 + selected.ordinal() * slot;
 		if (indicator < 0f) {
@@ -435,8 +435,8 @@ public class EchoScreen extends Screen {
 			int by = cfgY();
 			boolean hv = hoverOk && Gfx.hit(mx, my, bx, by, cfgW[i], CFG_H);
 			int fill = hv ? EchoTheme.CARD_HOVER : EchoTheme.PILL;
-			Gfx.rrect(g, bx, by, cfgW[i], CFG_H, 6f, fill, fill,
-					hv ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER, 1f);
+			LiquidGlassRenderer.surface(g, bx, by, cfgW[i], CFG_H, 6f, fill,
+				hv ? EchoTheme.CARD_BORDER_HOT : EchoTheme.PILL_BORDER);
 			Gfx.text(g, this.font, CFG_LABELS[i], bx + (cfgW[i] - Gfx.width(this.font, CFG_LABELS[i])) / 2, by + 3,
 					hv ? EchoTheme.TEXT : EchoTheme.MUTED);
 		}
