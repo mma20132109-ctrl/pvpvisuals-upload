@@ -16,7 +16,9 @@
 		"TargetScanEntityRenderStateMixin",
 		"TargetScanLivingEntityRendererMixin",
 		"TargetScanHumanoidArmorLayerMixin",
-		"TargetScanEquipmentLayerRendererAccessor"
+		"TargetScanEquipmentLayerRendererAccessor",
+		"MinecraftUserAccessor",
+		"TitleScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
