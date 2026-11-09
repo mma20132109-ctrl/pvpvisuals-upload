@@ -2,7 +2,7 @@ package com.pvpvisuals.gui.echo;
 
 /** Accent presets used by the Echo GUI. Surfaces stay neutral; only interactive accents change. */
 public enum EchoPalette {
-	PERIWINKLE("Periwinkle", 0xFF8C9EFF, 0xFFB69CFF),
+	PERIWINKLE("Ice", 0xFF58D8F3, 0xFF719DFF),
 	ROSE("Rose", 0xFFE5737F, 0xFFF29E7C),
 	VIOLET("Violet", 0xFF8A72F2, 0xFFCB7CF4),
 	MINT("Mint", 0xFF5DD39E, 0xFF5BC0E8),
