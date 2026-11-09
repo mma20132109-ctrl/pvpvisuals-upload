@@ -25,7 +25,7 @@ public final class CoordinatesHudModule extends AbstractHudModule {
  }
  @Override protected int contentWidth(){
   update(); var f=Minecraft.getInstance().font;
-  int w=7+Gfx.widthAtSize(f,"XYZ",6.2f)+5+Gfx.widthAtSize(f,coords,6.2f)+7;
+  int w=(int)Math.ceil(7+Gfx.widthAtSize(f,"XYZ",6.2f)+5+Gfx.widthAtSize(f,coords,6.2f)+7);
   if(!direction.isEmpty())w+=22+Gfx.widthAtSize(f,direction,6.2f);
   if(!other.isEmpty())w+=10+Gfx.widthAtSize(f,other,5.6f);
   return w;
