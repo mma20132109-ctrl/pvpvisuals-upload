@@ -1,17 +1,21 @@
 # PvP Visuals (Fabric, Minecraft 1.21.11, client-only)
 
-## Сборка (Windows PowerShell)
+## Скачать готовый JAR
 
-1. Нужен JDK 21 (`java -version`).
-2. В архиве нет `gradlew`. Скопируйте его из официального примера (команды выполнять в папке проекта):
-   ```powershell
-   Invoke-WebRequest -Uri https://github.com/FabricMC/fabric-example-mod/archive/refs/heads/1.21.11.zip -OutFile $env:TEMP\ex.zip
-   Expand-Archive $env:TEMP\ex.zip $env:TEMP\ex -Force
-   $src = "$env:TEMP\ex\fabric-example-mod-1.21.11"
-   Copy-Item "$src\gradlew", "$src\gradlew.bat" .
-   Copy-Item "$src\gradle\wrapper\gradle-wrapper.jar" .\gradle\wrapper\
-   ```
-3. `.\gradlew.bat build` -> `build\libs\pvpvisuals-1.0.0.jar`; `.\gradlew.bat runClient` — запуск клиента.
+Откройте вкладку **Releases** репозитория и скачайте файл `pvpvisuals-1.0.0.jar` из последнего релиза (**Latest**). Положите его в папку `.minecraft/mods`. Нужны Fabric Loader и Fabric API для Minecraft 1.21.11.
+
+Каждая успешная сборка ветки `main` автоматически публикуется в Releases. Сборки веток и pull request также доступны как артефакты во вкладке **Actions**.
+
+## Сборка и запуск из исходников (Windows PowerShell)
+
+Нужен JDK 21 (`java -version`). В корне проекта выполните:
+
+```powershell
+.\gradlew.bat build
+.\gradlew.bat runClient
+```
+
+Готовый мод будет в `build\libs\pvpvisuals-1.0.0.jar`.
 
 ## Меню
 
