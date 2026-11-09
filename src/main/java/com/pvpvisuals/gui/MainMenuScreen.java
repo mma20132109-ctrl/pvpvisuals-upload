@@ -51,7 +51,7 @@ public final class MainMenuScreen extends Screen {
     private int buttonX;
     private int buttonW;
     private int firstButtonY;
-    private int[] buttonHeights = new int[5];
+    private final int[] buttonHeights = new int[5];
     private int buttonGap;
 
     public MainMenuScreen() {
@@ -64,7 +64,6 @@ public final class MainMenuScreen extends Screen {
     }
 
     private void layoutMenu() {
-        // Proportional layout keeps the visual balance at every GUI scale and aspect ratio.
         panelW = Math.min(this.width, Math.round(this.width * 0.302f));
         buttonX = Math.round(this.width * 0.0393f);
         buttonW = Math.min(Math.round(this.width * 0.232f),
@@ -113,12 +112,11 @@ public final class MainMenuScreen extends Screen {
         ensureBackgroundLoaded();
         if (backgroundLoaded) {
             g.blit(RenderPipelines.GUI_TEXTURED, BACKGROUND_TEXTURE, 0, 0, 0f, 0f,
-                    this.width, this.height, 640, 360, 640, 360, 0xFFFFFFFF);
+                    this.width, this.height, 320, 180, 320, 180, 0xFFFFFFFF);
         } else {
             g.fillGradient(0, 0, this.width, this.height, 0xFF172838, 0xFF07111C);
         }
 
-        // Gentle cinematic darkening across the scene; the left side gets a deeper glass veil.
         g.fill(0, 0, this.width, this.height, 0x35030A13);
         int fadeWidth = Math.max(12, Math.round(panelW * 0.30f));
         int solidWidth = Math.max(0, panelW - fadeWidth);
@@ -131,12 +129,10 @@ public final class MainMenuScreen extends Screen {
             int x1 = solidWidth + Math.round(fadeWidth * (i + 1) / (float) stripes);
             g.fill(x0, 0, Math.max(x0 + 1, x1), this.height, (alpha << 24) | 0x09121E);
         }
-        // Fine edge separation, barely visible over the background.
         g.fill(solidWidth + fadeWidth - 1, 0, solidWidth + fadeWidth, this.height, 0x2289B9D8);
     }
 
     private void drawSidebar(GuiGraphics g) {
-        // Soft top and bottom shading makes the sidebar feel like smoked glass instead of a flat card.
         g.fillGradient(0, 0, panelW, this.height, 0x260B1A2A, 0x38020A12);
     }
 
@@ -217,14 +213,14 @@ public final class MainMenuScreen extends Screen {
 
     private void drawIcon(GuiGraphics g, int index, float cx, float cy, int color) {
         switch (index) {
-            case 0 -> { // multiplayer: globe
+            case 0 -> {
                 Gfx.ringCircle(g, cx, cy, 8.5f, 1.5f, color);
                 Gfx.line(g, cx - 8f, cy, cx + 8f, cy, 1.2f, color);
                 Gfx.line(g, cx, cy - 8f, cx, cy + 8f, 1.2f, color);
                 Gfx.line(g, cx - 5f, cy - 6f, cx - 2f, cy + 6f, 0.9f, color);
                 Gfx.line(g, cx + 5f, cy - 6f, cx + 2f, cy + 6f, 0.9f, color);
             }
-            case 1 -> { // singleplayer: simple house
+            case 1 -> {
                 Gfx.polyline(g, 1.7f, color, cx - 9f, cy - 1f, cx, cy - 9f,
                         cx + 9f, cy - 1f, cx + 7f, cy - 1f);
                 Gfx.line(g, cx - 7f, cy - 1f, cx - 7f, cy + 8f, 1.5f, color);
@@ -232,11 +228,11 @@ public final class MainMenuScreen extends Screen {
                 Gfx.line(g, cx - 7f, cy + 8f, cx + 7f, cy + 8f, 1.5f, color);
                 Gfx.rrect(g, cx - 2f, cy + 2f, 4f, 6f, 1f, color, color, 0, 0f);
             }
-            case 2 -> { // accounts: head and shoulders
+            case 2 -> {
                 Gfx.circle(g, cx, cy - 4.5f, 3.8f, color);
                 Gfx.rrect(g, cx - 7f, cy + 1f, 14f, 8f, 4f, color, color, 0, 0f);
             }
-            case 3 -> { // settings: gear-like ring and teeth
+            case 3 -> {
                 Gfx.ringCircle(g, cx, cy, 7.5f, 2.4f, color);
                 Gfx.circle(g, cx, cy, 2.3f, color);
                 Gfx.line(g, cx, cy - 11f, cx, cy - 8f, 2f, color);
@@ -244,7 +240,7 @@ public final class MainMenuScreen extends Screen {
                 Gfx.line(g, cx - 11f, cy, cx - 8f, cy, 2f, color);
                 Gfx.line(g, cx + 8f, cy, cx + 11f, cy, 2f, color);
             }
-            case 4 -> { // exit: door and outward arrow
+            case 4 -> {
                 Gfx.line(g, cx - 7f, cy - 9f, cx - 7f, cy + 9f, 1.7f, color);
                 Gfx.line(g, cx - 7f, cy - 9f, cx + 1f, cy - 9f, 1.7f, color);
                 Gfx.line(g, cx - 7f, cy + 9f, cx + 1f, cy + 9f, 1.7f, color);
