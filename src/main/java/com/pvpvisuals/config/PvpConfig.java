@@ -45,7 +45,7 @@ public final class PvpConfig {
 	public ShaderSkySettings shaderSky = new ShaderSkySettings();
 	public FreelookSettings freelook = new FreelookSettings();
 	public SplashSettings splash = new SplashSettings();
-		public BlockOverlaySettings blockOverlay = new BlockOverlaySettings();
+	public BlockOverlaySettings blockOverlay = new BlockOverlaySettings();
 	public HitBoxSettings hitBox = new HitBoxSettings();
 	public RadialMenuSettings radial = new RadialMenuSettings();
 	public ViewModelSettings viewModel = new ViewModelSettings();
